@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +12,7 @@ import PolicyTableRow from "./policy/PolicyTableRow";
 import PolicySearch from "./policy/PolicySearch";
 import PolicyViewDialog from "./policy/PolicyViewDialog";
 import PolicyEditDialog from "./policy/PolicyEditDialog";
+import PolicyDocumentPreviewDialog from "./policy/PolicyDocumentPreviewDialog";
 import { Policy, getStatusColor, getDaysToExpiry, filterPolicies, downloadPoliciesAsExcel } from "@/utils/policyUtils";
 import { triggerManualPolicyReport } from "@/utils/emailReportUtils";
 import { generateSampleExcelTemplate, parseExcelFile, validatePolicyData, convertExcelRowToPolicy } from "@/utils/excelUtils";
@@ -38,6 +38,8 @@ const PolicyList = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [policyToDelete, setPolicyToDelete] = useState<Policy | null>(null);
+  const [documentPreviewOpen, setDocumentPreviewOpen] = useState(false);
+  const [documentPreviewPolicy, setDocumentPreviewPolicy] = useState<Policy | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -106,45 +108,9 @@ const PolicyList = () => {
     setIsDeleteDialogOpen(true);
   };
 
-  const handleDownloadDocument = async (policy: Policy) => {
-    if (!policy.document_url) {
-      toast({
-        title: "No Document",
-        description: "This policy does not have an attached document.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const { data, error } = await supabase.storage
-        .from('policy-documents')
-        .download(policy.document_url);
-
-      if (error) throw error;
-
-      // Create download link
-      const url = URL.createObjectURL(data);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${policy.policy_number}_document.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
-      toast({
-        title: "Download Started",
-        description: "Policy document is being downloaded.",
-      });
-    } catch (error: any) {
-      console.error('Error downloading document:', error);
-      toast({
-        title: "Download Failed",
-        description: error.message || "Failed to download document. Please try again.",
-        variant: "destructive",
-      });
-    }
+  const handlePreviewDocument = (policy: Policy) => {
+    setDocumentPreviewPolicy(policy);
+    setDocumentPreviewOpen(true);
   };
 
   const confirmDeletePolicy = async () => {
@@ -445,7 +411,7 @@ const PolicyList = () => {
                             onViewPolicy={handleViewPolicy}
                             onEditPolicy={handleEditPolicy}
                             onDeletePolicy={handleDeletePolicy}
-                            onDownloadDocument={handleDownloadDocument}
+                            onPreviewDocument={handlePreviewDocument}
                           />
                         );
                       })}
@@ -467,7 +433,7 @@ const PolicyList = () => {
                         onViewPolicy={handleViewPolicy}
                         onEditPolicy={handleEditPolicy}
                         onDeletePolicy={handleDeletePolicy}
-                        onDownloadDocument={handleDownloadDocument}
+                        onPreviewDocument={handlePreviewDocument}
                       />
                     );
                   })}
@@ -531,6 +497,13 @@ const PolicyList = () => {
         policy={selectedPolicy}
         open={viewDialogOpen}
         onOpenChange={setViewDialogOpen}
+      />
+
+      <PolicyDocumentPreviewDialog
+        documentUrl={documentPreviewPolicy?.document_url || null}
+        policyNumber={documentPreviewPolicy?.policy_number || ''}
+        open={documentPreviewOpen}
+        onOpenChange={setDocumentPreviewOpen}
       />
 
       <PolicyEditDialog 

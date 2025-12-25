@@ -1,7 +1,6 @@
-
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Eye, Edit, Trash2, Download } from "lucide-react";
+import { Eye, Edit, Trash2, FileText } from "lucide-react";
 import { Policy } from "@/utils/policyUtils";
 
 interface PolicyTableRowProps {
@@ -11,14 +10,21 @@ interface PolicyTableRowProps {
   onViewPolicy: (policy: Policy) => void;
   onEditPolicy: (policy: Policy) => void;
   onDeletePolicy: (policy: Policy) => void;
-  onDownloadDocument?: (policy: Policy) => void;
+  onPreviewDocument?: (policy: Policy) => void;
 }
 
-const PolicyTableRow = ({ policy, daysToExpiry, statusColor, onViewPolicy, onEditPolicy, onDeletePolicy, onDownloadDocument }: PolicyTableRowProps) => {
+const PolicyTableRow = ({ policy, daysToExpiry, statusColor, onViewPolicy, onEditPolicy, onDeletePolicy, onPreviewDocument }: PolicyTableRowProps) => {
   return (
     <tr className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
       <td className="p-3 sm:p-4">
-        <div className="font-medium text-blue-600 text-sm sm:text-base">{policy.policy_number}</div>
+        <div className="flex items-center gap-2">
+          <span className="font-medium text-blue-600 text-sm sm:text-base">{policy.policy_number}</span>
+          {policy.document_url && (
+            <span title="Document attached">
+              <FileText className="h-4 w-4 text-purple-500" />
+            </span>
+          )}
+        </div>
         <div className="text-xs sm:text-sm text-gray-500">{policy.company_name}</div>
       </td>
       <td className="p-3 sm:p-4">
@@ -72,14 +78,14 @@ const PolicyTableRow = ({ policy, daysToExpiry, statusColor, onViewPolicy, onEdi
             <Trash2 className="h-3 w-3 sm:mr-1 text-red-600" />
             <span className="hidden sm:inline text-red-600 font-medium">Delete</span>
           </Button>
-          {policy.document_url && onDownloadDocument && (
+          {policy.document_url && onPreviewDocument && (
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onDownloadDocument(policy)}
+              onClick={() => onPreviewDocument(policy)}
               className="h-8 px-2 sm:px-3 text-xs hover:bg-purple-50 hover:border-purple-200 transition-all duration-200 shadow-sm hover:shadow-md min-w-[70px]"
             >
-              <Download className="h-3 w-3 sm:mr-1 text-purple-600" />
+              <FileText className="h-3 w-3 sm:mr-1 text-purple-600" />
               <span className="hidden sm:inline text-purple-600 font-medium">PDF</span>
             </Button>
           )}
