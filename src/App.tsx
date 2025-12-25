@@ -21,6 +21,7 @@ import TermsConditions from "./pages/TermsConditions";
 import Shipping from "./pages/Shipping";
 import Privacy from "./pages/Privacy";
 import Contact from "./pages/Contact";
+import LandingPage from "./pages/LandingPage";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
       <AuthProvider>
         <BrowserRouter>
           <Routes>
+            <Route path="/welcome" element={<LandingPage />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/" element={

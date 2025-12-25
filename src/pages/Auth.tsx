@@ -8,10 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
-import { Shield, Mail, Lock, User } from "lucide-react";
+import { Mail, Lock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import logo from '@/assets/logo.png';
 
 const Auth = () => {
   const { user, signIn, signUp, loading } = useAuth();
@@ -111,10 +112,8 @@ const Auth = () => {
       <div className="flex-1 flex items-center justify-center px-2 sm:px-4 py-6 sm:py-12">
         <div className="w-full max-w-sm sm:max-w-md">
           <div className="text-center mb-6 sm:mb-8">
-            <div className="mx-auto mb-3 sm:mb-4 p-2 sm:p-3 bg-blue-100 rounded-full w-fit">
-              <Shield className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
-            </div>
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">AgentHub</h1>
+            <img src={logo} alt="Policy Tracker.in" className="h-16 w-16 sm:h-20 sm:w-20 mx-auto mb-3 sm:mb-4" />
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Policy Tracker.in</h1>
             <p className="text-gray-600 text-sm sm:text-base mt-1 sm:mt-2">Manage your policies with ease</p>
           </div>
 
@@ -283,6 +282,7 @@ const Auth = () => {
               Contact Us
             </Link>
           </div>
+          <p className="text-center text-xs text-gray-500 mt-4">© 2025 policytracker.in. All rights reserved.</p>
         </div>
       </footer>
 
