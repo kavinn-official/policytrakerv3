@@ -1,8 +1,7 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Car, User, Eye, Edit, Building, Trash2, Download } from "lucide-react";
+import { Calendar, Car, User, Eye, Edit, Building, Trash2, FileText } from "lucide-react";
 import { Policy } from "@/utils/policyUtils";
 
 interface PolicyCardProps {
@@ -12,16 +11,23 @@ interface PolicyCardProps {
   onViewPolicy: (policy: Policy) => void;
   onEditPolicy: (policy: Policy) => void;
   onDeletePolicy: (policy: Policy) => void;
-  onDownloadDocument?: (policy: Policy) => void;
+  onPreviewDocument?: (policy: Policy) => void;
 }
 
-const PolicyCard = ({ policy, daysToExpiry, statusColor, onViewPolicy, onEditPolicy, onDeletePolicy, onDownloadDocument }: PolicyCardProps) => {
+const PolicyCard = ({ policy, daysToExpiry, statusColor, onViewPolicy, onEditPolicy, onDeletePolicy, onPreviewDocument }: PolicyCardProps) => {
   return (
     <Card className="shadow-sm hover:shadow-lg transition-all duration-200 border-gray-200">
       <CardContent className="p-6">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h3 className="font-semibold text-blue-600 mb-1 text-lg">{policy.policy_number}</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-blue-600 text-lg">{policy.policy_number}</h3>
+              {policy.document_url && (
+                <span title="Document attached">
+                  <FileText className="h-4 w-4 text-purple-500" />
+                </span>
+              )}
+            </div>
             <p className="text-sm text-gray-600">{policy.company_name}</p>
           </div>
           <Badge className={statusColor}>{policy.status}</Badge>
@@ -84,15 +90,15 @@ const PolicyCard = ({ policy, daysToExpiry, statusColor, onViewPolicy, onEditPol
             <span className="text-red-600 font-medium truncate">Delete</span>
           </Button>
         </div>
-        {policy.document_url && onDownloadDocument && (
+        {policy.document_url && onPreviewDocument && (
           <Button
             variant="outline"
             size="sm"
-            onClick={() => onDownloadDocument(policy)}
+            onClick={() => onPreviewDocument(policy)}
             className="w-full mt-2 hover:bg-purple-50 hover:border-purple-200 transition-all duration-200 shadow-sm hover:shadow-md h-10"
           >
-            <Download className="h-4 w-4 mr-2 text-purple-600 flex-shrink-0" />
-            <span className="text-purple-600 font-medium">Download Policy Copy</span>
+            <FileText className="h-4 w-4 mr-2 text-purple-600 flex-shrink-0" />
+            <span className="text-purple-600 font-medium">View Policy Document</span>
           </Button>
         )}
       </CardContent>

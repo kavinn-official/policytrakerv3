@@ -188,7 +188,7 @@ const handler = async (req: Request): Promise<Response> => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            from: 'Policy Tracker.in <onboarding@resend.dev>',
+            from: 'Policy Tracker <no-reply@policytracker.in>',
             to: [profile.email],
             subject: `Policy Report - ${new Date().toLocaleDateString()} | Policy Tracker.in`,
             html: emailContent,
