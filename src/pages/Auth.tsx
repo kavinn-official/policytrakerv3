@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
-import { Mail, Lock } from "lucide-react";
+import { Mail, Lock, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -36,7 +36,7 @@ const Auth = () => {
   }
 
   if (user) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -109,6 +109,16 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex flex-col">
+      {/* Back Button */}
+      <div className="p-4">
+        <Link to="/">
+          <Button variant="ghost" size="sm" className="gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Home
+          </Button>
+        </Link>
+      </div>
+      
       <div className="flex-1 flex items-center justify-center px-2 sm:px-4 py-6 sm:py-12">
         <div className="w-full max-w-sm sm:max-w-md">
           <div className="text-center mb-6 sm:mb-8">
@@ -268,12 +278,6 @@ const Auth = () => {
               className="text-gray-600 hover:text-blue-600 transition-colors"
             >
               Cancellation & Refunds
-            </Link>
-            <Link 
-              to="/shipping" 
-              className="text-gray-600 hover:text-blue-600 transition-colors"
-            >
-              Shipping Policy
             </Link>
             <Link 
               to="/contact" 
