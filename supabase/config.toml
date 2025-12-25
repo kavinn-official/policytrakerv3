@@ -12,4 +12,6 @@ verify_jwt = false
 [functions.customer-portal]
 verify_jwt = false
 
-# parse-policy-pdf has manual auth check in the function code
+[functions.parse-policy-pdf]
+verify_jwt = false
+# Note: This function has manual auth check in the code
