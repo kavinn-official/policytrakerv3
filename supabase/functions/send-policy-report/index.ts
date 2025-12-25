@@ -25,6 +25,12 @@ interface Policy {
   company_name: string | null;
 }
 
+// Input validation helper
+function isValidUUID(str: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
+}
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -38,12 +44,59 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Starting policy report generation...");
 
-    // Get the user ID from the request (either from manual trigger or scheduled)
+    // Get the request body
     const { manual_trigger, user_id } = await req.json().catch(() => ({}));
     
     let profiles;
     
     if (manual_trigger && user_id) {
+      // Validate user_id format
+      if (typeof user_id !== 'string' || !isValidUUID(user_id)) {
+        console.error("Invalid user_id format");
+        return new Response(JSON.stringify({ 
+          error: "Invalid user_id format" 
+        }), {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
+
+      // For manual trigger, verify authorization
+      const authHeader = req.headers.get("Authorization");
+      if (!authHeader) {
+        console.error("Authorization required for manual trigger");
+        return new Response(JSON.stringify({ 
+          error: "Authorization required" 
+        }), {
+          status: 401,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
+
+      const token = authHeader.replace("Bearer ", "");
+      const { data: authData, error: authError } = await supabaseClient.auth.getUser(token);
+      
+      if (authError || !authData.user) {
+        console.error("Authentication failed");
+        return new Response(JSON.stringify({ 
+          error: "Authentication failed" 
+        }), {
+          status: 401,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
+
+      // SECURITY: Verify the authenticated user matches the requested user_id
+      if (authData.user.id !== user_id) {
+        console.error("Unauthorized: User cannot trigger reports for other users");
+        return new Response(JSON.stringify({ 
+          error: "Unauthorized to trigger reports for other users" 
+        }), {
+          status: 403,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
+
       // For manual trigger, get specific user
       const { data, error } = await supabaseClient
         .from('profiles')
@@ -51,10 +104,11 @@ const handler = async (req: Request): Promise<Response> => {
         .eq('id', user_id);
       
       if (error) {
-        console.error("Error fetching user profile:", error);
+        console.error("Error fetching user profile");
         throw error;
       }
       profiles = data;
+      console.log(`Manual trigger for user (ID: ${user_id.substring(0, 8)}...)`);
     } else {
       // For scheduled runs, get all users
       const { data, error } = await supabaseClient
@@ -62,13 +116,13 @@ const handler = async (req: Request): Promise<Response> => {
         .select('id, email, full_name');
 
       if (error) {
-        console.error("Error fetching profiles:", error);
+        console.error("Error fetching profiles");
         throw error;
       }
       profiles = data;
     }
 
-    console.log(`Found ${profiles?.length || 0} users to process`);
+    console.log(`Processing ${profiles?.length || 0} users`);
 
     // Process each user
     for (const profile of profiles || []) {
@@ -81,16 +135,16 @@ const handler = async (req: Request): Promise<Response> => {
           .order('policy_expiry_date', { ascending: true });
 
         if (policiesError) {
-          console.error(`Error fetching policies for user ${profile.id}:`, policiesError);
+          console.error(`Error fetching policies for user ${profile.id.substring(0, 8)}...`);
           continue;
         }
 
         if (!policies || policies.length === 0) {
-          console.log(`No policies found for user ${profile.email}`);
+          console.log(`No policies found for user ${profile.id.substring(0, 8)}...`);
           continue;
         }
 
-        console.log(`Found ${policies.length} policies for user ${profile.email}`);
+        console.log(`Found ${policies.length} policies for user ${profile.id.substring(0, 8)}...`);
 
         // Calculate policy statistics
         const today = new Date();
@@ -125,7 +179,7 @@ const handler = async (req: Request): Promise<Response> => {
           throw new Error("Email service not configured. Please contact support.");
         }
 
-        console.log(`Attempting to send email to ${profile.email}...`);
+        console.log(`Sending email to user ${profile.id.substring(0, 8)}...`);
 
         const emailResponse = await fetch('https://api.resend.com/emails', {
           method: 'POST',
@@ -150,14 +204,14 @@ const handler = async (req: Request): Promise<Response> => {
         const emailResult = await emailResponse.json();
 
         if (!emailResponse.ok) {
-          console.error(`Failed to send email to ${profile.email}:`, JSON.stringify(emailResult));
+          console.error(`Failed to send email to user ${profile.id.substring(0, 8)}...`);
           throw new Error(emailResult.message || 'Failed to send email');
         } else {
-          console.log(`Email with Excel attachment sent successfully to ${profile.email}`, emailResult);
+          console.log(`Email sent successfully to user ${profile.id.substring(0, 8)}...`);
         }
 
       } catch (userError) {
-        console.error(`Error processing user ${profile.email}:`, userError);
+        console.error(`Error processing user ${profile.id.substring(0, 8)}...`);
       }
     }
 
@@ -171,7 +225,7 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
   } catch (error: unknown) {
-    console.error("Error in send-policy-report function:", error);
+    console.error("Error in send-policy-report function");
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(JSON.stringify({ 
       error: errorMessage 
