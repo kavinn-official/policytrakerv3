@@ -134,9 +134,9 @@ const handler = async (req: Request): Promise<Response> => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            from: 'Policy Report <onboarding@resend.dev>',
+            from: 'Policy Tracker.in <onboarding@resend.dev>',
             to: [profile.email],
-            subject: `Policy Report - ${new Date().toLocaleDateString()}`,
+            subject: `Policy Report - ${new Date().toLocaleDateString()} | Policy Tracker.in`,
             html: emailContent,
             attachments: [
               {
@@ -170,10 +170,11 @@ const handler = async (req: Request): Promise<Response> => {
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error in send-policy-report function:", error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(JSON.stringify({ 
-      error: error.message 
+      error: errorMessage 
     }), {
       status: 500,
       headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -207,10 +208,10 @@ async function generateExcelFile(policies: Policy[]): Promise<ArrayBuffer> {
     'Reference': policy.reference
   })));
 
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'All Policies');
+  const workbook = (XLSX as any).utils.book_new();
+  (XLSX as any).utils.book_append_sheet(workbook, worksheet, 'All Policies');
   
-  return XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+  return (XLSX as any).write(workbook, { type: 'buffer', bookType: 'xlsx' });
 }
 
 function generateEmailContent(
@@ -226,29 +227,34 @@ function generateEmailContent(
     <html>
     <head>
         <meta charset="utf-8">
-        <title>Policy Report with Excel Details</title>
+        <title>Policy Report - Policy Tracker.in</title>
         <style>
             body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
             .container { max-width: 800px; margin: 0 auto; padding: 20px; }
-            .header { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+            .header { background: linear-gradient(135deg, #0891b2 0%, #0d9488 100%); padding: 30px; border-radius: 12px; margin-bottom: 20px; text-align: center; }
+            .header h1 { color: white; margin: 0; font-size: 28px; }
+            .header p { color: rgba(255,255,255,0.9); margin: 10px 0 0 0; }
+            .logo-text { font-size: 24px; font-weight: bold; color: white; margin-bottom: 10px; }
             .stats { display: flex; justify-content: space-around; margin: 20px 0; }
             .stat-card { background: #fff; border: 2px solid #e9ecef; border-radius: 8px; padding: 15px; text-align: center; min-width: 120px; }
-            .stat-number { font-size: 24px; font-weight: bold; color: #007bff; }
+            .stat-number { font-size: 24px; font-weight: bold; color: #0891b2; }
             .table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-            .table th, .table td { border: 1px solid #ddd; padding: 12px; text-left; }
+            .table th, .table td { border: 1px solid #ddd; padding: 12px; text-align: left; }
             .table th { background-color: #f8f9fa; font-weight: bold; }
             .expiring { background-color: #fff3cd; }
             .expired { background-color: #f8d7da; }
-            .section-title { color: #495057; border-bottom: 2px solid #007bff; padding-bottom: 5px; margin: 30px 0 15px 0; }
-            .attachment-notice { background: #e3f2fd; border-left: 4px solid #2196f3; padding: 15px; margin: 20px 0; border-radius: 4px; }
+            .section-title { color: #495057; border-bottom: 2px solid #0891b2; padding-bottom: 5px; margin: 30px 0 15px 0; }
+            .attachment-notice { background: #e0f2fe; border-left: 4px solid #0891b2; padding: 15px; margin: 20px 0; border-radius: 4px; }
+            .footer { margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; text-align: center; }
+            .footer a { color: #0891b2; text-decoration: none; }
         </style>
     </head>
     <body>
         <div class="container">
             <div class="header">
-                <h1>Insurance Policy Report with Excel Details</h1>
-                <p>Hello ${userName},</p>
-                <p>Here's your comprehensive policy report as of ${today}:</p>
+                <div class="logo-text">Policy Tracker.in</div>
+                <h1>Insurance Policy Report</h1>
+                <p>Hello ${userName}, here's your comprehensive policy report as of ${today}</p>
             </div>
             
             <div class="attachment-notice">
@@ -339,10 +345,13 @@ function generateEmailContent(
                 <li>Contact numbers and company information</li>
             </ul>
             
-            <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+            <div class="footer">
                 <p><strong>Need Help?</strong></p>
                 <p>If you have any questions about your policies or need assistance with renewals, please don't hesitate to contact us.</p>
                 <p>This automated report is sent every 15 days to keep you updated on your policy portfolio.</p>
+                <p style="margin-top: 20px; color: #666;">
+                    <a href="https://policytracker.in">policytracker.in</a> - Your Insurance Policy Management Partner
+                </p>
             </div>
         </div>
     </body>
