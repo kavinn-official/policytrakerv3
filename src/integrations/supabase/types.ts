@@ -93,6 +93,7 @@ export type Database = {
           company_name: string | null
           contact_number: string | null
           created_at: string
+          document_url: string | null
           id: string
           policy_active_date: string
           policy_expiry_date: string
@@ -111,6 +112,7 @@ export type Database = {
           company_name?: string | null
           contact_number?: string | null
           created_at?: string
+          document_url?: string | null
           id?: string
           policy_active_date: string
           policy_expiry_date: string
@@ -129,6 +131,7 @@ export type Database = {
           company_name?: string | null
           contact_number?: string | null
           created_at?: string
+          document_url?: string | null
           id?: string
           policy_active_date?: string
           policy_expiry_date?: string

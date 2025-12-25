@@ -18,6 +18,7 @@ export interface Policy {
   created_at: string;
   updated_at: string;
   user_id?: string;
+  document_url?: string;
 }
 
 export const getStatusColor = (status: string) => {

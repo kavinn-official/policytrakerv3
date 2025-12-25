@@ -197,12 +197,38 @@ const AddPolicy = () => {
         }
       }
 
+      // Upload PDF to storage if file is available
+      let documentUrl: string | null = null;
+      if (uploadedFile && uploadedFile.type === 'application/pdf') {
+        const fileExt = 'pdf';
+        const fileName = `${user?.id}/${Date.now()}_${formData.policy_number.replace(/[^a-zA-Z0-9]/g, '_')}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('policy-documents')
+          .upload(fileName, uploadedFile, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (uploadError) {
+          console.error('Document upload error:', uploadError);
+          toast({
+            title: "Warning",
+            description: "Policy document could not be uploaded. Policy will be saved without document.",
+            variant: "destructive",
+          });
+        } else {
+          documentUrl = fileName;
+        }
+      }
+
       const { error } = await supabase.from("policies").insert([
         {
           ...formData,
           policy_active_date: format(policyActiveDate, "yyyy-MM-dd"),
           policy_expiry_date: format(policyExpiryDate, "yyyy-MM-dd"),
           user_id: user?.id,
+          document_url: documentUrl,
         },
       ]);
 
@@ -210,7 +236,7 @@ const AddPolicy = () => {
 
       toast({
         title: "Success",
-        description: "Policy added successfully!",
+        description: documentUrl ? "Policy and document added successfully!" : "Policy added successfully!",
       });
 
       navigate("/policies");

@@ -2,7 +2,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Car, User, Eye, Edit, Building, Trash2 } from "lucide-react";
+import { Calendar, Car, User, Eye, Edit, Building, Trash2, Download } from "lucide-react";
 import { Policy } from "@/utils/policyUtils";
 
 interface PolicyCardProps {
@@ -12,9 +12,10 @@ interface PolicyCardProps {
   onViewPolicy: (policy: Policy) => void;
   onEditPolicy: (policy: Policy) => void;
   onDeletePolicy: (policy: Policy) => void;
+  onDownloadDocument?: (policy: Policy) => void;
 }
 
-const PolicyCard = ({ policy, daysToExpiry, statusColor, onViewPolicy, onEditPolicy, onDeletePolicy }: PolicyCardProps) => {
+const PolicyCard = ({ policy, daysToExpiry, statusColor, onViewPolicy, onEditPolicy, onDeletePolicy, onDownloadDocument }: PolicyCardProps) => {
   return (
     <Card className="shadow-sm hover:shadow-lg transition-all duration-200 border-gray-200">
       <CardContent className="p-6">
@@ -54,7 +55,7 @@ const PolicyCard = ({ policy, daysToExpiry, statusColor, onViewPolicy, onEditPol
           )}
         </div>
         
-        <div className="flex gap-2 sm:gap-3">
+        <div className="flex gap-2 sm:gap-3 flex-wrap">
           <Button
             variant="outline"
             size="sm"
@@ -83,6 +84,17 @@ const PolicyCard = ({ policy, daysToExpiry, statusColor, onViewPolicy, onEditPol
             <span className="text-red-600 font-medium truncate">Delete</span>
           </Button>
         </div>
+        {policy.document_url && onDownloadDocument && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onDownloadDocument(policy)}
+            className="w-full mt-2 hover:bg-purple-50 hover:border-purple-200 transition-all duration-200 shadow-sm hover:shadow-md h-10"
+          >
+            <Download className="h-4 w-4 mr-2 text-purple-600 flex-shrink-0" />
+            <span className="text-purple-600 font-medium">Download Policy Copy</span>
+          </Button>
+        )}
       </CardContent>
     </Card>
   );
