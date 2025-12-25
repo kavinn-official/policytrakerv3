@@ -5,7 +5,7 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { Button } from '@/components/ui/button';
 import { User, LogOut, Menu, Home, FileText, AlertTriangle, CreditCard, Plus } from 'lucide-react';
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,9 +24,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { subscribed, loading: subscriptionLoading } = useSubscription();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   const handleSignOut = async () => {
     await signOut();
+    navigate('/auth', { replace: true });
   };
 
   const navigationItems = [
