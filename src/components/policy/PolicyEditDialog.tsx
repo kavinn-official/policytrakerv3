@@ -4,9 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Combobox } from "@/components/ui/combobox";
 import { MaterialDatePicker } from "@/components/ui/material-date-picker";
-import { User, Car, Phone, Building, FileText } from "lucide-react";
+import { User, Car, FileText, Upload, Trash2 } from "lucide-react";
 import { format } from "date-fns";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Policy } from "@/utils/policyUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -24,6 +24,9 @@ const PolicyEditDialog = ({ policy, open, onOpenChange, onPolicyUpdated }: Polic
   const [activeDate, setActiveDate] = useState<Date | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [availableModels, setAvailableModels] = useState<string[]>([]);
+  const [documentFile, setDocumentFile] = useState<File | null>(null);
+  const [isUploadingDocument, setIsUploadingDocument] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   // Helper function to format text to Camel Case
@@ -39,6 +42,7 @@ const PolicyEditDialog = ({ policy, open, onOpenChange, onPolicyUpdated }: Polic
     if (policy) {
       setFormData(policy);
       setActiveDate(new Date(policy.policy_active_date));
+      setDocumentFile(null);
     }
   }, [policy]);
 
@@ -98,6 +102,84 @@ const PolicyEditDialog = ({ policy, open, onOpenChange, onPolicyUpdated }: Polic
     }
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.type !== 'application/pdf') {
+        toast({
+          title: "Invalid File",
+          description: "Please upload a PDF file only.",
+          variant: "destructive",
+        });
+        return;
+      }
+      setDocumentFile(file);
+    }
+  };
+
+  const handleRemoveDocument = async () => {
+    if (!policy) return;
+    
+    setIsUploadingDocument(true);
+    try {
+      // Delete from storage if exists
+      if (formData.document_url) {
+        await supabase.storage
+          .from('policy-documents')
+          .remove([formData.document_url]);
+      }
+
+      // Update policy to remove document reference
+      const { error } = await supabase
+        .from('policies')
+        .update({ document_url: null })
+        .eq('id', policy.id);
+
+      if (error) throw error;
+
+      setFormData(prev => ({ ...prev, document_url: undefined }));
+      setDocumentFile(null);
+      
+      toast({
+        title: "Document Removed",
+        description: "Policy document has been removed.",
+      });
+    } catch (error) {
+      console.error('Error removing document:', error);
+      toast({
+        title: "Error",
+        description: "Failed to remove document.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingDocument(false);
+    }
+  };
+
+  const uploadDocument = async (policyId: string): Promise<string | null> => {
+    if (!documentFile) return null;
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
+    const fileExt = documentFile.name.split('.').pop();
+    const fileName = `${user.id}/${policyId}/${Date.now()}.${fileExt}`;
+
+    // Delete old document if exists
+    if (formData.document_url) {
+      await supabase.storage
+        .from('policy-documents')
+        .remove([formData.document_url]);
+    }
+
+    const { error: uploadError } = await supabase.storage
+      .from('policy-documents')
+      .upload(fileName, documentFile, { contentType: 'application/pdf' });
+
+    if (uploadError) throw uploadError;
+    return fileName;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!policy) return;
@@ -124,6 +206,12 @@ const PolicyEditDialog = ({ policy, open, onOpenChange, onPolicyUpdated }: Polic
 
     setIsLoading(true);
     try {
+      // Upload document if new file selected
+      let documentUrl = formData.document_url;
+      if (documentFile) {
+        documentUrl = await uploadDocument(policy.id) || undefined;
+      }
+
       const { error } = await supabase
         .from('policies')
         .update({
@@ -138,6 +226,7 @@ const PolicyEditDialog = ({ policy, open, onOpenChange, onPolicyUpdated }: Polic
           reference: formData.reference,
           contact_number: formData.contact_number,
           company_name: formData.company_name,
+          document_url: documentUrl,
         })
         .eq('id', policy.id);
 
@@ -364,6 +453,72 @@ const PolicyEditDialog = ({ policy, open, onOpenChange, onPolicyUpdated }: Polic
                     className="h-9 sm:h-10 text-xs sm:text-sm bg-gray-50"
                   />
                 </div>
+              </div>
+
+              {/* Document Upload Section */}
+              <div className="sm:col-span-2 space-y-2">
+                <Label className="text-xs sm:text-sm font-medium">Policy Document (PDF)</Label>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  accept=".pdf,application/pdf"
+                  className="hidden"
+                />
+                
+                {formData.document_url && !documentFile ? (
+                  <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <FileText className="h-5 w-5 text-green-600" />
+                    <span className="text-sm text-green-700 flex-1">Document attached</span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="h-8"
+                    >
+                      <Upload className="h-4 w-4 mr-1" />
+                      Replace
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleRemoveDocument}
+                      disabled={isUploadingDocument}
+                      className="h-8"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : documentFile ? (
+                  <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <FileText className="h-5 w-5 text-blue-600" />
+                    <span className="text-sm text-blue-700 flex-1 truncate">{documentFile.name}</span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setDocumentFile(null);
+                        if (fileInputRef.current) fileInputRef.current.value = '';
+                      }}
+                      className="h-8"
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full h-16 border-dashed"
+                  >
+                    <Upload className="h-5 w-5 mr-2" />
+                    Upload Policy Document (PDF)
+                  </Button>
+                )}
               </div>
             </div>
           </div>

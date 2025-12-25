@@ -97,17 +97,42 @@ const handler = async (req: Request): Promise<Response> => {
         });
       }
 
-      // For manual trigger, get specific user
-      const { data, error } = await supabaseClient
+      // For manual trigger, get specific user profile, or create one if missing
+      const { data: profileData, error: profileError } = await supabaseClient
         .from('profiles')
         .select('id, email, full_name')
-        .eq('id', user_id);
+        .eq('id', user_id)
+        .single();
       
-      if (error) {
-        console.error("Error fetching user profile");
-        throw error;
+      if (profileError || !profileData) {
+        // Profile doesn't exist, create one using auth user data
+        console.log(`Profile not found for user ${user_id.substring(0, 8)}..., creating one`);
+        
+        const { data: authUserData } = await supabaseClient.auth.admin.getUserById(user_id);
+        
+        if (authUserData?.user) {
+          const { data: newProfile, error: createError } = await supabaseClient
+            .from('profiles')
+            .upsert({
+              id: user_id,
+              email: authUserData.user.email,
+              full_name: authUserData.user.user_metadata?.full_name || null,
+            })
+            .select('id, email, full_name')
+            .single();
+          
+          if (createError) {
+            console.error("Error creating profile:", createError);
+            throw new Error("Failed to create user profile");
+          }
+          profiles = newProfile ? [newProfile] : [];
+        } else {
+          console.error("Could not retrieve auth user data");
+          throw new Error("User not found");
+        }
+      } else {
+        profiles = [profileData];
       }
-      profiles = data;
       console.log(`Manual trigger for user (ID: ${user_id.substring(0, 8)}...)`);
     } else {
       // For scheduled runs, get all users

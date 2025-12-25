@@ -145,9 +145,27 @@ const DuePolicies = () => {
   };
 
   const handleWhatsApp = (policy: DuePolicy) => {
-    const message = `Hi ${policy.client_name}, your policy ${policy.policy_number} is expiring in ${policy.daysLeft} days. Please contact us for renewal.`;
+    const expiryDate = new Date(policy.policy_expiry_date);
+    const formattedExpiry = expiryDate.toLocaleDateString('en-IN', { 
+      day: '2-digit', 
+      month: '2-digit', 
+      year: 'numeric' 
+    });
+    
+    const vehicleDetails = policy.vehicle_make && policy.vehicle_model 
+      ? `${policy.vehicle_make} - ${policy.vehicle_model}`
+      : policy.vehicle_make || 'N/A';
+    
+    const message = `Hi ${policy.client_name},
+your policy ${policy.policy_number} is expiring in ${policy.daysLeft} days.
+Vehicle Details : ${vehicleDetails}
+Registration Number : ${policy.vehicle_number}
+Expires : ${formattedExpiry}
+
+Please contact us for renewal.`;
+    
     const phoneNumber = policy.contact_number?.replace(/\D/g, '') || '';
-    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+    const whatsappUrl = `https://wa.me/91${phoneNumber}?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
     
     toast({
