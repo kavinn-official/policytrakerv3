@@ -44,7 +44,7 @@ const SubscriptionCard = () => {
     setPaymentDialog(false);
     
     try {
-      const paymentData = await createRazorpayPayment(50, "Premium");
+      const paymentData = await createRazorpayPayment(99, "Premium");
       
       if (paymentData) {
         const options = {
@@ -199,7 +199,7 @@ const SubscriptionCard = () => {
             {!subscribed && (
               <div className="pt-4 border-t">
                 <div className="text-center mb-3">
-                  <span className="text-2xl font-bold text-blue-600">₹50</span>
+                  <span className="text-2xl font-bold text-blue-600">₹99</span>
                   <span className="text-sm text-gray-500">/month</span>
                 </div>
                 <Button 
@@ -219,7 +219,7 @@ const SubscriptionCard = () => {
       <Dialog open={paymentDialog} onOpenChange={setPaymentDialog}>
         <DialogContent className="max-w-sm w-[95vw] mx-auto">
           <RazorpayPayment
-            amount={50}
+            amount={99}
             planType="Premium"
             onPaymentInitiated={handlePaymentInitiated}
             onCancel={handlePaymentCancel}

@@ -64,7 +64,7 @@ serve(async (req) => {
     console.log("User authenticated:", user.id.substring(0, 8) + "...");
 
     // Parse and validate request body
-    let amount = 50; // Default ₹50
+    let amount = 99; // Default ₹99
     let planType = "Premium";
     
     try {
