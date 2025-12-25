@@ -23,16 +23,12 @@ export const useAuth = () => {
   return context;
 };
 
-// Helper function to clean up auth state
+// Helper function to clean up auth state - only used during sign out
 const cleanupAuthState = () => {
+  // Only remove auth tokens, not session data
   Object.keys(localStorage).forEach((key) => {
     if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
       localStorage.removeItem(key);
-    }
-  });
-  Object.keys(sessionStorage || {}).forEach((key) => {
-    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
-      sessionStorage.removeItem(key);
     }
   });
 };
@@ -71,15 +67,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signIn = async (email: string, password: string) => {
     try {
       setLoading(true);
-      // Clean up existing state
-      cleanupAuthState();
-      
-      // Attempt global sign out first
-      try {
-        await supabase.auth.signOut({ scope: 'global' });
-      } catch (err) {
-        // Continue even if this fails
-      }
 
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -89,7 +76,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) throw error;
 
       if (data.user && data.session) {
-        // Update state immediately
         setSession(data.session);
         setUser(data.user);
         
@@ -97,11 +83,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           title: "Success",
           description: "Successfully signed in!",
         });
-        
-        // Small delay before redirect to ensure state is updated
-        setTimeout(() => {
-          window.location.href = '/dashboard';
-        }, 500);
       }
 
       return { error: null };
@@ -156,19 +137,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     try {
-      // Check if there's an active session first
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session) {
-        // Only attempt signout if there's a session
-        const { error } = await supabase.auth.signOut({ scope: 'global' });
-        if (error) {
-          console.error('Sign out error:', error);
-        }
+      const { error } = await supabase.auth.signOut({ scope: 'local' });
+      if (error) {
+        console.error('Sign out error:', error);
       }
-      
-      // Always clean up local state regardless of whether signout succeeded
-      cleanupAuthState();
       
       // Clear component state
       setSession(null);
@@ -178,16 +150,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         title: "Success",
         description: "You have been logged out successfully.",
       });
-      
-      // Small delay to ensure toast is visible before redirect
-      setTimeout(() => {
-        window.location.href = '/auth';
-      }, 100);
     } catch (error: any) {
       console.error('Sign out error:', error);
       
-      // Still clean up and redirect even on error
-      cleanupAuthState();
+      // Still clean up even on error
       setSession(null);
       setUser(null);
       
@@ -195,10 +161,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         title: "Success",
         description: "You have been logged out successfully.",
       });
-      
-      setTimeout(() => {
-        window.location.href = '/auth';
-      }, 100);
     }
   };
 

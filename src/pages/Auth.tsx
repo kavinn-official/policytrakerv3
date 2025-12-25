@@ -44,7 +44,10 @@ const Auth = () => {
     setAuthLoading(true);
     
     try {
-      await signIn(signInData.email, signInData.password);
+      const { error } = await signIn(signInData.email, signInData.password);
+      if (!error) {
+        navigate('/dashboard', { replace: true });
+      }
     } finally {
       setAuthLoading(false);
     }
