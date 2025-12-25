@@ -7,6 +7,19 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Input validation helpers
+function isValidRazorpayOrderId(id: string): boolean {
+  return typeof id === 'string' && /^order_[A-Za-z0-9]{14,}$/.test(id);
+}
+
+function isValidRazorpayPaymentId(id: string): boolean {
+  return typeof id === 'string' && /^pay_[A-Za-z0-9]{14,}$/.test(id);
+}
+
+function isValidSignature(sig: string): boolean {
+  return typeof sig === 'string' && /^[a-f0-9]{64}$/.test(sig);
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -43,12 +56,25 @@ serve(async (req) => {
     }
 
     const user = data.user;
+    console.log("User authenticated:", user.id.substring(0, 8) + "...");
 
     // Parse request body
     const body = await req.text();
-    const requestData = JSON.parse(body);
+    let requestData;
+    try {
+      requestData = JSON.parse(body);
+    } catch {
+      return new Response(JSON.stringify({ 
+        error: "Invalid JSON body" 
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      });
+    }
+
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = requestData;
 
+    // Input validation
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
       return new Response(JSON.stringify({ 
         error: "Missing payment verification data" 
@@ -58,38 +84,34 @@ serve(async (req) => {
       });
     }
 
-    console.log("Verifying Razorpay payment:", {
-      order_id: razorpay_order_id,
-      payment_id: razorpay_payment_id
-    });
-
-    // Verify that the payment request exists and hasn't been processed
-    const { data: existingPayment, error: fetchError } = await supabaseClient
-      .from("payment_requests")
-      .select("*")
-      .eq("order_id", razorpay_order_id)
-      .eq("user_id", user.id)
-      .single();
-
-    if (fetchError || !existingPayment) {
-      console.error("Payment request not found:", fetchError);
+    if (!isValidRazorpayOrderId(razorpay_order_id)) {
       return new Response(JSON.stringify({ 
-        error: "Payment request not found" 
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 404,
-      });
-    }
-
-    if (existingPayment.status === "completed") {
-      console.error("Payment already processed");
-      return new Response(JSON.stringify({ 
-        error: "Payment already processed" 
+        error: "Invalid order_id format" 
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
       });
     }
+
+    if (!isValidRazorpayPaymentId(razorpay_payment_id)) {
+      return new Response(JSON.stringify({ 
+        error: "Invalid payment_id format" 
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      });
+    }
+
+    if (!isValidSignature(razorpay_signature)) {
+      return new Response(JSON.stringify({ 
+        error: "Invalid signature format" 
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      });
+    }
+
+    console.log("Verifying payment for order:", razorpay_order_id.substring(0, 15) + "...");
 
     // Verify Razorpay signature using HMAC-SHA256
     const keySecret = Deno.env.get("RAZORPAY_KEY_SECRET") ?? "";
@@ -125,7 +147,8 @@ serve(async (req) => {
 
     console.log("Payment signature verified successfully");
 
-    // Update payment request status
+    // ATOMIC UPDATE: Update payment request status only if pending
+    // This prevents race conditions by relying on database-level atomicity
     const { data: paymentData, error: updateError } = await supabaseClient
       .from("payment_requests")
       .update({ 
@@ -135,12 +158,12 @@ serve(async (req) => {
       })
       .eq("order_id", razorpay_order_id)
       .eq("user_id", user.id)
-      .eq("status", "pending") // Ensure we only update pending payments
+      .eq("status", "pending") // Only update if still pending - prevents double processing
       .select()
-      .single();
+      .maybeSingle();
 
     if (updateError) {
-      console.error("Error updating payment request:", updateError);
+      console.error("Error updating payment request");
       return new Response(JSON.stringify({ 
         error: "Failed to update payment status" 
       }), {
@@ -149,105 +172,104 @@ serve(async (req) => {
       });
     }
 
-    console.log("Payment request updated:", paymentData);
+    // If no data returned, payment was already processed or doesn't exist
+    if (!paymentData) {
+      console.error("Payment already processed or not found");
+      return new Response(JSON.stringify({ 
+        error: "Payment already processed or not found" 
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 409,
+      });
+    }
+
+    console.log("Payment request updated successfully");
 
     // Update subscription
-    if (paymentData) {
-      const now = new Date();
-      const subscriptionEnd = new Date();
-      subscriptionEnd.setMonth(subscriptionEnd.getMonth() + 1); // 1 month subscription
+    const now = new Date();
+    const subscriptionEnd = new Date();
+    subscriptionEnd.setMonth(subscriptionEnd.getMonth() + 1); // 1 month subscription
 
-      console.log("Creating/updating subscription for user:", user.id);
+    console.log("Creating/updating subscription for user:", user.id.substring(0, 8) + "...");
 
-      // Update both subscribers and subscriptions tables for consistency
-      const { data: subscribersData, error: subscribersError } = await supabaseClient
-        .from("subscribers")
-        .upsert({
-          user_id: user.id,
-          is_active: true,
-          subscription_tier: paymentData.plan_type,
-          subscription_end_date: subscriptionEnd.toISOString(),
-          updated_at: now.toISOString(),
-        }, { 
-          onConflict: 'user_id',
-          ignoreDuplicates: false
-        })
-        .select()
-        .single();
+    // Update both subscribers and subscriptions tables for consistency
+    const { error: subscribersError } = await supabaseClient
+      .from("subscribers")
+      .upsert({
+        user_id: user.id,
+        is_active: true,
+        subscription_tier: paymentData.plan_type,
+        subscription_end_date: subscriptionEnd.toISOString(),
+        updated_at: now.toISOString(),
+      }, { 
+        onConflict: 'user_id',
+        ignoreDuplicates: false
+      });
 
-      if (subscribersError) {
-        console.error("Error updating subscribers table:", subscribersError);
-      } else {
-        console.log("Subscribers table updated successfully:", subscribersData);
-      }
-
-      // Update subscriptions table (the one used by the frontend)
-      // Use update-or-insert flow since there is no unique constraint on user_id
-      const { data: existingSub, error: existingSubError } = await supabaseClient
-        .from("subscriptions")
-        .select("id")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      let subscriptionData: any = null;
-      let subscriptionError: any = null;
-
-      if (existingSubError) {
-        console.error("Error checking existing subscription:", existingSubError);
-        subscriptionError = existingSubError;
-      } else if (existingSub?.id) {
-        const { data, error } = await supabaseClient
-          .from("subscriptions")
-          .update({
-            plan_name: paymentData.plan_type || "Premium",
-            amount: paymentData.amount,
-            currency: paymentData.currency || "INR",
-            status: "active",
-            start_date: now.toISOString(),
-            end_date: subscriptionEnd.toISOString(),
-            razorpay_order_id: razorpay_order_id,
-            razorpay_payment_id: razorpay_payment_id,
-            updated_at: now.toISOString(),
-          })
-          .eq("id", existingSub.id)
-          .select()
-          .single();
-        subscriptionData = data;
-        subscriptionError = error;
-      } else {
-        const { data, error } = await supabaseClient
-          .from("subscriptions")
-          .insert({
-            user_id: user.id,
-            plan_name: paymentData.plan_type || "Premium",
-            amount: paymentData.amount,
-            currency: paymentData.currency || "INR",
-            status: "active",
-            start_date: now.toISOString(),
-            end_date: subscriptionEnd.toISOString(),
-            razorpay_order_id: razorpay_order_id,
-            razorpay_payment_id: razorpay_payment_id,
-            updated_at: now.toISOString(),
-          })
-          .select()
-          .single();
-        subscriptionData = data;
-        subscriptionError = error;
-      }
-
-      if (subscriptionError) {
-        console.error("Error updating subscriptions table:", subscriptionError);
-        return new Response(JSON.stringify({ 
-          error: "Failed to update subscription" 
-        }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 500,
-        });
-      }
-
-      console.log("Subscriptions table updated successfully:", subscriptionData);
-
+    if (subscribersError) {
+      console.error("Error updating subscribers table");
+    } else {
+      console.log("Subscribers table updated successfully");
     }
+
+    // Update subscriptions table (the one used by the frontend)
+    // Use update-or-insert flow since there is no unique constraint on user_id
+    const { data: existingSub, error: existingSubError } = await supabaseClient
+      .from("subscriptions")
+      .select("id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    let subscriptionError: any = null;
+
+    if (existingSubError) {
+      console.error("Error checking existing subscription");
+      subscriptionError = existingSubError;
+    } else if (existingSub?.id) {
+      const { error } = await supabaseClient
+        .from("subscriptions")
+        .update({
+          plan_name: paymentData.plan_type || "Premium",
+          amount: paymentData.amount,
+          currency: paymentData.currency || "INR",
+          status: "active",
+          start_date: now.toISOString(),
+          end_date: subscriptionEnd.toISOString(),
+          razorpay_order_id: razorpay_order_id,
+          razorpay_payment_id: razorpay_payment_id,
+          updated_at: now.toISOString(),
+        })
+        .eq("id", existingSub.id);
+      subscriptionError = error;
+    } else {
+      const { error } = await supabaseClient
+        .from("subscriptions")
+        .insert({
+          user_id: user.id,
+          plan_name: paymentData.plan_type || "Premium",
+          amount: paymentData.amount,
+          currency: paymentData.currency || "INR",
+          status: "active",
+          start_date: now.toISOString(),
+          end_date: subscriptionEnd.toISOString(),
+          razorpay_order_id: razorpay_order_id,
+          razorpay_payment_id: razorpay_payment_id,
+          updated_at: now.toISOString(),
+        });
+      subscriptionError = error;
+    }
+
+    if (subscriptionError) {
+      console.error("Error updating subscriptions table");
+      return new Response(JSON.stringify({ 
+        error: "Failed to update subscription" 
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500,
+      });
+    }
+
+    console.log("Subscriptions table updated successfully");
 
     return new Response(JSON.stringify({ 
       success: true,
@@ -258,7 +280,7 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
-    console.error("Error in verify-razorpay-payment:", error);
+    console.error("Error in verify-razorpay-payment");
     return new Response(JSON.stringify({ 
       error: error instanceof Error ? error.message : "Unknown error occurred"
     }), {

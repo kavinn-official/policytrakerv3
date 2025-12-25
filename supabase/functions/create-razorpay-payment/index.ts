@@ -7,6 +7,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Input validation constants
+const VALID_PLAN_TYPES = ["Premium", "Basic"] as const;
+const MIN_AMOUNT = 1;
+const MAX_AMOUNT = 100000;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -36,9 +41,9 @@ serve(async (req) => {
     
     const { data, error: authError } = await supabaseClient.auth.getUser(token);
     if (authError) {
-      console.error("Auth error:", authError);
+      console.error("Auth error");
       return new Response(JSON.stringify({ 
-        error: `Authentication failed: ${authError.message}` 
+        error: "Authentication failed" 
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 401,
@@ -56,27 +61,46 @@ serve(async (req) => {
       });
     }
 
-    console.log("User authenticated:", user.email);
+    console.log("User authenticated:", user.id.substring(0, 8) + "...");
 
-    // Parse request body for payment details
+    // Parse and validate request body
     let amount = 50; // Default ₹50
     let planType = "Premium";
     
     try {
       const body = await req.text();
-      console.log("Raw request body:", body);
       if (body && body.trim()) {
         const requestData = JSON.parse(body);
-        console.log("Parsed request data:", requestData);
-        if (requestData.amount) {
-          amount = requestData.amount;
+        
+        // Validate amount
+        if (requestData.amount !== undefined) {
+          const parsedAmount = Number(requestData.amount);
+          if (isNaN(parsedAmount) || parsedAmount < MIN_AMOUNT || parsedAmount > MAX_AMOUNT) {
+            return new Response(JSON.stringify({ 
+              error: `Amount must be between ${MIN_AMOUNT} and ${MAX_AMOUNT}` 
+            }), {
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+              status: 400,
+            });
+          }
+          amount = parsedAmount;
         }
-        if (requestData.planType) {
+        
+        // Validate planType
+        if (requestData.planType !== undefined) {
+          if (!VALID_PLAN_TYPES.includes(requestData.planType)) {
+            return new Response(JSON.stringify({ 
+              error: `Invalid plan type. Must be one of: ${VALID_PLAN_TYPES.join(", ")}` 
+            }), {
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+              status: 400,
+            });
+          }
           planType = requestData.planType;
         }
       }
     } catch (parseError) {
-      console.log("Could not parse request body, using defaults:", parseError);
+      console.log("Could not parse request body, using defaults");
     }
 
     // Razorpay configuration
@@ -95,19 +119,18 @@ serve(async (req) => {
 
     const orderId = `order_${Date.now()}${Math.random().toString(36).substr(2, 9)}`;
     
-    // Create Razorpay order
+    // Create Razorpay order (no PII in notes)
     const orderData = {
       amount: amount * 100, // Razorpay expects amount in paise
       currency: "INR",
       receipt: orderId,
       notes: {
         user_id: user.id,
-        email: user.email,
         plan_type: planType
       }
     };
 
-    console.log("Creating Razorpay order:", orderData);
+    console.log("Creating Razorpay order for amount:", amount);
 
     const razorpayResponse = await fetch("https://api.razorpay.com/v1/orders", {
       method: "POST",
@@ -119,10 +142,9 @@ serve(async (req) => {
     });
 
     const razorpayResult = await razorpayResponse.json();
-    console.log("Razorpay order response:", razorpayResult);
 
     if (!razorpayResponse.ok) {
-      console.error("Razorpay order creation failed:", razorpayResult);
+      console.error("Razorpay order creation failed");
       return new Response(JSON.stringify({ 
         error: "Failed to create payment order",
         details: razorpayResult.error?.description || "Unknown error"
@@ -131,6 +153,8 @@ serve(async (req) => {
         status: 500,
       });
     }
+
+    console.log("Razorpay order created successfully");
 
     // Store payment request in database for tracking
     const supabaseService = createClient(
@@ -148,7 +172,7 @@ serve(async (req) => {
     });
 
     if (insertError) {
-      console.error("Error storing payment request:", insertError);
+      console.error("Error storing payment request");
       return new Response(JSON.stringify({ 
         error: "Failed to create payment request" 
       }), {
@@ -157,7 +181,7 @@ serve(async (req) => {
       });
     }
 
-    console.log("Payment request stored successfully for order:", razorpayResult.id);
+    console.log("Payment request stored successfully");
 
     return new Response(JSON.stringify({ 
       orderId: razorpayResult.id,
@@ -171,10 +195,9 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
-    console.error("Error in create-razorpay-payment:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+    console.error("Error in create-razorpay-payment");
     return new Response(JSON.stringify({ 
-      error: errorMessage,
+      error: "An unexpected error occurred",
       details: "Check function logs for more information"
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
