@@ -1,0 +1,80 @@
+
+import * as XLSX from "xlsx";
+
+export interface Policy {
+  id: string;
+  policy_number: string;
+  client_name: string;
+  vehicle_number: string;
+  vehicle_make: string;
+  vehicle_model: string;
+  policy_active_date: string;
+  policy_expiry_date: string;
+  status: string;
+  agent_code: string;
+  reference: string;
+  contact_number?: string;
+  company_name?: string;
+  created_at: string;
+  updated_at: string;
+  user_id?: string;
+}
+
+export const getStatusColor = (status: string) => {
+  return status === "Fresh" ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800";
+};
+
+export const getDaysToExpiry = (expiryDate: string) => {
+  const today = new Date();
+  const expiry = new Date(expiryDate);
+  const timeDiff = expiry.getTime() - today.getTime();
+  return Math.ceil(timeDiff / (1000 * 3600 * 24));
+};
+
+export const filterPolicies = (policies: Policy[], searchTerm: string) => {
+  if (!searchTerm) return policies;
+  
+  const term = searchTerm.toLowerCase();
+  return policies.filter(policy =>
+    policy.policy_number.toLowerCase().includes(term) ||
+    policy.client_name.toLowerCase().includes(term) ||
+    policy.vehicle_number.toLowerCase().includes(term) ||
+    policy.vehicle_make.toLowerCase().includes(term) ||
+    policy.vehicle_model.toLowerCase().includes(term) ||
+    (policy.agent_code && policy.agent_code.toLowerCase().includes(term)) ||
+    (policy.company_name && policy.company_name.toLowerCase().includes(term))
+  );
+};
+
+export const downloadPoliciesAsExcel = (policies: Policy[], filename: string) => {
+  if (!policies || policies.length === 0) {
+    return null;
+  }
+
+  const worksheet = XLSX.utils.json_to_sheet(policies.map(policy => ({
+    'Policy Number': policy.policy_number,
+    'Client Name': policy.client_name,
+    'Agent Name': policy.agent_code,
+    'Company Name': policy.company_name || '',
+    'Vehicle Number': policy.vehicle_number,
+    'Vehicle Make': policy.vehicle_make,
+    'Vehicle Model': policy.vehicle_model,
+    'Active Date': new Date(policy.policy_active_date).toLocaleDateString(),
+    'Expiry Date': new Date(policy.policy_expiry_date).toLocaleDateString(),
+    'Status': policy.status,
+    'Reference': policy.reference,
+    'Contact Number': policy.contact_number || '',
+    'Created At': new Date(policy.created_at).toLocaleDateString()
+  })));
+
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Policies');
+  
+  const fileName = `${filename}_${new Date().toISOString().split('T')[0]}.xlsx`;
+  XLSX.writeFile(workbook, fileName);
+  
+  return {
+    fileName,
+    count: policies.length
+  };
+};
