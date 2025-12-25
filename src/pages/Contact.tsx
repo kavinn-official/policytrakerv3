@@ -30,7 +30,7 @@ const Contact = () => {
                   <Mail className="h-6 w-6 text-blue-600 mt-1" />
                   <div>
                     <h3 className="font-semibold text-gray-900">Email Support</h3>
-                    <p className="text-gray-600">support@agentprimehub.com</p>
+                    <p className="text-gray-600">policytracker.in@gmail.com</p>
                     <p className="text-sm text-gray-500">We'll respond within 24 hours</p>
                   </div>
                 </div>
@@ -39,7 +39,7 @@ const Contact = () => {
                   <Phone className="h-6 w-6 text-blue-600 mt-1" />
                   <div>
                     <h3 className="font-semibold text-gray-900">Phone Support</h3>
-                    <p className="text-gray-600">+91 98765 43210</p>
+                    <p className="text-gray-600">+91 6381615829</p>
                     <p className="text-sm text-gray-500">Mon-Fri, 9 AM - 6 PM IST</p>
                   </div>
                 </div>
@@ -49,9 +49,9 @@ const Contact = () => {
                   <div>
                     <h3 className="font-semibold text-gray-900">Office Address</h3>
                     <p className="text-gray-600">
-                      Agent Prime Hub<br />
-                      123 Business District<br />
-                      Mumbai, Maharashtra 400001<br />
+                      Policy Tracker.in<br />
+                      No.7, Perrys Plaza, Ground Floor<br />
+                      Karur, Tamil Nadu 639001<br />
                       India
                     </p>
                   </div>
@@ -93,7 +93,7 @@ const Contact = () => {
                     <h4 className="font-medium text-gray-800">Feature Requests</h4>
                     <p className="text-sm text-gray-600">
                       Have ideas for new features? We'd love to hear your 
-                      suggestions for improving Agent Prime Hub.
+                      suggestions for improving Policy Tracker.in.
                     </p>
                   </div>
                 </div>

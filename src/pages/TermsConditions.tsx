@@ -28,7 +28,7 @@ const TermsConditions = () => {
               <section>
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">1. Acceptance of Terms</h3>
                 <p>
-                  By accessing and using Agent Prime Hub, you accept and agree to be bound by the terms 
+                  By accessing and using Policy Tracker.in, you accept and agree to be bound by the terms 
                   and provision of this agreement.
                 </p>
               </section>
@@ -36,7 +36,7 @@ const TermsConditions = () => {
               <section>
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">2. Use License</h3>
                 <p>
-                  Permission is granted to temporarily download one copy of Agent Prime Hub per device 
+                  Permission is granted to temporarily download one copy of Policy Tracker.in per device 
                   for personal, non-commercial transitory viewing only.
                 </p>
                 <ul className="list-disc pl-6 space-y-2 mt-3">
@@ -66,7 +66,7 @@ const TermsConditions = () => {
               <section>
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">5. Disclaimer</h3>
                 <p>
-                  The materials on Agent Prime Hub are provided on an 'as is' basis. Agent Prime Hub 
+                  The materials on Policy Tracker.in are provided on an 'as is' basis. Policy Tracker.in 
                   makes no warranties, expressed or implied, and hereby disclaims and negates all other 
                   warranties including without limitation, implied warranties or conditions of merchantability, 
                   fitness for a particular purpose, or non-infringement of intellectual property or other 

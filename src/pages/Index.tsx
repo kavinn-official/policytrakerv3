@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
-import { FileText, Shield, Phone, Mail, Scale, Truck, Home as HomeIcon, AlertTriangle, CreditCard, Plus } from "lucide-react";
+import { FileText, Shield, Phone, Mail, Scale, AlertTriangle, CreditCard, Plus } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const Index = () => {
@@ -93,15 +93,6 @@ const Index = () => {
                 <FileText className="h-8 w-8 text-purple-600 mb-3 group-hover:scale-110 transition-transform" />
                 <span className="text-sm font-medium text-center text-gray-900">Cancellation & Refunds</span>
                 <span className="text-xs text-gray-600 mt-1 text-center">Refund policy details</span>
-              </Link>
-              
-              <Link 
-                to="/shipping" 
-                className="flex flex-col items-center p-6 bg-orange-50 hover:bg-orange-100 rounded-lg transition-colors group"
-              >
-                <Truck className="h-8 w-8 text-orange-600 mb-3 group-hover:scale-110 transition-transform" />
-                <span className="text-sm font-medium text-center text-gray-900">Shipping Policy</span>
-                <span className="text-xs text-gray-600 mt-1 text-center">Digital service delivery</span>
               </Link>
               
               <Link 

@@ -67,7 +67,7 @@ const Privacy = () => {
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">Contact Us</h3>
                 <p>
                   If you have questions about this Privacy Policy, please contact us at 
-                  privacy@agentprimehub.com
+                  policytracker.in@gmail.com
                 </p>
               </section>
             </div>
