@@ -1,0 +1,147 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const { pdfBase64 } = await req.json();
+    
+    if (!pdfBase64) {
+      return new Response(
+        JSON.stringify({ error: "No PDF data provided" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      throw new Error("LOVABLE_API_KEY is not configured");
+    }
+
+    // Use Gemini to extract policy details from PDF
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          {
+            role: "system",
+            content: `You are an expert at extracting insurance policy information from documents. 
+Extract the following fields from the provided policy document image/PDF:
+- policy_number: The policy number/ID
+- client_name: The policyholder's name
+- vehicle_number: The vehicle registration number
+- vehicle_make: The vehicle manufacturer/make (e.g., Maruti, Honda, Toyota)
+- vehicle_model: The vehicle model name
+- company_name: The insurance company name
+- contact_number: The contact phone number (10 digits)
+- policy_active_date: The policy start date in YYYY-MM-DD format
+- policy_expiry_date: The policy end date in YYYY-MM-DD format
+
+Return ONLY a valid JSON object with these fields. If a field cannot be found, use an empty string.
+Do not include any explanation or markdown formatting.`
+          },
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: "Extract policy details from this insurance document:"
+              },
+              {
+                type: "image_url",
+                image_url: {
+                  url: `data:application/pdf;base64,${pdfBase64}`
+                }
+              }
+            ]
+          }
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("AI Gateway error:", response.status, errorText);
+      
+      if (response.status === 429) {
+        return new Response(
+          JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (response.status === 402) {
+        return new Response(
+          JSON.stringify({ error: "AI credits depleted. Please add credits to continue." }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      
+      throw new Error(`AI processing failed: ${errorText}`);
+    }
+
+    const aiResponse = await response.json();
+    const content = aiResponse.choices?.[0]?.message?.content;
+    
+    if (!content) {
+      throw new Error("No response from AI");
+    }
+
+    // Parse the JSON response
+    let extractedData;
+    try {
+      // Clean the response - remove markdown code blocks if present
+      let cleanContent = content.trim();
+      if (cleanContent.startsWith("```json")) {
+        cleanContent = cleanContent.slice(7);
+      }
+      if (cleanContent.startsWith("```")) {
+        cleanContent = cleanContent.slice(3);
+      }
+      if (cleanContent.endsWith("```")) {
+        cleanContent = cleanContent.slice(0, -3);
+      }
+      extractedData = JSON.parse(cleanContent.trim());
+    } catch (parseError) {
+      console.error("Failed to parse AI response:", content);
+      extractedData = {
+        policy_number: "",
+        client_name: "",
+        vehicle_number: "",
+        vehicle_make: "",
+        vehicle_model: "",
+        company_name: "",
+        contact_number: "",
+        policy_active_date: "",
+        policy_expiry_date: "",
+      };
+    }
+
+    return new Response(
+      JSON.stringify({ 
+        success: true, 
+        data: extractedData 
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  } catch (error) {
+    console.error("Error parsing policy PDF:", error);
+    return new Response(
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : "Failed to parse PDF" 
+      }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+});
