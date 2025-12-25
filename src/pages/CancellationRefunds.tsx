@@ -47,7 +47,7 @@ const CancellationRefunds = () => {
               <section>
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">How to Request a Refund</h3>
                 <p>
-                  To request a refund, please contact our support team at support@agentprimehub.com 
+                  To request a refund, please contact our support team at policytracker.in@gmail.com 
                   with your order details and reason for the refund request.
                 </p>
               </section>

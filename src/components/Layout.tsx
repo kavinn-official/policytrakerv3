@@ -30,7 +30,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   const navigationItems = [
-    { name: 'Dashboard', path: '/', icon: Home },
+    { name: 'Dashboard', path: '/dashboard', icon: Home },
     { name: 'Policies', path: '/policies', icon: FileText },
     { name: 'Due Policies', path: '/due-policies', icon: AlertTriangle },
     { name: 'Subscription', path: '/subscription', icon: CreditCard },
@@ -52,7 +52,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
           <div className="flex justify-between items-center h-14 sm:h-16">
             {/* Logo */}
-            <Link to="/" className="flex items-center space-x-2 sm:space-x-3 min-w-0">
+            <Link to="/dashboard" className="flex items-center space-x-2 sm:space-x-3 min-w-0">
               <img src={logo} alt="Policy Tracker.in" className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0" />
               <div className="hidden xs:block min-w-0">
                 <h1 className="text-sm sm:text-xl font-bold text-gray-900 truncate">Policy Tracker.in</h1>

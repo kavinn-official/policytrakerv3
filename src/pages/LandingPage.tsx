@@ -282,7 +282,6 @@ const LandingPage = () => {
                 <li><Link to="/terms-conditions" className="hover:text-white transition-colors">Terms & Conditions</Link></li>
                 <li><Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
                 <li><Link to="/cancellation-refunds" className="hover:text-white transition-colors">Refund Policy</Link></li>
-                <li><Link to="/shipping" className="hover:text-white transition-colors">Shipping Policy</Link></li>
               </ul>
             </div>
           </div>

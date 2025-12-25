@@ -18,7 +18,6 @@ import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import CancellationRefunds from "./pages/CancellationRefunds";
 import TermsConditions from "./pages/TermsConditions";
-import Shipping from "./pages/Shipping";
 import Privacy from "./pages/Privacy";
 import Contact from "./pages/Contact";
 import LandingPage from "./pages/LandingPage";
@@ -33,10 +32,10 @@ const App = () => (
       <AuthProvider>
         <BrowserRouter>
           <Routes>
-            <Route path="/welcome" element={<LandingPage />} />
+            <Route path="/" element={<LandingPage />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/" element={
+            <Route path="/dashboard" element={
               <ProtectedRoute>
                 <Layout>
                   <Index />
@@ -80,7 +79,6 @@ const App = () => (
             } />
             <Route path="/cancellation-refunds" element={<CancellationRefunds />} />
             <Route path="/terms-conditions" element={<TermsConditions />} />
-            <Route path="/shipping" element={<Shipping />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="*" element={<NotFound />} />
