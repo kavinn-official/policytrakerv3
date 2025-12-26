@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
-import { Mail, Lock, ArrowLeft } from "lucide-react";
+import { Mail, Lock, ArrowLeft, User, Phone } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -19,7 +19,13 @@ const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [signInData, setSignInData] = useState({ email: "", password: "" });
-  const [signUpData, setSignUpData] = useState({ email: "", password: "", confirmPassword: "" });
+  const [signUpData, setSignUpData] = useState({ 
+    email: "", 
+    password: "", 
+    confirmPassword: "",
+    fullName: "",
+    mobileNumber: ""
+  });
   const [authLoading, setAuthLoading] = useState(false);
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
@@ -56,15 +62,40 @@ const Auth = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!signUpData.fullName.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter your full name",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (signUpData.mobileNumber && signUpData.mobileNumber.replace(/\D/g, '').length !== 10) {
+      toast({
+        title: "Error",
+        description: "Mobile number must be exactly 10 digits",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     if (signUpData.password !== signUpData.confirmPassword) {
-      alert("Passwords don't match");
+      toast({
+        title: "Error",
+        description: "Passwords don't match",
+        variant: "destructive",
+      });
       return;
     }
     
     setAuthLoading(true);
     
     try {
-      await signUp(signUpData.email, signUpData.password);
+      await signUp(signUpData.email, signUpData.password, {
+        full_name: signUpData.fullName.trim(),
+        mobile_number: signUpData.mobileNumber.replace(/\D/g, '')
+      });
     } finally {
       setAuthLoading(false);
     }
@@ -198,7 +229,47 @@ const Auth = () => {
                 <TabsContent value="signup">
                   <form onSubmit={handleSignUp} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="signup-email" className="text-sm font-medium">Email</Label>
+                      <Label htmlFor="signup-fullname" className="text-sm font-medium">Full Name <span className="text-red-500">*</span></Label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <Input
+                          id="signup-fullname"
+                          type="text"
+                          value={signUpData.fullName}
+                          onChange={(e) => {
+                            const cleanedValue = e.target.value.replace(/[^a-zA-Z\s]/g, '');
+                            setSignUpData({...signUpData, fullName: cleanedValue});
+                          }}
+                          className="pl-10 h-10 text-sm"
+                          placeholder="Enter your full name"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-mobile" className="text-sm font-medium">Mobile Number</Label>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <Input
+                          id="signup-mobile"
+                          type="tel"
+                          inputMode="numeric"
+                          value={signUpData.mobileNumber}
+                          onChange={(e) => {
+                            const digits = e.target.value.replace(/\D/g, '').substring(0, 10);
+                            setSignUpData({...signUpData, mobileNumber: digits});
+                          }}
+                          className="pl-10 h-10 text-sm"
+                          placeholder="9876543210"
+                          maxLength={10}
+                        />
+                      </div>
+                      <p className="text-xs text-gray-500">10 digits only (optional)</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-email" className="text-sm font-medium">Email <span className="text-red-500">*</span></Label>
                       <div className="relative">
                         <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                         <Input
@@ -214,7 +285,7 @@ const Auth = () => {
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="signup-password" className="text-sm font-medium">Password</Label>
+                      <Label htmlFor="signup-password" className="text-sm font-medium">Password <span className="text-red-500">*</span></Label>
                       <div className="relative">
                         <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                         <Input
@@ -230,7 +301,7 @@ const Auth = () => {
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="signup-confirm-password" className="text-sm font-medium">Confirm Password</Label>
+                      <Label htmlFor="signup-confirm-password" className="text-sm font-medium">Confirm Password <span className="text-red-500">*</span></Label>
                       <div className="relative">
                         <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                         <Input

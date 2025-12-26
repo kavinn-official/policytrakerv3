@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.validate-client]
 verify_jwt = false
+
+[functions.send-whatsapp-reminders]
+verify_jwt = false
