@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Download, Mail, Lock, Upload, FileSpreadsheet } from "lucide-react";
+import { Plus, Download, Mail, Lock, Upload, FileSpreadsheet, ChevronLeft, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -27,6 +27,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+const POLICIES_PER_PAGE = 10;
+
 const PolicyList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [policies, setPolicies] = useState<Policy[]>([]);
@@ -40,6 +42,7 @@ const PolicyList = () => {
   const [policyToDelete, setPolicyToDelete] = useState<Policy | null>(null);
   const [documentPreviewOpen, setDocumentPreviewOpen] = useState(false);
   const [documentPreviewPolicy, setDocumentPreviewPolicy] = useState<Policy | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -49,7 +52,6 @@ const PolicyList = () => {
   useEffect(() => {
     fetchPolicies();
 
-    // Set up real-time subscription to policy changes
     const channel = supabase
       .channel('policy-list-changes')
       .on(
@@ -91,7 +93,18 @@ const PolicyList = () => {
     }
   };
 
+  // Filter policies based on search term
   const filteredPolicies = filterPolicies(policies, searchTerm);
+  
+  // Pagination logic
+  const totalPages = Math.ceil(filteredPolicies.length / POLICIES_PER_PAGE);
+  const startIndex = (currentPage - 1) * POLICIES_PER_PAGE;
+  const paginatedPolicies = filteredPolicies.slice(startIndex, startIndex + POLICIES_PER_PAGE);
+
+  // Reset to page 1 when search term changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   const handleViewPolicy = (policy: Policy) => {
     setSelectedPolicy(policy);
@@ -244,7 +257,6 @@ const PolicyList = () => {
       }
 
       if (validPolicies.length > 0) {
-        // Check policy limit for free users
         const currentPolicyCount = policies.length;
         const newTotalCount = currentPolicyCount + validPolicies.length;
         
@@ -399,7 +411,7 @@ const PolicyList = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredPolicies.map((policy) => {
+                      {paginatedPolicies.map((policy) => {
                         const daysToExpiry = getDaysToExpiry(policy.policy_expiry_date);
                         const statusColor = getStatusColor(policy.status);
                         return (
@@ -421,7 +433,7 @@ const PolicyList = () => {
 
                 {/* Mobile Card View */}
                 <div className="lg:hidden space-y-4">
-                  {filteredPolicies.map((policy) => {
+                  {paginatedPolicies.map((policy) => {
                     const daysToExpiry = getDaysToExpiry(policy.policy_expiry_date);
                     const statusColor = getStatusColor(policy.status);
                     return (
@@ -438,6 +450,60 @@ const PolicyList = () => {
                     );
                   })}
                 </div>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between mt-6 pt-4 border-t">
+                    <p className="text-sm text-muted-foreground">
+                      Showing {startIndex + 1}-{Math.min(startIndex + POLICIES_PER_PAGE, filteredPolicies.length)} of {filteredPolicies.length} policies
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                        Previous
+                      </Button>
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                          let pageNum;
+                          if (totalPages <= 5) {
+                            pageNum = i + 1;
+                          } else if (currentPage <= 3) {
+                            pageNum = i + 1;
+                          } else if (currentPage >= totalPages - 2) {
+                            pageNum = totalPages - 4 + i;
+                          } else {
+                            pageNum = currentPage - 2 + i;
+                          }
+                          return (
+                            <Button
+                              key={pageNum}
+                              variant={currentPage === pageNum ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => setCurrentPage(pageNum)}
+                              className="w-8 h-8 p-0"
+                            >
+                              {pageNum}
+                            </Button>
+                          );
+                        })}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                      >
+                        Next
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </CardContent>
@@ -493,12 +559,22 @@ const PolicyList = () => {
         </div>
       </div>
 
-      <PolicyViewDialog 
+      {/* View Policy Dialog */}
+      <PolicyViewDialog
         policy={selectedPolicy}
         open={viewDialogOpen}
         onOpenChange={setViewDialogOpen}
       />
 
+      {/* Edit Policy Dialog */}
+      <PolicyEditDialog
+        policy={selectedPolicy}
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        onPolicyUpdated={fetchPolicies}
+      />
+
+      {/* Document Preview Dialog */}
       <PolicyDocumentPreviewDialog
         documentUrl={documentPreviewPolicy?.document_url || null}
         policyNumber={documentPreviewPolicy?.policy_number || ''}
@@ -506,29 +582,22 @@ const PolicyList = () => {
         onOpenChange={setDocumentPreviewOpen}
       />
 
-      <PolicyEditDialog 
-        policy={selectedPolicy}
-        open={editDialogOpen}
-        onOpenChange={setEditDialogOpen}
-        onPolicyUpdated={fetchPolicies}
-      />
-
+      {/* Delete Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this policy? This action cannot be undone.
-              {policyToDelete && (
-                <div className="mt-2 text-sm font-medium">
-                  Policy: {policyToDelete.policy_number}
-                </div>
-              )}
+              This will permanently delete the policy for {policyToDelete?.client_name}.
+              This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDeletePolicy} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction 
+              onClick={confirmDeletePolicy}
+              className="bg-red-600 hover:bg-red-700"
+            >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

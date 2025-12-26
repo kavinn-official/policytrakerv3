@@ -248,6 +248,71 @@ export type Database = {
         }
         Relationships: []
       }
+      user_settings: {
+        Row: {
+          auto_reminders_enabled: boolean | null
+          created_at: string
+          id: string
+          reminder_days: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_reminders_enabled?: boolean | null
+          created_at?: string
+          id?: string
+          reminder_days?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_reminders_enabled?: boolean | null
+          created_at?: string
+          id?: string
+          reminder_days?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      whatsapp_reminder_logs: {
+        Row: {
+          created_at: string
+          id: string
+          message: string | null
+          policy_id: string
+          sent_at: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          policy_id: string
+          sent_at?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          policy_id?: string
+          sent_at?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_reminder_logs_policy_id_fkey"
+            columns: ["policy_id"]
+            isOneToOne: false
+            referencedRelation: "policies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
