@@ -99,7 +99,7 @@ const PolicyDocumentPreviewDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl w-[95vw] h-[90vh] flex flex-col p-0">
+      <DialogContent className="max-w-4xl w-[95vw] h-[90vh] flex flex-col p-0 [&>button]:hidden">
         <DialogHeader className="px-4 py-3 border-b flex-shrink-0">
           <div className="flex items-center justify-between gap-2">
             <DialogTitle className="flex items-center gap-2 text-base truncate">

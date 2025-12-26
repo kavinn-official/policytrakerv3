@@ -299,140 +299,197 @@ function generateEmailContent(
   expiringPolicies: Policy[],
   expiredPolicies: Policy[]
 ): string {
-  const today = new Date().toLocaleDateString();
+  const today = new Date().toLocaleDateString('en-IN', { 
+    day: '2-digit', 
+    month: 'long', 
+    year: 'numeric' 
+  });
   
   return `
     <!DOCTYPE html>
     <html>
     <head>
         <meta charset="utf-8">
-        <title>Policy Report - Policy Tracker.in</title>
-        <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 800px; margin: 0 auto; padding: 20px; }
-            .header { background: linear-gradient(135deg, #0891b2 0%, #0d9488 100%); padding: 30px; border-radius: 12px; margin-bottom: 20px; text-align: center; }
-            .header h1 { color: white; margin: 0; font-size: 28px; }
-            .header p { color: rgba(255,255,255,0.9); margin: 10px 0 0 0; }
-            .logo-text { font-size: 24px; font-weight: bold; color: white; margin-bottom: 10px; }
-            .stats { display: flex; justify-content: space-around; margin: 20px 0; }
-            .stat-card { background: #fff; border: 2px solid #e9ecef; border-radius: 8px; padding: 15px; text-align: center; min-width: 120px; }
-            .stat-number { font-size: 24px; font-weight: bold; color: #0891b2; }
-            .table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-            .table th, .table td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-            .table th { background-color: #f8f9fa; font-weight: bold; }
-            .expiring { background-color: #fff3cd; }
-            .expired { background-color: #f8d7da; }
-            .section-title { color: #495057; border-bottom: 2px solid #0891b2; padding-bottom: 5px; margin: 30px 0 15px 0; }
-            .attachment-notice { background: #e0f2fe; border-left: 4px solid #0891b2; padding: 15px; margin: 20px 0; border-radius: 4px; }
-            .footer { margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; text-align: center; }
-            .footer a { color: #0891b2; text-decoration: none; }
-        </style>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Policy Report - Policy Tracker</title>
     </head>
-    <body>
-        <div class="container">
-            <div class="header">
-                <div class="logo-text">Policy Tracker.in</div>
-                <h1>Insurance Policy Report</h1>
-                <p>Hello ${userName}, here's your comprehensive policy report as of ${today}</p>
-            </div>
-            
-            <div class="attachment-notice">
-                <h3>📎 Excel Attachment Included</h3>
-                <p><strong>Complete policy details have been attached as an Excel file</strong> for your records and offline analysis. The file contains all policy information with calculated expiry days.</p>
-            </div>
-            
-            <div class="stats">
-                <div class="stat-card">
-                    <div class="stat-number">${allPolicies.length}</div>
-                    <div>Total Policies</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">${expiringPolicies.length}</div>
-                    <div>Expiring Soon</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">${expiredPolicies.length}</div>
-                    <div>Expired</div>
-                </div>
-            </div>
-
-            ${expiringPolicies.length > 0 ? `
-            <h2 class="section-title">⚠️ Policies Expiring in Next 30 Days</h2>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Policy Number</th>
-                        <th>Client Name</th>
-                        <th>Vehicle</th>
-                        <th>Expiry Date</th>
-                        <th>Days Left</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${expiringPolicies.map(policy => {
-                      const daysLeft = Math.ceil((new Date(policy.policy_expiry_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-                      return `
-                        <tr class="expiring">
-                            <td>${policy.policy_number}</td>
-                            <td>${policy.client_name}</td>
-                            <td>${policy.vehicle_number} (${policy.vehicle_make} ${policy.vehicle_model})</td>
-                            <td>${new Date(policy.policy_expiry_date).toLocaleDateString()}</td>
-                            <td><strong>${daysLeft} days</strong></td>
+    <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f4f8; line-height: 1.6;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f0f4f8; padding: 20px 0;">
+            <tr>
+                <td align="center">
+                    <table width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
+                        <!-- Header -->
+                        <tr>
+                            <td style="background: linear-gradient(135deg, #0d9488 0%, #0891b2 50%, #0284c7 100%); padding: 40px 30px; border-radius: 16px 16px 0 0; text-align: center;">
+                                <h1 style="color: #ffffff; margin: 0 0 8px 0; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">📋 Policy Tracker</h1>
+                                <p style="color: rgba(255,255,255,0.9); margin: 0; font-size: 14px;">Your Insurance Management Partner</p>
+                            </td>
                         </tr>
-                      `;
-                    }).join('')}
-                </tbody>
-            </table>
-            ` : ''}
+                        
+                        <!-- Main Content -->
+                        <tr>
+                            <td style="background-color: #ffffff; padding: 30px;">
+                                <!-- Greeting -->
+                                <h2 style="color: #1e293b; margin: 0 0 8px 0; font-size: 22px; font-weight: 600;">Hello ${userName}! 👋</h2>
+                                <p style="color: #64748b; margin: 0 0 24px 0; font-size: 15px;">Here's your policy report as of <strong>${today}</strong></p>
+                                
+                                <!-- Stats Cards -->
+                                <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
+                                    <tr>
+                                        <td width="33%" style="padding: 8px;">
+                                            <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%); border-radius: 12px; text-align: center; padding: 20px 10px;">
+                                                <tr><td style="color: #ffffff; font-size: 32px; font-weight: 700;">${allPolicies.length}</td></tr>
+                                                <tr><td style="color: rgba(255,255,255,0.9); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Total Policies</td></tr>
+                                            </table>
+                                        </td>
+                                        <td width="33%" style="padding: 8px;">
+                                            <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%); border-radius: 12px; text-align: center; padding: 20px 10px;">
+                                                <tr><td style="color: #ffffff; font-size: 32px; font-weight: 700;">${expiringPolicies.length}</td></tr>
+                                                <tr><td style="color: rgba(255,255,255,0.9); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Expiring Soon</td></tr>
+                                            </table>
+                                        </td>
+                                        <td width="33%" style="padding: 8px;">
+                                            <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #ef4444 0%, #f87171 100%); border-radius: 12px; text-align: center; padding: 20px 10px;">
+                                                <tr><td style="color: #ffffff; font-size: 32px; font-weight: 700;">${expiredPolicies.length}</td></tr>
+                                                <tr><td style="color: rgba(255,255,255,0.9); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Expired</td></tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                </table>
+                                
+                                <!-- Attachment Notice -->
+                                <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border-radius: 12px; margin-bottom: 24px; border-left: 4px solid #10b981;">
+                                    <tr>
+                                        <td style="padding: 20px;">
+                                            <table cellpadding="0" cellspacing="0">
+                                                <tr>
+                                                    <td style="vertical-align: top; padding-right: 12px;">
+                                                        <span style="font-size: 24px;">📎</span>
+                                                    </td>
+                                                    <td>
+                                                        <h3 style="color: #059669; margin: 0 0 4px 0; font-size: 16px; font-weight: 600;">Excel Report Attached</h3>
+                                                        <p style="color: #047857; margin: 0; font-size: 14px;">Complete policy details are attached for offline analysis</p>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                </table>
 
-            ${expiredPolicies.length > 0 ? `
-            <h2 class="section-title">🚨 Expired Policies</h2>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Policy Number</th>
-                        <th>Client Name</th>
-                        <th>Vehicle</th>
-                        <th>Expiry Date</th>
-                        <th>Days Overdue</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${expiredPolicies.map(policy => {
-                      const daysOverdue = Math.ceil((new Date().getTime() - new Date(policy.policy_expiry_date).getTime()) / (1000 * 60 * 60 * 24));
-                      return `
-                        <tr class="expired">
-                            <td>${policy.policy_number}</td>
-                            <td>${policy.client_name}</td>
-                            <td>${policy.vehicle_number} (${policy.vehicle_make} ${policy.vehicle_model})</td>
-                            <td>${new Date(policy.policy_expiry_date).toLocaleDateString()}</td>
-                            <td><strong>${daysOverdue} days</strong></td>
+                                ${expiringPolicies.length > 0 ? `
+                                <!-- Expiring Policies -->
+                                <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
+                                    <tr>
+                                        <td style="padding-bottom: 12px;">
+                                            <h3 style="color: #1e293b; margin: 0; font-size: 18px; font-weight: 600;">
+                                                <span style="color: #f59e0b;">⚠️</span> Policies Expiring Soon
+                                            </h3>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <table width="100%" cellpadding="0" cellspacing="0" style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+                                                <tr style="background-color: #f8fafc;">
+                                                    <th style="padding: 12px 16px; text-align: left; font-size: 12px; color: #64748b; text-transform: uppercase; border-bottom: 1px solid #e2e8f0;">Policy</th>
+                                                    <th style="padding: 12px 16px; text-align: left; font-size: 12px; color: #64748b; text-transform: uppercase; border-bottom: 1px solid #e2e8f0;">Client</th>
+                                                    <th style="padding: 12px 16px; text-align: center; font-size: 12px; color: #64748b; text-transform: uppercase; border-bottom: 1px solid #e2e8f0;">Days Left</th>
+                                                </tr>
+                                                ${expiringPolicies.slice(0, 5).map((policy, index) => {
+                                                  const daysLeft = Math.ceil((new Date(policy.policy_expiry_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                                                  const bgColor = index % 2 === 0 ? '#ffffff' : '#f8fafc';
+                                                  const urgencyColor = daysLeft <= 7 ? '#ef4444' : daysLeft <= 15 ? '#f59e0b' : '#3b82f6';
+                                                  return `
+                                                    <tr style="background-color: ${bgColor};">
+                                                        <td style="padding: 12px 16px; font-size: 14px; color: #334155;">${policy.policy_number}</td>
+                                                        <td style="padding: 12px 16px; font-size: 14px; color: #334155;">${policy.client_name}</td>
+                                                        <td style="padding: 12px 16px; text-align: center;">
+                                                            <span style="background-color: ${urgencyColor}; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">${daysLeft} days</span>
+                                                        </td>
+                                                    </tr>
+                                                  `;
+                                                }).join('')}
+                                                ${expiringPolicies.length > 5 ? `
+                                                <tr style="background-color: #f8fafc;">
+                                                    <td colspan="3" style="padding: 12px 16px; text-align: center; color: #64748b; font-size: 13px;">
+                                                        + ${expiringPolicies.length - 5} more policies (see attached Excel)
+                                                    </td>
+                                                </tr>
+                                                ` : ''}
+                                            </table>
+                                        </td>
+                                    </tr>
+                                </table>
+                                ` : ''}
+
+                                ${expiredPolicies.length > 0 ? `
+                                <!-- Expired Policies -->
+                                <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
+                                    <tr>
+                                        <td style="padding-bottom: 12px;">
+                                            <h3 style="color: #1e293b; margin: 0; font-size: 18px; font-weight: 600;">
+                                                <span style="color: #ef4444;">🚨</span> Expired Policies
+                                            </h3>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <table width="100%" cellpadding="0" cellspacing="0" style="border: 1px solid #fecaca; border-radius: 12px; overflow: hidden; background-color: #fef2f2;">
+                                                <tr style="background-color: #fee2e2;">
+                                                    <th style="padding: 12px 16px; text-align: left; font-size: 12px; color: #991b1b; text-transform: uppercase; border-bottom: 1px solid #fecaca;">Policy</th>
+                                                    <th style="padding: 12px 16px; text-align: left; font-size: 12px; color: #991b1b; text-transform: uppercase; border-bottom: 1px solid #fecaca;">Client</th>
+                                                    <th style="padding: 12px 16px; text-align: center; font-size: 12px; color: #991b1b; text-transform: uppercase; border-bottom: 1px solid #fecaca;">Overdue</th>
+                                                </tr>
+                                                ${expiredPolicies.slice(0, 5).map((policy, index) => {
+                                                  const daysOverdue = Math.ceil((new Date().getTime() - new Date(policy.policy_expiry_date).getTime()) / (1000 * 60 * 60 * 24));
+                                                  return `
+                                                    <tr>
+                                                        <td style="padding: 12px 16px; font-size: 14px; color: #991b1b; border-bottom: 1px solid #fecaca;">${policy.policy_number}</td>
+                                                        <td style="padding: 12px 16px; font-size: 14px; color: #991b1b; border-bottom: 1px solid #fecaca;">${policy.client_name}</td>
+                                                        <td style="padding: 12px 16px; text-align: center; border-bottom: 1px solid #fecaca;">
+                                                            <span style="color: #dc2626; font-weight: 600;">${daysOverdue} days</span>
+                                                        </td>
+                                                    </tr>
+                                                  `;
+                                                }).join('')}
+                                                ${expiredPolicies.length > 5 ? `
+                                                <tr>
+                                                    <td colspan="3" style="padding: 12px 16px; text-align: center; color: #991b1b; font-size: 13px;">
+                                                        + ${expiredPolicies.length - 5} more expired policies (see attached Excel)
+                                                    </td>
+                                                </tr>
+                                                ` : ''}
+                                            </table>
+                                        </td>
+                                    </tr>
+                                </table>
+                                ` : ''}
+
+                                <!-- CTA Button -->
+                                <table width="100%" cellpadding="0" cellspacing="0">
+                                    <tr>
+                                        <td align="center" style="padding: 20px 0;">
+                                            <a href="https://policytracker.in" style="display: inline-block; background: linear-gradient(135deg, #0d9488 0%, #0891b2 100%); color: #ffffff; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px;">
+                                                View Dashboard →
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
                         </tr>
-                      `;
-                    }).join('')}
-                </tbody>
-            </table>
-            ` : ''}
-
-            <h2 class="section-title">📋 Summary</h2>
-            <p>Your complete policy database is attached as an Excel file with the following information:</p>
-            <ul>
-                <li>Policy numbers and client details</li>
-                <li>Vehicle information</li>
-                <li>Active and expiry dates with calculated days remaining</li>
-                <li>Status, agent codes, and references</li>
-                <li>Contact numbers and company information</li>
-            </ul>
-            
-            <div class="footer">
-                <p><strong>Need Help?</strong></p>
-                <p>If you have any questions about your policies or need assistance with renewals, please don't hesitate to contact us.</p>
-                <p>This automated report is sent every 15 days to keep you updated on your policy portfolio.</p>
-                <p style="margin-top: 20px; color: #666;">
-                    <a href="https://policytracker.in">policytracker.in</a> - Your Insurance Policy Management Partner
-                </p>
-            </div>
-        </div>
+                        
+                        <!-- Footer -->
+                        <tr>
+                            <td style="background-color: #1e293b; padding: 30px; border-radius: 0 0 16px 16px; text-align: center;">
+                                <p style="color: #94a3b8; margin: 0 0 8px 0; font-size: 14px;">📧 Automated policy report • Sent every 15 days</p>
+                                <p style="color: #64748b; margin: 0; font-size: 13px;">
+                                    <a href="https://policytracker.in" style="color: #38bdf8; text-decoration: none;">policytracker.in</a> — Your Insurance Policy Management Partner
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
     </body>
     </html>
   `;

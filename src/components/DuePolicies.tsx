@@ -3,7 +3,8 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare, Phone, AlertTriangle, Calendar, Bell, Download } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { MessageSquare, Phone, AlertTriangle, Calendar, Bell, Download, Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -26,10 +27,12 @@ interface DuePolicy extends PolicyData {
   daysLeft: number;
   urgency: string;
   company_name?: string;
+  selected?: boolean;
 }
 
 const DuePolicies = () => {
   const [duePolicies, setDuePolicies] = useState<DuePolicy[]>([]);
+  const [selectedPolicies, setSelectedPolicies] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -144,7 +147,7 @@ const DuePolicies = () => {
     return <Calendar className="h-4 w-4" />;
   };
 
-  const handleWhatsApp = (policy: DuePolicy) => {
+  const generateWhatsAppMessage = (policy: DuePolicy) => {
     const expiryDate = new Date(policy.policy_expiry_date);
     const formattedExpiry = expiryDate.toLocaleDateString('en-IN', { 
       day: '2-digit', 
@@ -156,21 +159,31 @@ const DuePolicies = () => {
       ? `${policy.vehicle_make} - ${policy.vehicle_model}`
       : policy.vehicle_make || 'N/A';
     
-    const message = `Hi ${policy.client_name},
+    return `Hi ${policy.client_name},
 your policy ${policy.policy_number} is expiring in ${policy.daysLeft} days.
 Vehicle Details : ${vehicleDetails}
 Registration Number : ${policy.vehicle_number}
 Expires : ${formattedExpiry}
 
 Please contact us for renewal.`;
-    
+  };
+
+  const handleWhatsApp = (policy: DuePolicy) => {
+    const message = generateWhatsAppMessage(policy);
     const phoneNumber = policy.contact_number?.replace(/\D/g, '') || '';
-    const whatsappUrl = `https://wa.me/91${phoneNumber}?text=${encodeURIComponent(message)}`;
+    
+    // If no contact number, open WhatsApp with just the message so user can select contact
+    const whatsappUrl = phoneNumber 
+      ? `https://wa.me/91${phoneNumber}?text=${encodeURIComponent(message)}`
+      : `https://wa.me/?text=${encodeURIComponent(message)}`;
+    
     window.open(whatsappUrl, '_blank');
     
     toast({
       title: "WhatsApp Message",
-      description: `Opening WhatsApp for ${policy.client_name}`,
+      description: phoneNumber 
+        ? `Opening WhatsApp for ${policy.client_name}`
+        : `Opening WhatsApp - please select a contact`,
     });
   };
 
@@ -197,10 +210,53 @@ Please contact us for renewal.`;
     });
   };
 
+  const togglePolicySelection = (policyId: string) => {
+    setSelectedPolicies(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(policyId)) {
+        newSet.delete(policyId);
+      } else {
+        newSet.add(policyId);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedPolicies.size === duePolicies.length) {
+      setSelectedPolicies(new Set());
+    } else {
+      setSelectedPolicies(new Set(duePolicies.map(p => p.id)));
+    }
+  };
+
   const handleBulkWhatsApp = () => {
+    const selected = duePolicies.filter(p => selectedPolicies.has(p.id));
+    
+    if (selected.length === 0) {
+      toast({
+        title: "No Policies Selected",
+        description: "Please select at least one policy to send WhatsApp messages.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Open WhatsApp for each selected policy with a delay
+    selected.forEach((policy, index) => {
+      setTimeout(() => {
+        const message = generateWhatsAppMessage(policy);
+        const phoneNumber = policy.contact_number?.replace(/\D/g, '') || '';
+        const whatsappUrl = phoneNumber 
+          ? `https://wa.me/91${phoneNumber}?text=${encodeURIComponent(message)}`
+          : `https://wa.me/?text=${encodeURIComponent(message)}`;
+        window.open(whatsappUrl, '_blank');
+      }, index * 1000); // 1 second delay between each
+    });
+
     toast({
       title: "Bulk WhatsApp",
-      description: `Sending WhatsApp messages to ${duePolicies.length} clients`,
+      description: `Opening WhatsApp for ${selected.length} policies`,
     });
   };
 
@@ -262,6 +318,18 @@ Please contact us for renewal.`;
           </div>
         </CardHeader>
         <CardContent className="px-4 sm:px-6">
+          {duePolicies.length > 0 && (
+            <div className="flex items-center gap-3 mb-4">
+              <Checkbox
+                checked={selectedPolicies.size === duePolicies.length && duePolicies.length > 0}
+                onCheckedChange={toggleSelectAll}
+                id="selectAll"
+              />
+              <label htmlFor="selectAll" className="text-sm text-muted-foreground cursor-pointer">
+                Select All ({selectedPolicies.size}/{duePolicies.length} selected)
+              </label>
+            </div>
+          )}
           {duePolicies.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               No policies are due for renewal in the next 30 days.
@@ -277,9 +345,13 @@ Please contact us for renewal.`;
                 }`}>
                   <CardContent className="p-4 sm:p-6">
                     <div className="space-y-4">
-                      {/* Header with Badge and Days Left */}
+                      {/* Header with Badge, Checkbox and Days Left */}
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
                         <div className="flex items-center space-x-3">
+                          <Checkbox
+                            checked={selectedPolicies.has(policy.id)}
+                            onCheckedChange={() => togglePolicySelection(policy.id)}
+                          />
                           <Badge className={getUrgencyColor(policy.urgency)}>
                             {getUrgencyIcon(policy.urgency)}
                             <span className="ml-1 capitalize">{policy.urgency}</span>
@@ -354,6 +426,15 @@ Please contact us for renewal.`;
       {/* Action Buttons at Bottom */}
       {duePolicies.length > 0 && (
         <div className="flex flex-col sm:flex-row justify-center space-y-2 sm:space-y-0 sm:space-x-4 px-4 sm:px-0">
+          <Button 
+            variant="default"
+            onClick={handleBulkWhatsApp}
+            disabled={selectedPolicies.size === 0}
+            className="bg-green-600 hover:bg-green-700 text-white min-h-[44px] w-full sm:w-auto"
+          >
+            <Send className="h-4 w-4 mr-2" />
+            Send WhatsApp to Selected ({selectedPolicies.size})
+          </Button>
           <Button 
             variant="outline"
             onClick={downloadExpiringPolicies}
