@@ -294,9 +294,9 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
-    console.error("Error in verify-razorpay-payment");
+    console.error("Error in verify-razorpay-payment:", error);
     return new Response(JSON.stringify({ 
-      error: error instanceof Error ? error.message : "Unknown error occurred"
+      error: "An unexpected error occurred while verifying payment"
     }), {
       headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       status: 500,

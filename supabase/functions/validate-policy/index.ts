@@ -294,8 +294,7 @@ serve(async (req) => {
 
   } catch (error) {
     console.error("Error in validate-policy function:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    return new Response(JSON.stringify({ error: errorMessage }), {
+    return new Response(JSON.stringify({ error: "An unexpected error occurred while processing your request" }), {
       headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       status: 500,
     });
