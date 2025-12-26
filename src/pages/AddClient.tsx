@@ -33,18 +33,21 @@ const AddClient = () => {
     setLoading(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error("User not authenticated");
+      // Use edge function for server-side validation
+      const { data: result, error: validationError } = await supabase.functions.invoke('validate-client', {
+        body: {
+          action: 'create',
+          data: formData
+        }
+      });
+
+      if (validationError || !result?.success) {
+        const errorDetails = result?.details;
+        if (errorDetails && Array.isArray(errorDetails)) {
+          throw new Error(errorDetails.map((e: any) => e.message).join(', '));
+        }
+        throw new Error(result?.error || validationError?.message || "Failed to add client");
       }
-
-      const { error } = await supabase.from("clients").insert([{
-        ...formData,
-        user_id: user.id,
-      }]);
-
-      if (error) throw error;
 
       toast({
         title: "Success",
