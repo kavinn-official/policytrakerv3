@@ -212,25 +212,36 @@ const PolicyEditDialog = ({ policy, open, onOpenChange, onPolicyUpdated }: Polic
         documentUrl = await uploadDocument(policy.id) || undefined;
       }
 
-      const { error } = await supabase
-        .from('policies')
-        .update({
-          client_name: formData.client_name,
-          vehicle_number: formData.vehicle_number,
-          vehicle_make: formData.vehicle_make,
-          vehicle_model: formData.vehicle_model,
-          policy_active_date: formData.policy_active_date,
-          policy_expiry_date: formData.policy_expiry_date,
-          status: formData.status,
-          agent_code: formData.agent_code,
-          reference: formData.reference,
-          contact_number: formData.contact_number,
-          company_name: formData.company_name,
-          document_url: documentUrl,
-        })
-        .eq('id', policy.id);
+      // Use edge function for server-side validation
+      const { data: result, error: validationError } = await supabase.functions.invoke('validate-policy', {
+        body: {
+          action: 'update',
+          policyId: policy.id,
+          data: {
+            policy_number: formData.policy_number,
+            client_name: formData.client_name,
+            vehicle_number: formData.vehicle_number,
+            vehicle_make: formData.vehicle_make,
+            vehicle_model: formData.vehicle_model,
+            policy_active_date: formData.policy_active_date,
+            policy_expiry_date: formData.policy_expiry_date,
+            status: formData.status,
+            agent_code: formData.agent_code,
+            reference: formData.reference,
+            contact_number: formData.contact_number,
+            company_name: formData.company_name,
+            document_url: documentUrl,
+          }
+        }
+      });
 
-      if (error) throw error;
+      if (validationError || !result?.success) {
+        const errorDetails = result?.details;
+        if (errorDetails && Array.isArray(errorDetails)) {
+          throw new Error(errorDetails.map((e: any) => e.message).join(', '));
+        }
+        throw new Error(result?.error || validationError?.message || "Failed to update policy");
+      }
 
       toast({
         title: "Success",

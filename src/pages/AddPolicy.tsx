@@ -222,17 +222,26 @@ const AddPolicy = () => {
         }
       }
 
-      const { error } = await supabase.from("policies").insert([
-        {
-          ...formData,
-          policy_active_date: format(policyActiveDate, "yyyy-MM-dd"),
-          policy_expiry_date: format(policyExpiryDate, "yyyy-MM-dd"),
-          user_id: user?.id,
-          document_url: documentUrl,
-        },
-      ]);
+      // Use edge function for server-side validation
+      const { data: result, error: validationError } = await supabase.functions.invoke('validate-policy', {
+        body: {
+          action: 'create',
+          data: {
+            ...formData,
+            policy_active_date: format(policyActiveDate, "yyyy-MM-dd"),
+            policy_expiry_date: format(policyExpiryDate, "yyyy-MM-dd"),
+            document_url: documentUrl,
+          }
+        }
+      });
 
-      if (error) throw error;
+      if (validationError || !result?.success) {
+        const errorDetails = result?.details;
+        if (errorDetails && Array.isArray(errorDetails)) {
+          throw new Error(errorDetails.map((e: any) => e.message).join(', '));
+        }
+        throw new Error(result?.error || validationError?.message || "Failed to add policy");
+      }
 
       toast({
         title: "Success",

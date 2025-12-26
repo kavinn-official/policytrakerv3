@@ -14,4 +14,9 @@ verify_jwt = false
 
 [functions.parse-policy-pdf]
 verify_jwt = false
-# Note: This function has manual auth check in the code
+
+[functions.validate-policy]
+verify_jwt = false
+
+[functions.validate-client]
+verify_jwt = false
