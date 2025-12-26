@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { MessageSquare, Phone, AlertTriangle, Calendar, Bell, Download, Send } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { MessageSquare, Phone, AlertTriangle, Calendar, Bell, Download, Send, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -21,19 +22,23 @@ interface PolicyData {
   contact_number: string | null;
   status: string;
   reference: string;
+  company_name?: string;
 }
 
 interface DuePolicy extends PolicyData {
   daysLeft: number;
   urgency: string;
-  company_name?: string;
   selected?: boolean;
 }
+
+const POLICIES_PER_PAGE = 10;
 
 const DuePolicies = () => {
   const [duePolicies, setDuePolicies] = useState<DuePolicy[]>([]);
   const [selectedPolicies, setSelectedPolicies] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -41,7 +46,6 @@ const DuePolicies = () => {
     if (user) {
       fetchDuePolicies();
 
-      // Set up real-time subscription to policy changes
       const channel = supabase
         .channel('due-policy-changes')
         .on(
@@ -70,7 +74,7 @@ const DuePolicies = () => {
     try {
       const { data, error } = await supabase
         .from('policies')
-        .select('id, policy_number, client_name, vehicle_number, vehicle_make, vehicle_model, policy_expiry_date, contact_number, status, reference')
+        .select('id, policy_number, client_name, vehicle_number, vehicle_make, vehicle_model, policy_expiry_date, contact_number, status, reference, company_name')
         .eq('user_id', user.id)
         .order('policy_expiry_date', { ascending: true });
 
@@ -97,17 +101,8 @@ const DuePolicies = () => {
           else if (daysLeft <= 21) urgency = "medium";
 
           return {
-            id: policy.id,
-            policy_number: policy.policy_number,
-            client_name: policy.client_name,
-            vehicle_number: policy.vehicle_number,
-            vehicle_make: policy.vehicle_make,
-            vehicle_model: policy.vehicle_model,
-            policy_expiry_date: policy.policy_expiry_date,
-            contact_number: policy.contact_number,
-            status: policy.status,
-            reference: policy.reference,
-            company_name: "Not specified", // Default value since column might not exist yet
+            ...policy,
+            company_name: policy.company_name || "Not specified",
             daysLeft,
             urgency
           } as DuePolicy;
@@ -125,6 +120,27 @@ const DuePolicies = () => {
       setIsLoading(false);
     }
   };
+
+  // Filter policies based on search term
+  const filteredPolicies = duePolicies.filter((policy) => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      policy.policy_number.toLowerCase().includes(searchLower) ||
+      policy.client_name.toLowerCase().includes(searchLower) ||
+      policy.vehicle_number.toLowerCase().includes(searchLower) ||
+      (policy.company_name?.toLowerCase().includes(searchLower) || false)
+    );
+  });
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredPolicies.length / POLICIES_PER_PAGE);
+  const startIndex = (currentPage - 1) * POLICIES_PER_PAGE;
+  const paginatedPolicies = filteredPolicies.slice(startIndex, startIndex + POLICIES_PER_PAGE);
+
+  // Reset page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   const getUrgencyColor = (urgency: string) => {
     switch (urgency) {
@@ -172,7 +188,6 @@ Please contact us for renewal.`;
     const message = generateWhatsAppMessage(policy);
     const phoneNumber = policy.contact_number?.replace(/\D/g, '') || '';
     
-    // If no contact number, open WhatsApp with just the message so user can select contact
     const whatsappUrl = phoneNumber 
       ? `https://wa.me/91${phoneNumber}?text=${encodeURIComponent(message)}`
       : `https://wa.me/?text=${encodeURIComponent(message)}`;
@@ -203,13 +218,6 @@ Please contact us for renewal.`;
     }
   };
 
-  const handleRemind = (policy: DuePolicy) => {
-    toast({
-      title: "Reminder Set",
-      description: `Reminder set for policy ${policy.policy_number}`,
-    });
-  };
-
   const togglePolicySelection = (policyId: string) => {
     setSelectedPolicies(prev => {
       const newSet = new Set(prev);
@@ -223,15 +231,15 @@ Please contact us for renewal.`;
   };
 
   const toggleSelectAll = () => {
-    if (selectedPolicies.size === duePolicies.length) {
+    if (selectedPolicies.size === filteredPolicies.length) {
       setSelectedPolicies(new Set());
     } else {
-      setSelectedPolicies(new Set(duePolicies.map(p => p.id)));
+      setSelectedPolicies(new Set(filteredPolicies.map(p => p.id)));
     }
   };
 
   const handleBulkWhatsApp = () => {
-    const selected = duePolicies.filter(p => selectedPolicies.has(p.id));
+    const selected = filteredPolicies.filter(p => selectedPolicies.has(p.id));
     
     if (selected.length === 0) {
       toast({
@@ -242,7 +250,6 @@ Please contact us for renewal.`;
       return;
     }
 
-    // Open WhatsApp for each selected policy with a delay
     selected.forEach((policy, index) => {
       setTimeout(() => {
         const message = generateWhatsAppMessage(policy);
@@ -251,7 +258,7 @@ Please contact us for renewal.`;
           ? `https://wa.me/91${phoneNumber}?text=${encodeURIComponent(message)}`
           : `https://wa.me/?text=${encodeURIComponent(message)}`;
         window.open(whatsappUrl, '_blank');
-      }, index * 1000); // 1 second delay between each
+      }, index * 1000);
     });
 
     toast({
@@ -261,7 +268,7 @@ Please contact us for renewal.`;
   };
 
   const downloadExpiringPolicies = () => {
-    if (duePolicies.length === 0) {
+    if (filteredPolicies.length === 0) {
       toast({
         title: "No Expiring Policies",
         description: "There are no policies expiring in the next 30 days.",
@@ -269,7 +276,7 @@ Please contact us for renewal.`;
       return;
     }
 
-    const worksheet = XLSX.utils.json_to_sheet(duePolicies.map(policy => ({
+    const worksheet = XLSX.utils.json_to_sheet(filteredPolicies.map(policy => ({
       'Policy Number': policy.policy_number,
       'Client Name': policy.client_name,
       'Vehicle Number': policy.vehicle_number,
@@ -291,7 +298,7 @@ Please contact us for renewal.`;
     
     toast({
       title: "Download Complete",
-      description: `Downloaded ${duePolicies.length} expiring policies to ${fileName}`,
+      description: `Downloaded ${filteredPolicies.length} expiring policies to ${fileName}`,
     });
   };
 
@@ -318,25 +325,39 @@ Please contact us for renewal.`;
           </div>
         </CardHeader>
         <CardContent className="px-4 sm:px-6">
-          {duePolicies.length > 0 && (
+          {/* Search Input */}
+          <div className="mb-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Search by policy number, customer name, vehicle number, or company..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 min-h-[44px]"
+              />
+            </div>
+          </div>
+
+          {filteredPolicies.length > 0 && (
             <div className="flex items-center gap-3 mb-4">
               <Checkbox
-                checked={selectedPolicies.size === duePolicies.length && duePolicies.length > 0}
+                checked={selectedPolicies.size === filteredPolicies.length && filteredPolicies.length > 0}
                 onCheckedChange={toggleSelectAll}
                 id="selectAll"
               />
               <label htmlFor="selectAll" className="text-sm text-muted-foreground cursor-pointer">
-                Select All ({selectedPolicies.size}/{duePolicies.length} selected)
+                Select All ({selectedPolicies.size}/{filteredPolicies.length} selected)
               </label>
             </div>
           )}
-          {duePolicies.length === 0 ? (
+          
+          {filteredPolicies.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
-              No policies are due for renewal in the next 30 days.
+              {searchTerm ? "No policies match your search." : "No policies are due for renewal in the next 30 days."}
             </div>
           ) : (
             <div className="space-y-4">
-              {duePolicies.map((policy) => (
+              {paginatedPolicies.map((policy) => (
                 <Card key={policy.id} className={`border rounded-lg hover:shadow-md transition-all duration-200 ${
                   policy.urgency === "critical" ? "border-red-200 bg-red-50" :
                   policy.urgency === "high" ? "border-orange-200 bg-orange-50" :
@@ -345,7 +366,6 @@ Please contact us for renewal.`;
                 }`}>
                   <CardContent className="p-4 sm:p-6">
                     <div className="space-y-4">
-                      {/* Header with Badge, Checkbox and Days Left */}
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
                         <div className="flex items-center space-x-3">
                           <Checkbox
@@ -362,7 +382,6 @@ Please contact us for renewal.`;
                         </div>
                       </div>
                       
-                      {/* Policy Information */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div className="space-y-1">
                           <h3 className="font-semibold text-gray-900 text-sm sm:text-base">{policy.client_name}</h3>
@@ -394,7 +413,6 @@ Please contact us for renewal.`;
                         </div>
                       </div>
 
-                      {/* Action Buttons */}
                       <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 pt-2">
                         <Button 
                           size="sm" 
@@ -418,13 +436,67 @@ Please contact us for renewal.`;
                   </CardContent>
                 </Card>
               ))}
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-6 pt-4 border-t">
+                  <p className="text-sm text-muted-foreground">
+                    Showing {startIndex + 1}-{Math.min(startIndex + POLICIES_PER_PAGE, filteredPolicies.length)} of {filteredPolicies.length} policies
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      Previous
+                    </Button>
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        let pageNum;
+                        if (totalPages <= 5) {
+                          pageNum = i + 1;
+                        } else if (currentPage <= 3) {
+                          pageNum = i + 1;
+                        } else if (currentPage >= totalPages - 2) {
+                          pageNum = totalPages - 4 + i;
+                        } else {
+                          pageNum = currentPage - 2 + i;
+                        }
+                        return (
+                          <Button
+                            key={pageNum}
+                            variant={currentPage === pageNum ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setCurrentPage(pageNum)}
+                            className="w-8 h-8 p-0"
+                          >
+                            {pageNum}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </CardContent>
       </Card>
 
       {/* Action Buttons at Bottom */}
-      {duePolicies.length > 0 && (
+      {filteredPolicies.length > 0 && (
         <div className="flex flex-col sm:flex-row justify-center space-y-2 sm:space-y-0 sm:space-x-4 px-4 sm:px-0">
           <Button 
             variant="default"

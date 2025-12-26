@@ -11,6 +11,7 @@ import Index from "./pages/Index";
 import Policies from "./pages/Policies";
 import DuePoliciesPage from "./pages/DuePoliciesPage";
 import SubscriptionPage from "./pages/SubscriptionPage";
+import ProfilePage from "./pages/ProfilePage";
 import AddClient from "./pages/AddClient";
 import AddPolicy from "./pages/AddPolicy";
 import Auth from "./pages/Auth";
@@ -60,6 +61,13 @@ const App = () => (
               <ProtectedRoute>
                 <Layout>
                   <SubscriptionPage />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <Layout>
+                  <ProfilePage />
                 </Layout>
               </ProtectedRoute>
             } />
