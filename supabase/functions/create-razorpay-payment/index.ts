@@ -158,10 +158,9 @@ serve(async (req) => {
     const razorpayResult = await razorpayResponse.json();
 
     if (!razorpayResponse.ok) {
-      console.error("Razorpay order creation failed");
+      console.error("Razorpay order creation failed:", razorpayResult);
       return new Response(JSON.stringify({ 
-        error: "Failed to create payment order",
-        details: razorpayResult.error?.description || "Unknown error"
+        error: "Failed to create payment order. Please try again later."
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500,

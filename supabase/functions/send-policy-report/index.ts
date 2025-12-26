@@ -264,10 +264,9 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
   } catch (error: unknown) {
-    console.error("Error in send-policy-report function");
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error("Error in send-policy-report function:", error);
     return new Response(JSON.stringify({ 
-      error: errorMessage 
+      error: "An unexpected error occurred while generating the report" 
     }), {
       status: 500,
       headers: { "Content-Type": "application/json", ...corsHeaders },
