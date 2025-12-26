@@ -61,33 +61,33 @@ const PolicyCard = ({ policy, daysToExpiry, statusColor, onViewPolicy, onEditPol
           )}
         </div>
         
-        <div className="flex gap-2 sm:gap-3 flex-wrap">
+        <div className="grid grid-cols-3 gap-2">
           <Button
             variant="outline"
             size="sm"
             onClick={() => onViewPolicy(policy)}
-            className="flex-1 hover:bg-blue-50 hover:border-blue-200 transition-all duration-200 shadow-sm hover:shadow-md h-10 min-w-0"
+            className="hover:bg-blue-50 hover:border-blue-200 transition-all duration-200 shadow-sm hover:shadow-md h-10"
           >
-            <Eye className="h-4 w-4 sm:mr-2 text-blue-600 flex-shrink-0" />
-            <span className="text-blue-600 font-medium truncate">View</span>
+            <Eye className="h-4 w-4 flex-shrink-0" />
+            <span className="text-blue-600 font-medium ml-1 hidden sm:inline">View</span>
           </Button>
           <Button
             variant="outline"
             size="sm"
             onClick={() => onEditPolicy(policy)}
-            className="flex-1 hover:bg-green-50 hover:border-green-200 transition-all duration-200 shadow-sm hover:shadow-md h-10 min-w-0"
+            className="hover:bg-green-50 hover:border-green-200 transition-all duration-200 shadow-sm hover:shadow-md h-10"
           >
-            <Edit className="h-4 w-4 sm:mr-2 text-green-600 flex-shrink-0" />
-            <span className="text-green-600 font-medium truncate">Edit</span>
+            <Edit className="h-4 w-4 flex-shrink-0" />
+            <span className="text-green-600 font-medium ml-1 hidden sm:inline">Edit</span>
           </Button>
           <Button
             variant="outline"
             size="sm"
             onClick={() => onDeletePolicy(policy)}
-            className="flex-1 hover:bg-red-50 hover:border-red-200 transition-all duration-200 shadow-sm hover:shadow-md h-10 min-w-0"
+            className="hover:bg-red-50 hover:border-red-200 transition-all duration-200 shadow-sm hover:shadow-md h-10"
           >
-            <Trash2 className="h-4 w-4 sm:mr-2 text-red-600 flex-shrink-0" />
-            <span className="text-red-600 font-medium truncate">Delete</span>
+            <Trash2 className="h-4 w-4 flex-shrink-0" />
+            <span className="text-red-600 font-medium ml-1 hidden sm:inline">Delete</span>
           </Button>
         </div>
         {policy.document_url && onPreviewDocument && (

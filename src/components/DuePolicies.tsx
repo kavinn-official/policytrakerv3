@@ -39,6 +39,7 @@ const DuePolicies = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [weekFilter, setWeekFilter] = useState<number | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -121,15 +122,24 @@ const DuePolicies = () => {
     }
   };
 
-  // Filter policies based on search term
+  // Filter policies based on search term and week filter
   const filteredPolicies = duePolicies.filter((policy) => {
     const searchLower = searchTerm.toLowerCase();
-    return (
+    const matchesSearch = (
       policy.policy_number.toLowerCase().includes(searchLower) ||
       policy.client_name.toLowerCase().includes(searchLower) ||
       policy.vehicle_number.toLowerCase().includes(searchLower) ||
       (policy.company_name?.toLowerCase().includes(searchLower) || false)
     );
+    
+    // Apply week filter
+    if (weekFilter !== null) {
+      const maxDays = weekFilter * 7;
+      const minDays = (weekFilter - 1) * 7;
+      return matchesSearch && policy.daysLeft <= maxDays && policy.daysLeft > minDays;
+    }
+    
+    return matchesSearch;
   });
 
   // Pagination logic
@@ -137,10 +147,10 @@ const DuePolicies = () => {
   const startIndex = (currentPage - 1) * POLICIES_PER_PAGE;
   const paginatedPolicies = filteredPolicies.slice(startIndex, startIndex + POLICIES_PER_PAGE);
 
-  // Reset page when search changes
+  // Reset page when search or filter changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm]);
+  }, [searchTerm, weekFilter]);
 
   const getUrgencyColor = (urgency: string) => {
     switch (urgency) {
@@ -338,6 +348,50 @@ Please contact us for renewal.`;
             </div>
           </div>
 
+          {/* Quick Filter Buttons */}
+          <div className="mb-4 flex flex-wrap gap-2">
+            <Button
+              variant={weekFilter === null ? "default" : "outline"}
+              size="sm"
+              onClick={() => setWeekFilter(null)}
+              className="min-h-[36px]"
+            >
+              All ({duePolicies.length})
+            </Button>
+            <Button
+              variant={weekFilter === 1 ? "default" : "outline"}
+              size="sm"
+              onClick={() => setWeekFilter(1)}
+              className="min-h-[36px]"
+            >
+              Due in 1 Week ({duePolicies.filter(p => p.daysLeft <= 7 && p.daysLeft > 0).length})
+            </Button>
+            <Button
+              variant={weekFilter === 2 ? "default" : "outline"}
+              size="sm"
+              onClick={() => setWeekFilter(2)}
+              className="min-h-[36px]"
+            >
+              Due in 2 Weeks ({duePolicies.filter(p => p.daysLeft <= 14 && p.daysLeft > 7).length})
+            </Button>
+            <Button
+              variant={weekFilter === 3 ? "default" : "outline"}
+              size="sm"
+              onClick={() => setWeekFilter(3)}
+              className="min-h-[36px]"
+            >
+              Due in 3 Weeks ({duePolicies.filter(p => p.daysLeft <= 21 && p.daysLeft > 14).length})
+            </Button>
+            <Button
+              variant={weekFilter === 4 ? "default" : "outline"}
+              size="sm"
+              onClick={() => setWeekFilter(4)}
+              className="min-h-[36px]"
+            >
+              Due in 4 Weeks ({duePolicies.filter(p => p.daysLeft <= 28 && p.daysLeft > 21).length})
+            </Button>
+          </div>
+
           {filteredPolicies.length > 0 && (
             <div className="flex items-center gap-3 mb-4">
               <Checkbox
@@ -353,7 +407,7 @@ Please contact us for renewal.`;
           
           {filteredPolicies.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
-              {searchTerm ? "No policies match your search." : "No policies are due for renewal in the next 30 days."}
+              {searchTerm || weekFilter !== null ? "No policies match your filters." : "No policies are due for renewal in the next 30 days."}
             </div>
           ) : (
             <div className="space-y-4">
