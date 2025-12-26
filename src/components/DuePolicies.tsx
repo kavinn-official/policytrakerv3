@@ -364,7 +364,7 @@ Please contact us for renewal.`;
               onClick={() => setWeekFilter(1)}
               className="min-h-[36px]"
             >
-              Due in 1 Week ({duePolicies.filter(p => p.daysLeft <= 7 && p.daysLeft > 0).length})
+              Due in 1st Week ({duePolicies.filter(p => p.daysLeft <= 7 && p.daysLeft > 0).length})
             </Button>
             <Button
               variant={weekFilter === 2 ? "default" : "outline"}
@@ -372,7 +372,7 @@ Please contact us for renewal.`;
               onClick={() => setWeekFilter(2)}
               className="min-h-[36px]"
             >
-              Due in 2 Weeks ({duePolicies.filter(p => p.daysLeft <= 14 && p.daysLeft > 7).length})
+              Due in 2nd Week ({duePolicies.filter(p => p.daysLeft <= 14 && p.daysLeft > 7).length})
             </Button>
             <Button
               variant={weekFilter === 3 ? "default" : "outline"}
@@ -380,7 +380,7 @@ Please contact us for renewal.`;
               onClick={() => setWeekFilter(3)}
               className="min-h-[36px]"
             >
-              Due in 3 Weeks ({duePolicies.filter(p => p.daysLeft <= 21 && p.daysLeft > 14).length})
+              Due in 3rd Week ({duePolicies.filter(p => p.daysLeft <= 21 && p.daysLeft > 14).length})
             </Button>
             <Button
               variant={weekFilter === 4 ? "default" : "outline"}
@@ -388,7 +388,7 @@ Please contact us for renewal.`;
               onClick={() => setWeekFilter(4)}
               className="min-h-[36px]"
             >
-              Due in 4 Weeks ({duePolicies.filter(p => p.daysLeft <= 28 && p.daysLeft > 21).length})
+              Due in 4th Week ({duePolicies.filter(p => p.daysLeft <= 28 && p.daysLeft > 21).length})
             </Button>
           </div>
 
@@ -493,8 +493,8 @@ Please contact us for renewal.`;
 
               {/* Pagination Controls */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-between mt-6 pt-4 border-t">
-                  <p className="text-sm text-muted-foreground">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-4 border-t">
+                  <p className="text-sm text-muted-foreground text-center sm:text-left">
                     Showing {startIndex + 1}-{Math.min(startIndex + POLICIES_PER_PAGE, filteredPolicies.length)} of {filteredPolicies.length} policies
                   </p>
                   <div className="flex items-center gap-2">
