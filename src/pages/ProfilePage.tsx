@@ -2,11 +2,14 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { User, Mail, Phone, Crown, Calendar, CreditCard, ArrowLeft } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { User, Mail, Phone, Crown, Calendar, CreditCard, ArrowLeft, Edit2, Save, X, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface Transaction {
   id: string;
@@ -21,6 +24,7 @@ interface Profile {
   id: string;
   email: string;
   full_name: string | null;
+  mobile_number: string | null;
 }
 
 const ProfilePage = () => {
@@ -30,6 +34,10 @@ const ProfilePage = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isEditingMobile, setIsEditingMobile] = useState(false);
+  const [mobileNumber, setMobileNumber] = useState("");
+  const [mobileError, setMobileError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -48,7 +56,9 @@ const ProfilePage = () => {
         .eq('id', user.id)
         .maybeSingle();
 
-      setProfile(profileData || { id: user.id, email: user.email || '', full_name: null });
+      const profileInfo = profileData || { id: user.id, email: user.email || '', full_name: null, mobile_number: null };
+      setProfile(profileInfo);
+      setMobileNumber(profileInfo.mobile_number || '');
 
       // Fetch transactions
       const { data: transactionsData } = await supabase
@@ -63,6 +73,77 @@ const ProfilePage = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const validateMobileNumber = (number: string): boolean => {
+    // Remove all non-digit characters
+    const cleanedNumber = number.replace(/\D/g, '');
+    
+    // Check if it's exactly 10 digits and starts with a valid Indian mobile prefix
+    if (cleanedNumber.length !== 10) {
+      setMobileError('Mobile number must be exactly 10 digits');
+      return false;
+    }
+    
+    if (!/^[6-9]/.test(cleanedNumber)) {
+      setMobileError('Please enter a valid Indian mobile number');
+      return false;
+    }
+    
+    setMobileError('');
+    return true;
+  };
+
+  const handleMobileChange = (value: string) => {
+    // Only allow digits
+    const cleanedValue = value.replace(/\D/g, '').slice(0, 10);
+    setMobileNumber(cleanedValue);
+    
+    if (cleanedValue.length > 0) {
+      validateMobileNumber(cleanedValue);
+    } else {
+      setMobileError('');
+    }
+  };
+
+  const handleSaveMobile = async () => {
+    if (!user || !mobileNumber) return;
+
+    if (!validateMobileNumber(mobileNumber)) {
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ 
+          mobile_number: mobileNumber,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+
+      if (error) {
+        console.error('Error updating mobile number:', error);
+        toast.error('Failed to update mobile number');
+        return;
+      }
+
+      setProfile(prev => prev ? { ...prev, mobile_number: mobileNumber } : null);
+      setIsEditingMobile(false);
+      toast.success('Mobile number updated successfully');
+    } catch (error) {
+      console.error('Error updating mobile number:', error);
+      toast.error('Failed to update mobile number');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setMobileNumber(profile?.mobile_number || '');
+    setMobileError('');
+    setIsEditingMobile(false);
   };
 
   const formatDate = (dateString: string) => {
@@ -109,9 +190,17 @@ const ProfilePage = () => {
           </Button>
           <div>
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">My Profile</h1>
-            <p className="text-muted-foreground text-sm sm:text-base">View your account details and subscription</p>
+            <p className="text-muted-foreground text-sm sm:text-base">View and manage your account details</p>
           </div>
         </div>
+        <Button
+          variant="outline"
+          onClick={() => navigate('/settings')}
+          className="gap-2"
+        >
+          <Settings className="h-4 w-4" />
+          Settings
+        </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -140,11 +229,65 @@ const ProfilePage = () => {
               </div>
             </div>
 
-            <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-              <Phone className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="text-sm text-muted-foreground">Mobile Number</p>
-                <p className="font-medium">{user?.phone || 'Not set'}</p>
+            <div className="p-3 bg-muted/50 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Phone className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Mobile Number</p>
+                    {isEditingMobile ? (
+                      <div className="space-y-2 mt-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-muted-foreground">+91</span>
+                          <Input
+                            type="tel"
+                            value={mobileNumber}
+                            onChange={(e) => handleMobileChange(e.target.value)}
+                            placeholder="Enter 10-digit mobile"
+                            className="max-w-[180px] h-9"
+                            maxLength={10}
+                          />
+                        </div>
+                        {mobileError && (
+                          <p className="text-xs text-destructive">{mobileError}</p>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="font-medium">
+                        {profile?.mobile_number ? `+91 ${profile.mobile_number}` : 'Not set'}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  {isEditingMobile ? (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={handleCancelEdit}
+                        disabled={isSaving}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={handleSaveMobile}
+                        disabled={isSaving || !!mobileError || !mobileNumber}
+                      >
+                        <Save className="h-4 w-4" />
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setIsEditingMobile(true)}
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           </CardContent>

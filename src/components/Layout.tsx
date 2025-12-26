@@ -3,7 +3,7 @@ import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Button } from '@/components/ui/button';
-import { User, LogOut, Menu, Home, FileText, AlertTriangle, CreditCard, Plus, UserCircle } from 'lucide-react';
+import { User, LogOut, Menu, Home, FileText, AlertTriangle, CreditCard, Plus, UserCircle, Settings } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -106,6 +106,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                             Profile
                           </Link>
                         </DropdownMenuItem>
+                        <DropdownMenuItem asChild className="cursor-pointer">
+                          <Link to="/settings" className="flex items-center w-full">
+                            <Settings className="h-4 w-4 mr-2" />
+                            Settings
+                          </Link>
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
                           <LogOut className="h-4 w-4 mr-2" />
@@ -155,7 +161,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                             ))}
                           </div>
                           
-                          <div className="border-t pt-4 mt-2">
+                          <div className="border-t pt-4 mt-2 space-y-2">
                             <Link
                               to="/profile"
                               onClick={() => setIsMobileMenuOpen(false)}
@@ -167,6 +173,18 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                             >
                               <UserCircle className="h-5 w-5 mr-4 flex-shrink-0" />
                               <span className="font-medium">Profile</span>
+                            </Link>
+                            <Link
+                              to="/settings"
+                              onClick={() => setIsMobileMenuOpen(false)}
+                              className={`flex items-center w-full px-4 py-3 rounded-lg text-left transition-colors min-h-[48px] ${
+                                isActivePath('/settings')
+                                  ? 'bg-blue-100 text-blue-700'
+                                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                              }`}
+                            >
+                              <Settings className="h-5 w-5 mr-4 flex-shrink-0" />
+                              <span className="font-medium">Settings</span>
                             </Link>
                           </div>
                           

@@ -255,24 +255,39 @@ export type Database = {
         Row: {
           auto_reminders_enabled: boolean | null
           created_at: string
+          cron_job_status: string | null
+          custom_reminder_time: string | null
           id: string
+          last_cron_execution: string | null
           reminder_days: Json | null
+          reminder_frequency: string | null
+          reminder_time: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           auto_reminders_enabled?: boolean | null
           created_at?: string
+          cron_job_status?: string | null
+          custom_reminder_time?: string | null
           id?: string
+          last_cron_execution?: string | null
           reminder_days?: Json | null
+          reminder_frequency?: string | null
+          reminder_time?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           auto_reminders_enabled?: boolean | null
           created_at?: string
+          cron_job_status?: string | null
+          custom_reminder_time?: string | null
           id?: string
+          last_cron_execution?: string | null
           reminder_days?: Json | null
+          reminder_frequency?: string | null
+          reminder_time?: string | null
           updated_at?: string
           user_id?: string
         }
