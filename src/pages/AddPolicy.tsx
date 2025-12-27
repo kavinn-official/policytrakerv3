@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useRef, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,17 +8,19 @@ import { MaterialDatePicker } from "@/components/ui/material-date-picker";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { ArrowLeft, Upload, FileText, Loader2, Sparkles, X } from "lucide-react";
+import { ArrowLeft, Upload, FileText, Loader2, Sparkles, X, Share2 } from "lucide-react";
 import { format, addDays, parse } from "date-fns";
 
 const AddPolicy = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
   const [parsing, setParsing] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [sharedFileLoaded, setSharedFileLoaded] = useState(false);
   const [formData, setFormData] = useState({
     policy_number: "",
     client_name: "",
@@ -34,6 +36,76 @@ const AddPolicy = () => {
   const [policyActiveDate, setPolicyActiveDate] = useState<Date>();
   const [policyExpiryDate, setPolicyExpiryDate] = useState<Date>();
 
+  // Handle shared files from external apps
+  useEffect(() => {
+    const checkForSharedFile = async () => {
+      const sharedParam = searchParams.get('shared');
+      const errorParam = searchParams.get('error');
+
+      // Handle errors from share target
+      if (errorParam) {
+        let errorMessage = "An error occurred while receiving the file.";
+        switch (errorParam) {
+          case 'no_file':
+            errorMessage = "No file was received. Please try again.";
+            break;
+          case 'invalid_type':
+            errorMessage = "Only PDF files are supported. Please share a PDF document.";
+            break;
+          case 'file_too_large':
+            errorMessage = "File is too large. Maximum size is 10MB.";
+            break;
+          case 'processing_failed':
+            errorMessage = "Failed to process the shared file. Please try again.";
+            break;
+        }
+        toast({
+          title: "Share Error",
+          description: errorMessage,
+          variant: "destructive",
+        });
+        // Clear error params from URL
+        navigate('/add-policy', { replace: true });
+        return;
+      }
+
+      // Check for pending shared file
+      if (sharedParam === 'pending' && !sharedFileLoaded) {
+        try {
+          const cache = await caches.open('shared-files');
+          const response = await cache.match('/shared-pdf');
+          
+          if (response) {
+            const blob = await response.blob();
+            const fileName = decodeURIComponent(response.headers.get('X-File-Name') || 'shared-policy.pdf');
+            const file = new File([blob], fileName, { type: 'application/pdf' });
+            
+            // Clear the cached file
+            await cache.delete('/shared-pdf');
+            
+            setUploadedFile(file);
+            setSharedFileLoaded(true);
+            
+            toast({
+              title: "PDF Received",
+              description: `"${fileName}" has been loaded. Processing document...`,
+            });
+            
+            // Auto-parse the shared file
+            await parseFile(file);
+            
+            // Update URL to remove shared param
+            navigate('/add-policy', { replace: true });
+          }
+        } catch (error) {
+          console.error('Error loading shared file:', error);
+        }
+      }
+    };
+
+    checkForSharedFile();
+  }, [searchParams, sharedFileLoaded]);
+
   const toCamelCase = (text: string): string => {
     return text
       .toLowerCase()
@@ -42,38 +114,15 @@ const AddPolicy = () => {
       .join(' ');
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.type !== 'application/pdf' && !file.type.startsWith('image/')) {
-      toast({
-        title: "Invalid File",
-        description: "Please upload a PDF or image file",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (file.size > 10 * 1024 * 1024) {
-      toast({
-        title: "File Too Large",
-        description: "Please upload a file smaller than 10MB",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setUploadedFile(file);
+  const parseFile = async (file: File) => {
     setParsing(true);
-
+    
     try {
       // Convert file to base64
       const base64 = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => {
           const result = reader.result as string;
-          // Remove data URL prefix
           const base64Data = result.split(',')[1];
           resolve(base64Data);
         };
@@ -90,7 +139,6 @@ const AddPolicy = () => {
       if (data?.success && data?.data) {
         const extracted = data.data;
         
-        // Update form with extracted data
         setFormData(prev => ({
           ...prev,
           policy_number: extracted.policy_number || prev.policy_number,
@@ -102,7 +150,6 @@ const AddPolicy = () => {
           contact_number: extracted.contact_number?.replace(/\D/g, '').substring(0, 10) || prev.contact_number,
         }));
 
-        // Parse dates if available
         if (extracted.policy_active_date) {
           try {
             const activeDate = parse(extracted.policy_active_date, 'yyyy-MM-dd', new Date());
@@ -132,6 +179,32 @@ const AddPolicy = () => {
     } finally {
       setParsing(false);
     }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.type !== 'application/pdf' && !file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid File",
+        description: "Please upload a PDF or image file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast({
+        title: "File Too Large",
+        description: "Please upload a file smaller than 10MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploadedFile(file);
+    await parseFile(file);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -325,6 +398,10 @@ const AddPolicy = () => {
                 <h3 className="font-semibold text-gray-900 mb-1">Smart Auto-Fill</h3>
                 <p className="text-sm text-gray-600 mb-3">
                   Upload a policy PDF or image and we'll automatically extract the details for you.
+                  <span className="block mt-1 text-xs text-blue-600">
+                    <Share2 className="w-3 h-3 inline mr-1" />
+                    Tip: You can also share PDFs directly from other apps!
+                  </span>
                 </p>
                 
                 <input
