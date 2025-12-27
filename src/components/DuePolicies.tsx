@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MessageSquare, Phone, AlertTriangle, Calendar, Bell, Download, Send, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -23,6 +24,7 @@ interface PolicyData {
   status: string;
   reference: string;
   company_name?: string;
+  whatsapp_reminder_count: number;
 }
 
 interface DuePolicy extends PolicyData {
@@ -75,7 +77,7 @@ const DuePolicies = () => {
     try {
       const { data, error } = await supabase
         .from('policies')
-        .select('id, policy_number, client_name, vehicle_number, vehicle_make, vehicle_model, policy_expiry_date, contact_number, status, reference, company_name')
+        .select('id, policy_number, client_name, vehicle_number, vehicle_make, vehicle_model, policy_expiry_date, contact_number, status, reference, company_name, whatsapp_reminder_count')
         .eq('user_id', user.id)
         .order('policy_expiry_date', { ascending: true });
 
@@ -104,6 +106,7 @@ const DuePolicies = () => {
           return {
             ...policy,
             company_name: policy.company_name || "Not specified",
+            whatsapp_reminder_count: policy.whatsapp_reminder_count || 0,
             daysLeft,
             urgency
           } as DuePolicy;
@@ -194,7 +197,7 @@ Expires : ${formattedExpiry}
 Please contact us for renewal.`;
   };
 
-  const handleWhatsApp = (policy: DuePolicy) => {
+  const handleWhatsApp = async (policy: DuePolicy) => {
     const message = generateWhatsAppMessage(policy);
     const phoneNumber = policy.contact_number?.replace(/\D/g, '') || '';
     
@@ -203,6 +206,27 @@ Please contact us for renewal.`;
       : `https://wa.me/?text=${encodeURIComponent(message)}`;
     
     window.open(whatsappUrl, '_blank');
+
+    // Increment the WhatsApp reminder count
+    try {
+      const { error } = await supabase
+        .from('policies')
+        .update({ whatsapp_reminder_count: (policy.whatsapp_reminder_count || 0) + 1 })
+        .eq('id', policy.id);
+
+      if (error) {
+        console.error('Error updating WhatsApp count:', error);
+      } else {
+        // Update local state
+        setDuePolicies(prev => prev.map(p => 
+          p.id === policy.id 
+            ? { ...p, whatsapp_reminder_count: (p.whatsapp_reminder_count || 0) + 1 }
+            : p
+        ));
+      }
+    } catch (error) {
+      console.error('Error incrementing WhatsApp count:', error);
+    }
     
     toast({
       title: "WhatsApp Message",
@@ -348,48 +372,67 @@ Please contact us for renewal.`;
             </div>
           </div>
 
-          {/* Quick Filter Buttons */}
-          <div className="mb-4 flex flex-wrap gap-2">
-            <Button
-              variant={weekFilter === null ? "default" : "outline"}
-              size="sm"
-              onClick={() => setWeekFilter(null)}
-              className="min-h-[36px]"
+          {/* Due In Dropdown Filter */}
+          <div className="mb-4 flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+            <Select
+              value={weekFilter === null ? "all" : weekFilter.toString()}
+              onValueChange={(value) => setWeekFilter(value === "all" ? null : parseInt(value))}
             >
-              All ({duePolicies.length})
-            </Button>
-            <Button
-              variant={weekFilter === 1 ? "default" : "outline"}
-              size="sm"
-              onClick={() => setWeekFilter(1)}
-              className="min-h-[36px]"
-            >
-              Due in 1st Week ({duePolicies.filter(p => p.daysLeft <= 7 && p.daysLeft > 0).length})
-            </Button>
-            <Button
-              variant={weekFilter === 2 ? "default" : "outline"}
-              size="sm"
-              onClick={() => setWeekFilter(2)}
-              className="min-h-[36px]"
-            >
-              Due in 2nd Week ({duePolicies.filter(p => p.daysLeft <= 14 && p.daysLeft > 7).length})
-            </Button>
-            <Button
-              variant={weekFilter === 3 ? "default" : "outline"}
-              size="sm"
-              onClick={() => setWeekFilter(3)}
-              className="min-h-[36px]"
-            >
-              Due in 3rd Week ({duePolicies.filter(p => p.daysLeft <= 21 && p.daysLeft > 14).length})
-            </Button>
-            <Button
-              variant={weekFilter === 4 ? "default" : "outline"}
-              size="sm"
-              onClick={() => setWeekFilter(4)}
-              className="min-h-[36px]"
-            >
-              Due in 4th Week ({duePolicies.filter(p => p.daysLeft <= 28 && p.daysLeft > 21).length})
-            </Button>
+              <SelectTrigger className="w-full sm:w-[200px] min-h-[44px] bg-background">
+                <SelectValue placeholder="Due In" />
+              </SelectTrigger>
+              <SelectContent className="bg-background z-50">
+                <SelectItem value="all">All ({duePolicies.length})</SelectItem>
+                <SelectItem value="1">Due in 1st Week ({duePolicies.filter(p => p.daysLeft <= 7 && p.daysLeft > 0).length})</SelectItem>
+                <SelectItem value="2">Due in 2nd Week ({duePolicies.filter(p => p.daysLeft <= 14 && p.daysLeft > 7).length})</SelectItem>
+                <SelectItem value="3">Due in 3rd Week ({duePolicies.filter(p => p.daysLeft <= 21 && p.daysLeft > 14).length})</SelectItem>
+                <SelectItem value="4">Due in 4th Week ({duePolicies.filter(p => p.daysLeft <= 28 && p.daysLeft > 21).length})</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            {/* Quick Filter Buttons for Desktop */}
+            <div className="hidden lg:flex flex-wrap gap-2">
+              <Button
+                variant={weekFilter === null ? "default" : "outline"}
+                size="sm"
+                onClick={() => setWeekFilter(null)}
+                className="min-h-[36px]"
+              >
+                All
+              </Button>
+              <Button
+                variant={weekFilter === 1 ? "default" : "outline"}
+                size="sm"
+                onClick={() => setWeekFilter(1)}
+                className="min-h-[36px]"
+              >
+                1st Week
+              </Button>
+              <Button
+                variant={weekFilter === 2 ? "default" : "outline"}
+                size="sm"
+                onClick={() => setWeekFilter(2)}
+                className="min-h-[36px]"
+              >
+                2nd Week
+              </Button>
+              <Button
+                variant={weekFilter === 3 ? "default" : "outline"}
+                size="sm"
+                onClick={() => setWeekFilter(3)}
+                className="min-h-[36px]"
+              >
+                3rd Week
+              </Button>
+              <Button
+                variant={weekFilter === 4 ? "default" : "outline"}
+                size="sm"
+                onClick={() => setWeekFilter(4)}
+                className="min-h-[36px]"
+              >
+                4th Week
+              </Button>
+            </div>
           </div>
 
           {filteredPolicies.length > 0 && (
@@ -464,6 +507,14 @@ Please contact us for renewal.`;
                               {policy.daysLeft} days remaining
                             </span>
                           </div>
+                          {policy.whatsapp_reminder_count > 0 && (
+                            <div className="flex items-center">
+                              <MessageSquare className="h-3 w-3 text-green-500 mr-1" />
+                              <span className="text-xs text-green-600 font-medium">
+                                {policy.whatsapp_reminder_count} reminder{policy.whatsapp_reminder_count !== 1 ? 's' : ''} sent
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </div>
 
@@ -474,7 +525,7 @@ Please contact us for renewal.`;
                           onClick={() => handleWhatsApp(policy)}
                         >
                           <MessageSquare className="h-4 w-4 mr-2" />
-                          WhatsApp
+                          WhatsApp {policy.whatsapp_reminder_count > 0 && `(${policy.whatsapp_reminder_count})`}
                         </Button>
                         <Button 
                           size="sm" 

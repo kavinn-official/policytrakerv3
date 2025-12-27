@@ -105,6 +105,7 @@ export type Database = {
           vehicle_make: string | null
           vehicle_model: string | null
           vehicle_number: string | null
+          whatsapp_reminder_count: number
         }
         Insert: {
           agent_code?: string | null
@@ -124,6 +125,7 @@ export type Database = {
           vehicle_make?: string | null
           vehicle_model?: string | null
           vehicle_number?: string | null
+          whatsapp_reminder_count?: number
         }
         Update: {
           agent_code?: string | null
@@ -143,6 +145,7 @@ export type Database = {
           vehicle_make?: string | null
           vehicle_model?: string | null
           vehicle_number?: string | null
+          whatsapp_reminder_count?: number
         }
         Relationships: []
       }

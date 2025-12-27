@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { FileText, AlertTriangle, CheckCircle, Clock } from "lucide-react";
+import { FileText, AlertTriangle, CheckCircle, Clock, PlusCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -18,6 +18,7 @@ interface StatItem {
 
 interface PolicyData {
   policy_expiry_date: string;
+  created_at: string;
 }
 
 const DashboardStats = () => {
@@ -29,6 +30,7 @@ const DashboardStats = () => {
     duePolicies: 0,
     activePolicies: 0,
     expiredPolicies: 0,
+    newPoliciesToday: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -68,7 +70,7 @@ const DashboardStats = () => {
       // Fetch user's policies only - select only the columns we need
       const { data: policies, error } = await supabase
         .from('policies')
-        .select('policy_expiry_date')
+        .select('policy_expiry_date, created_at')
         .eq('user_id', user.id);
 
       if (error) {
@@ -77,6 +79,7 @@ const DashboardStats = () => {
       }
 
       const today = new Date();
+      const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
       const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
 
       const totalPolicies = policies?.length || 0;
@@ -95,11 +98,17 @@ const DashboardStats = () => {
         return expiryDate < today;
       }).length || 0;
 
+      const newPoliciesToday = policies?.filter((policy: PolicyData) => {
+        const createdAt = new Date(policy.created_at);
+        return createdAt >= todayStart;
+      }).length || 0;
+
       setStats({
         totalPolicies,
         duePolicies,
         activePolicies,
         expiredPolicies,
+        newPoliciesToday,
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -116,6 +125,14 @@ const DashboardStats = () => {
       icon: FileText,
       color: "bg-blue-500",
       textColor: "text-blue-600",
+    },
+    {
+      title: "New Policies Today",
+      value: isLoading ? "..." : stats.newPoliciesToday.toString(),
+      subtitle: "Added today",
+      icon: PlusCircle,
+      color: "bg-purple-500",
+      textColor: "text-purple-600",
     },
     {
       title: "Due for Renewal",
@@ -160,7 +177,7 @@ const DashboardStats = () => {
   }
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+    <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 lg:gap-6">
       {statsData.map((stat, index) => {
         const IconComponent = stat.icon;
         return (
