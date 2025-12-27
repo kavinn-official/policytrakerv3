@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,8 +8,12 @@ import { MaterialDatePicker } from "@/components/ui/material-date-picker";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { ArrowLeft, Upload, FileText, Loader2, Sparkles, X, Share2 } from "lucide-react";
+import { ArrowLeft, Upload, FileText, Loader2, Sparkles, X, Share2, AlertCircle } from "lucide-react";
 import { format, addDays, parse } from "date-fns";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+
+const STORAGE_KEY = 'addPolicy_formData';
+const FILE_STORAGE_KEY = 'addPolicy_uploadedFile';
 
 const AddPolicy = () => {
   const navigate = useNavigate();
@@ -17,24 +21,85 @@ const AddPolicy = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const dropZoneRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(false);
   const [parsing, setParsing] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [sharedFileLoaded, setSharedFileLoaded] = useState(false);
-  const [formData, setFormData] = useState({
-    policy_number: "",
-    client_name: "",
-    vehicle_number: "",
-    vehicle_make: "",
-    vehicle_model: "",
-    company_name: "",
-    contact_number: "",
-    agent_code: "",
-    reference: "",
-    status: "Active",
+  const [isDragging, setIsDragging] = useState(false);
+  const [checkingDuplicate, setCheckingDuplicate] = useState(false);
+  const [duplicateError, setDuplicateError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [formData, setFormData] = useState(() => {
+    // Try to restore from localStorage
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        // ignore parse error
+      }
+    }
+    return {
+      policy_number: "",
+      client_name: "",
+      vehicle_number: "",
+      vehicle_make: "",
+      vehicle_model: "",
+      company_name: "",
+      contact_number: "",
+      agent_code: "",
+      reference: "",
+      status: "Active",
+    };
   });
-  const [policyActiveDate, setPolicyActiveDate] = useState<Date>();
-  const [policyExpiryDate, setPolicyExpiryDate] = useState<Date>();
+
+  const [policyActiveDate, setPolicyActiveDate] = useState<Date | undefined>(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed._policyActiveDate) {
+          return new Date(parsed._policyActiveDate);
+        }
+      } catch {
+        // ignore
+      }
+    }
+    return undefined;
+  });
+
+  const [policyExpiryDate, setPolicyExpiryDate] = useState<Date | undefined>(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed._policyExpiryDate) {
+          return new Date(parsed._policyExpiryDate);
+        }
+      } catch {
+        // ignore
+      }
+    }
+    return undefined;
+  });
+
+  // Persist form data to localStorage
+  useEffect(() => {
+    const dataToSave = {
+      ...formData,
+      _policyActiveDate: policyActiveDate?.toISOString(),
+      _policyExpiryDate: policyExpiryDate?.toISOString(),
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+  }, [formData, policyActiveDate, policyExpiryDate]);
+
+  // Clear form data after successful submission
+  const clearSavedFormData = () => {
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(FILE_STORAGE_KEY);
+  };
 
   // Handle shared files from external apps
   useEffect(() => {
@@ -64,7 +129,6 @@ const AddPolicy = () => {
           description: errorMessage,
           variant: "destructive",
         });
-        // Clear error params from URL
         navigate('/add-policy', { replace: true });
         return;
       }
@@ -80,7 +144,6 @@ const AddPolicy = () => {
             const fileName = decodeURIComponent(response.headers.get('X-File-Name') || 'shared-policy.pdf');
             const file = new File([blob], fileName, { type: 'application/pdf' });
             
-            // Clear the cached file
             await cache.delete('/shared-pdf');
             
             setUploadedFile(file);
@@ -91,10 +154,7 @@ const AddPolicy = () => {
               description: `"${fileName}" has been loaded. Processing document...`,
             });
             
-            // Auto-parse the shared file
             await parseFile(file);
-            
-            // Update URL to remove shared param
             navigate('/add-policy', { replace: true });
           }
         } catch (error) {
@@ -118,7 +178,6 @@ const AddPolicy = () => {
     setParsing(true);
     
     try {
-      // Convert file to base64
       const base64 = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => {
@@ -139,7 +198,7 @@ const AddPolicy = () => {
       if (data?.success && data?.data) {
         const extracted = data.data;
         
-        setFormData(prev => ({
+        setFormData((prev: typeof formData) => ({
           ...prev,
           policy_number: extracted.policy_number || prev.policy_number,
           client_name: extracted.client_name ? toCamelCase(extracted.client_name) : prev.client_name,
@@ -181,39 +240,180 @@ const AddPolicy = () => {
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.type !== 'application/pdf' && !file.type.startsWith('image/')) {
+  const validateFile = (file: File): boolean => {
+    // Check file type - accept PDF and common image types
+    const validTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
+    if (!validTypes.includes(file.type) && !file.type.startsWith('image/')) {
       toast({
-        title: "Invalid File",
-        description: "Please upload a PDF or image file",
+        title: "Invalid File Type",
+        description: "Please upload a PDF or image file (JPEG, PNG, WebP)",
         variant: "destructive",
       });
-      return;
+      return false;
     }
 
+    // Check file size (10MB max)
     if (file.size > 10 * 1024 * 1024) {
       toast({
         title: "File Too Large",
         description: "Please upload a file smaller than 10MB",
         variant: "destructive",
       });
-      return;
+      return false;
     }
 
+    return true;
+  };
+
+  const handleFile = async (file: File) => {
+    if (!validateFile(file)) return;
     setUploadedFile(file);
     await parseFile(file);
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await handleFile(file);
+  };
+
+  // Drag and drop handlers
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only set to false if leaving the drop zone entirely
+    const rect = dropZoneRef.current?.getBoundingClientRect();
+    if (rect) {
+      const { clientX, clientY } = e;
+      if (
+        clientX < rect.left ||
+        clientX > rect.right ||
+        clientY < rect.top ||
+        clientY > rect.bottom
+      ) {
+        setIsDragging(false);
+      }
+    }
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length === 0) return;
+
+    // Take only the first file
+    if (files.length > 1) {
+      toast({
+        title: "Multiple Files",
+        description: "Only one file can be uploaded at a time. Using the first file.",
+      });
+    }
+
+    const file = files[0];
+    await handleFile(file);
+  }, [toast]);
+
+  // Check for duplicate policy
+  const checkDuplicatePolicy = async (): Promise<boolean> => {
+    if (!user?.id) return false;
+    
+    setCheckingDuplicate(true);
+    setDuplicateError(null);
+
+    try {
+      const policyNumber = formData.policy_number.trim().toUpperCase();
+      const vehicleNumber = formData.vehicle_number.trim().toUpperCase();
+      
+      // Check by policy number (exact match, case-insensitive)
+      if (policyNumber) {
+        const { data: existingByPolicyNumber } = await supabase
+          .from('policies')
+          .select('id, policy_number, vehicle_number, client_name')
+          .eq('user_id', user.id)
+          .ilike('policy_number', policyNumber)
+          .limit(1);
+
+        if (existingByPolicyNumber && existingByPolicyNumber.length > 0) {
+          setDuplicateError(
+            `A policy with number "${policyNumber}" already exists for ${existingByPolicyNumber[0].client_name || 'this client'}.`
+          );
+          return true;
+        }
+      }
+
+      // Check by vehicle number + active date + company (same vehicle, same period, same company)
+      if (vehicleNumber && policyActiveDate && formData.company_name) {
+        const { data: existingByVehicle } = await supabase
+          .from('policies')
+          .select('id, policy_number, vehicle_number, client_name, policy_active_date, policy_expiry_date')
+          .eq('user_id', user.id)
+          .ilike('vehicle_number', vehicleNumber)
+          .ilike('company_name', formData.company_name.trim());
+
+        if (existingByVehicle && existingByVehicle.length > 0) {
+          // Check for date overlap
+          const newActiveDate = policyActiveDate;
+          const newExpiryDate = policyExpiryDate || addDays(policyActiveDate, 364);
+          
+          for (const existing of existingByVehicle) {
+            const existingActive = new Date(existing.policy_active_date);
+            const existingExpiry = new Date(existing.policy_expiry_date);
+            
+            // Check if dates overlap
+            if (newActiveDate <= existingExpiry && newExpiryDate >= existingActive) {
+              setDuplicateError(
+                `A policy for vehicle "${vehicleNumber}" from the same company already exists (Policy: ${existing.policy_number}, Period: ${format(existingActive, 'dd/MM/yyyy')} - ${format(existingExpiry, 'dd/MM/yyyy')}).`
+              );
+              return true;
+            }
+          }
+        }
+      }
+
+      return false;
+    } catch (error) {
+      console.error('Error checking duplicate:', error);
+      return false;
+    } finally {
+      setCheckingDuplicate(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Prevent double submission
+    if (isSubmitting || loading) return;
+    
+    setDuplicateError(null);
+
     if (!policyActiveDate || !policyExpiryDate) {
       toast({
         title: "Error",
         description: "Please select policy active date",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.policy_number || formData.policy_number.trim() === "") {
+      toast({
+        title: "Error",
+        description: "Policy number is required",
         variant: "destructive",
       });
       return;
@@ -232,6 +432,20 @@ const AddPolicy = () => {
       toast({
         title: "Error",
         description: "Contact number must be exactly 10 digits",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    // Check for duplicate policy
+    const isDuplicate = await checkDuplicatePolicy();
+    if (isDuplicate) {
+      setIsSubmitting(false);
+      toast({
+        title: "Duplicate Policy",
+        description: "This policy already exists in your account.",
         variant: "destructive",
       });
       return;
@@ -266,6 +480,7 @@ const AddPolicy = () => {
             variant: "destructive",
           });
           setLoading(false);
+          setIsSubmitting(false);
           return;
         }
       }
@@ -316,6 +531,9 @@ const AddPolicy = () => {
         throw new Error(result?.error || validationError?.message || "Failed to add policy");
       }
 
+      // Clear saved form data on success
+      clearSavedFormData();
+
       toast({
         title: "Success",
         description: documentUrl ? "Policy and document added successfully!" : "Policy added successfully!",
@@ -330,11 +548,17 @@ const AddPolicy = () => {
       });
     } finally {
       setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    
+    // Clear duplicate error when user modifies key fields
+    if (['policy_number', 'vehicle_number', 'company_name'].includes(name)) {
+      setDuplicateError(null);
+    }
     
     if (name === "policy_number") {
       setFormData({ ...formData, [name]: value.toUpperCase() });
@@ -355,6 +579,7 @@ const AddPolicy = () => {
   };
 
   const handleActiveDateChange = (date: Date | undefined) => {
+    setDuplicateError(null);
     if (date) {
       setPolicyActiveDate(date);
       setPolicyExpiryDate(addDays(date, 364));
@@ -368,26 +593,67 @@ const AddPolicy = () => {
     }
   };
 
+  const clearForm = () => {
+    setFormData({
+      policy_number: "",
+      client_name: "",
+      vehicle_number: "",
+      vehicle_make: "",
+      vehicle_model: "",
+      company_name: "",
+      contact_number: "",
+      agent_code: "",
+      reference: "",
+      status: "Active",
+    });
+    setPolicyActiveDate(undefined);
+    setPolicyExpiryDate(undefined);
+    setUploadedFile(null);
+    setDuplicateError(null);
+    clearSavedFormData();
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   return (
     <div className="space-y-4 sm:space-y-6 px-2 sm:px-4 lg:px-6 pb-4 sm:pb-6">
-      <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => navigate(-1)}
-          className="self-start"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back
-        </Button>
-        <div>
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Add New Policy</h1>
-          <p className="text-gray-600 text-sm sm:text-base">Create a new insurance policy</p>
+      <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+        <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate(-1)}
+            className="self-start"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+          <div>
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Add New Policy</h1>
+            <p className="text-gray-600 text-sm sm:text-base">Create a new insurance policy</p>
+          </div>
         </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={clearForm}
+          className="self-start sm:self-auto text-muted-foreground"
+        >
+          Clear Form
+        </Button>
       </div>
 
       <div className="max-w-2xl mx-auto space-y-4">
-        {/* PDF Upload Card */}
+        {/* Duplicate Error Alert */}
+        {duplicateError && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{duplicateError}</AlertDescription>
+          </Alert>
+        )}
+
+        {/* PDF Upload Card with Drag & Drop */}
         <Card className="shadow-lg border-0 bg-gradient-to-r from-blue-50 to-indigo-50">
           <CardContent className="p-4 sm:p-6">
             <div className="flex items-start gap-4">
@@ -400,17 +666,18 @@ const AddPolicy = () => {
                   Upload a policy PDF or image and we'll automatically extract the details for you.
                   <span className="block mt-1 text-xs text-blue-600">
                     <Share2 className="w-3 h-3 inline mr-1" />
-                    Tip: You can also share PDFs directly from other apps!
+                    Tip: You can also share PDFs directly from other apps or drag & drop files!
                   </span>
                 </p>
                 
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept=".pdf,image/*"
+                  accept=".pdf,application/pdf,image/*,.jpg,.jpeg,.png,.webp"
                   onChange={handleFileUpload}
                   className="hidden"
                   id="pdf-upload"
+                  capture={undefined}
                 />
                 
                 {uploadedFile ? (
@@ -426,15 +693,29 @@ const AddPolicy = () => {
                     )}
                   </div>
                 ) : (
-                  <label
-                    htmlFor="pdf-upload"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                  <div
+                    ref={dropZoneRef}
+                    onDragEnter={handleDragEnter}
+                    onDragLeave={handleDragLeave}
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop}
+                    onClick={() => fileInputRef.current?.click()}
+                    className={`
+                      flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg cursor-pointer transition-all
+                      ${isDragging 
+                        ? 'border-blue-500 bg-blue-50' 
+                        : 'border-gray-300 bg-white hover:border-blue-400 hover:bg-gray-50'
+                      }
+                    `}
                   >
-                    <Upload className="w-4 h-4 text-gray-500" />
-                    <span className="text-sm font-medium text-gray-700">
-                      {parsing ? "Processing..." : "Upload Document"}
+                    <Upload className={`w-8 h-8 mb-2 ${isDragging ? 'text-blue-500' : 'text-gray-400'}`} />
+                    <span className="text-sm font-medium text-gray-700 text-center">
+                      {parsing ? "Processing..." : isDragging ? "Drop file here" : "Click or drag file to upload"}
                     </span>
-                  </label>
+                    <span className="text-xs text-gray-500 mt-1">
+                      PDF or images (max 10MB)
+                    </span>
+                  </div>
                 )}
               </div>
             </div>
@@ -459,7 +740,7 @@ const AddPolicy = () => {
                     value={formData.policy_number}
                     onChange={handleInputChange}
                     required
-                    className="h-10 text-sm uppercase"
+                    className={`h-10 text-sm uppercase ${duplicateError?.includes('policy') ? 'border-destructive' : ''}`}
                     placeholder="ABC-123-XYZ"
                   />
                   <p className="text-xs text-gray-500">Letters, numbers, and special characters (auto CAPS)</p>
@@ -493,7 +774,7 @@ const AddPolicy = () => {
                     value={formData.vehicle_number}
                     onChange={handleInputChange}
                     required
-                    className="h-10 text-sm uppercase"
+                    className={`h-10 text-sm uppercase ${duplicateError?.includes('vehicle') ? 'border-destructive' : ''}`}
                     placeholder="TN01AB1234"
                   />
                   <p className="text-xs text-gray-500">Uppercase letters and numbers only</p>
@@ -610,10 +891,19 @@ const AddPolicy = () => {
               <div className="pt-4">
                 <Button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || checkingDuplicate || isSubmitting}
                   className="w-full h-10 text-sm"
                 >
-                  {loading ? "Adding Policy..." : "Add Policy"}
+                  {checkingDuplicate ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Checking for duplicates...
+                    </>
+                  ) : loading ? (
+                    "Adding Policy..."
+                  ) : (
+                    "Add Policy"
+                  )}
                 </Button>
               </div>
             </form>
