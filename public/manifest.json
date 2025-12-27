@@ -1,0 +1,41 @@
+{
+  "name": "PolicyTracker - Insurance Policy Management",
+  "short_name": "PolicyTracker",
+  "description": "Track and manage insurance policies with WhatsApp reminders for Indian insurance agents",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#667eea",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "share_target": {
+    "action": "/add-policy?shared=true",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "files": [
+        {
+          "name": "pdf",
+          "accept": ["application/pdf", ".pdf"]
+        }
+      ]
+    }
+  },
+  "categories": ["business", "productivity", "utilities"],
+  "lang": "en-IN",
+  "scope": "/",
+  "prefer_related_applications": false
+}
