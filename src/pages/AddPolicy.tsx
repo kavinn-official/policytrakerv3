@@ -52,6 +52,7 @@ const AddPolicy = () => {
       agent_code: "",
       reference: "",
       status: "Active",
+      net_premium: "",
     };
   });
 
@@ -176,6 +177,7 @@ const AddPolicy = () => {
 
   const parseFile = async (file: File) => {
     setParsing(true);
+    setDuplicateError(null);
     
     try {
       const base64 = await new Promise<string>((resolve, reject) => {
@@ -198,21 +200,29 @@ const AddPolicy = () => {
       if (data?.success && data?.data) {
         const extracted = data.data;
         
-        setFormData((prev: typeof formData) => ({
-          ...prev,
-          policy_number: extracted.policy_number || prev.policy_number,
-          client_name: extracted.client_name ? toCamelCase(extracted.client_name) : prev.client_name,
-          vehicle_number: extracted.vehicle_number?.toUpperCase().replace(/[^A-Z0-9]/g, '') || prev.vehicle_number,
-          vehicle_make: extracted.vehicle_make || prev.vehicle_make,
-          vehicle_model: extracted.vehicle_model || prev.vehicle_model,
-          company_name: extracted.company_name || prev.company_name,
-          contact_number: extracted.contact_number?.replace(/\D/g, '').substring(0, 10) || prev.contact_number,
-        }));
+        const newFormData = {
+          ...formData,
+          policy_number: extracted.policy_number || formData.policy_number,
+          client_name: extracted.client_name ? toCamelCase(extracted.client_name) : formData.client_name,
+          vehicle_number: extracted.vehicle_number?.toUpperCase().replace(/[^A-Z0-9]/g, '') || formData.vehicle_number,
+          vehicle_make: extracted.vehicle_make || formData.vehicle_make,
+          vehicle_model: extracted.vehicle_model || formData.vehicle_model,
+          company_name: extracted.company_name || formData.company_name,
+          contact_number: extracted.contact_number?.replace(/\D/g, '').substring(0, 10) || formData.contact_number,
+          net_premium: extracted.net_premium ? String(extracted.net_premium) : formData.net_premium,
+        };
+        
+        setFormData(newFormData);
 
+        let newActiveDate: Date | undefined;
+        let newExpiryDate: Date | undefined;
+        
         if (extracted.policy_active_date) {
           try {
             const activeDate = parse(extracted.policy_active_date, 'yyyy-MM-dd', new Date());
             if (!isNaN(activeDate.getTime())) {
+              newActiveDate = activeDate;
+              newExpiryDate = addDays(activeDate, 364);
               setPolicyActiveDate(activeDate);
               setPolicyExpiryDate(addDays(activeDate, 364));
             }
@@ -220,6 +230,15 @@ const AddPolicy = () => {
             console.log("Could not parse active date");
           }
         }
+
+        // Check for duplicates immediately after parsing
+        await checkDuplicatePolicyAfterParse(
+          extracted.policy_number,
+          extracted.vehicle_number?.toUpperCase().replace(/[^A-Z0-9]/g, ''),
+          extracted.company_name,
+          newActiveDate,
+          newExpiryDate
+        );
 
         toast({
           title: "Document Parsed Successfully",
@@ -237,6 +256,72 @@ const AddPolicy = () => {
       });
     } finally {
       setParsing(false);
+    }
+  };
+
+  // Check for duplicate immediately after PDF parsing
+  const checkDuplicatePolicyAfterParse = async (
+    policyNumber?: string,
+    vehicleNumber?: string,
+    companyName?: string,
+    activeDate?: Date,
+    expiryDate?: Date
+  ): Promise<boolean> => {
+    if (!user?.id) return false;
+    
+    try {
+      const policyNum = policyNumber?.trim().toUpperCase();
+      const vehicleNum = vehicleNumber?.trim().toUpperCase();
+      
+      // Check by policy number (exact match, case-insensitive)
+      if (policyNum) {
+        const { data: existingByPolicyNumber } = await supabase
+          .from('policies')
+          .select('id, policy_number, vehicle_number, client_name')
+          .eq('user_id', user.id)
+          .ilike('policy_number', policyNum)
+          .limit(1);
+
+        if (existingByPolicyNumber && existingByPolicyNumber.length > 0) {
+          setDuplicateError(
+            `⚠️ Duplicate Found: A policy with number "${policyNum}" already exists for ${existingByPolicyNumber[0].client_name || 'this client'}. This policy cannot be submitted.`
+          );
+          return true;
+        }
+      }
+
+      // Check by vehicle number + active date + company (same vehicle, same period, same company)
+      if (vehicleNum && activeDate && companyName) {
+        const { data: existingByVehicle } = await supabase
+          .from('policies')
+          .select('id, policy_number, vehicle_number, client_name, policy_active_date, policy_expiry_date')
+          .eq('user_id', user.id)
+          .ilike('vehicle_number', vehicleNum)
+          .ilike('company_name', companyName.trim());
+
+        if (existingByVehicle && existingByVehicle.length > 0) {
+          const newActiveDate = activeDate;
+          const newExpiryDate = expiryDate || addDays(activeDate, 364);
+          
+          for (const existing of existingByVehicle) {
+            const existingActive = new Date(existing.policy_active_date);
+            const existingExpiry = new Date(existing.policy_expiry_date);
+            
+            // Check if dates overlap
+            if (newActiveDate <= existingExpiry && newExpiryDate >= existingActive) {
+              setDuplicateError(
+                `⚠️ Duplicate Found: A policy for vehicle "${vehicleNum}" from the same company already exists (Policy: ${existing.policy_number}, Period: ${format(existingActive, 'dd/MM/yyyy')} - ${format(existingExpiry, 'dd/MM/yyyy')}). This policy cannot be submitted.`
+              );
+              return true;
+            }
+          }
+        }
+      }
+
+      return false;
+    } catch (error) {
+      console.error('Error checking duplicate after parse:', error);
+      return false;
     }
   };
 
@@ -516,6 +601,7 @@ const AddPolicy = () => {
           action: 'create',
           data: {
             ...formData,
+            net_premium: formData.net_premium ? parseFloat(formData.net_premium) : 0,
             policy_active_date: format(policyActiveDate, "yyyy-MM-dd"),
             policy_expiry_date: format(policyExpiryDate, "yyyy-MM-dd"),
             document_url: documentUrl,
@@ -605,6 +691,7 @@ const AddPolicy = () => {
       agent_code: "",
       reference: "",
       status: "Active",
+      net_premium: "",
     });
     setPolicyActiveDate(undefined);
     setPolicyExpiryDate(undefined);
@@ -865,6 +952,25 @@ const AddPolicy = () => {
                     className="h-10 text-sm"
                     placeholder="Enter reference"
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="net_premium" className="text-sm font-medium">
+                    Net Premium (₹)
+                  </Label>
+                  <Input
+                    id="net_premium"
+                    name="net_premium"
+                    type="number"
+                    inputMode="decimal"
+                    value={formData.net_premium}
+                    onChange={handleInputChange}
+                    className="h-10 text-sm"
+                    placeholder="0.00"
+                    min="0"
+                    step="0.01"
+                  />
+                  <p className="text-xs text-gray-500">Auto-extracted from PDF (optional)</p>
                 </div>
 
                 <div className="space-y-2">

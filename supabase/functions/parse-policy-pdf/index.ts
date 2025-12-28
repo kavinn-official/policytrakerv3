@@ -103,8 +103,9 @@ Extract the following fields from the provided policy document image/PDF:
 - contact_number: The contact phone number (10 digits)
 - policy_active_date: The policy start date in YYYY-MM-DD format
 - policy_expiry_date: The policy end date in YYYY-MM-DD format
+- net_premium: The net premium amount (numeric value only, no currency symbols)
 
-Return ONLY a valid JSON object with these fields. If a field cannot be found, use an empty string.
+Return ONLY a valid JSON object with these fields. If a field cannot be found, use an empty string for text fields or 0 for net_premium.
 Do not include any explanation or markdown formatting.`
           },
           {
@@ -180,6 +181,7 @@ Do not include any explanation or markdown formatting.`
         contact_number: "",
         policy_active_date: "",
         policy_expiry_date: "",
+        net_premium: 0,
       };
     }
 
