@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useEffect } from "react";
 
 interface BackButtonProps {
   fallbackPath?: string;
@@ -9,12 +10,24 @@ interface BackButtonProps {
 
 const BackButton = ({ fallbackPath = "/dashboard", className = "" }: BackButtonProps) => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Handle browser/device back button by ensuring proper history state
+  useEffect(() => {
+    const handlePopState = () => {
+      // Browser back button was pressed - React Router will handle it
+    };
+    
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   const handleBack = () => {
-    if (window.history.length > 2) {
+    // Check if we have history to go back to
+    if (window.history.state?.idx > 0) {
       navigate(-1);
     } else {
-      navigate(fallbackPath);
+      navigate(fallbackPath, { replace: true });
     }
   };
 

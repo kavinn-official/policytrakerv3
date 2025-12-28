@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import PolicyCard from "./policy/PolicyCard";
 import PolicyTableRow from "./policy/PolicyTableRow";
 import PolicySearch from "./policy/PolicySearch";
+import PolicyDateFilter from "./policy/PolicyDateFilter";
 import PolicyViewDialog from "./policy/PolicyViewDialog";
 import PolicyEditDialog from "./policy/PolicyEditDialog";
 import PolicyDocumentPreviewDialog from "./policy/PolicyDocumentPreviewDialog";
@@ -43,6 +44,8 @@ const PolicyList = () => {
   const [documentPreviewOpen, setDocumentPreviewOpen] = useState(false);
   const [documentPreviewPolicy, setDocumentPreviewPolicy] = useState<Policy | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [dateFromFilter, setDateFromFilter] = useState<Date | undefined>(undefined);
+  const [dateToFilter, setDateToFilter] = useState<Date | undefined>(undefined);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -93,18 +96,32 @@ const PolicyList = () => {
     }
   };
 
-  // Filter policies based on search term
-  const filteredPolicies = filterPolicies(policies, searchTerm);
+  // Filter policies based on search term and date range
+  const filteredPolicies = filterPolicies(policies, searchTerm).filter((policy) => {
+    const createdAt = new Date(policy.created_at);
+    if (dateFromFilter && createdAt < dateFromFilter) return false;
+    if (dateToFilter) {
+      const endOfDay = new Date(dateToFilter);
+      endOfDay.setHours(23, 59, 59, 999);
+      if (createdAt > endOfDay) return false;
+    }
+    return true;
+  });
   
   // Pagination logic
   const totalPages = Math.ceil(filteredPolicies.length / POLICIES_PER_PAGE);
   const startIndex = (currentPage - 1) * POLICIES_PER_PAGE;
   const paginatedPolicies = filteredPolicies.slice(startIndex, startIndex + POLICIES_PER_PAGE);
 
-  // Reset to page 1 when search term changes
+  // Reset to page 1 when search term or date filter changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm]);
+  }, [searchTerm, dateFromFilter, dateToFilter]);
+
+  const handleClearDateFilter = () => {
+    setDateFromFilter(undefined);
+    setDateToFilter(undefined);
+  };
 
   const handleViewPolicy = (policy: Policy) => {
     setSelectedPolicy(policy);
@@ -367,8 +384,18 @@ const PolicyList = () => {
             </div>
           </CardHeader>
           <CardContent className="px-4 sm:px-6">
-            <PolicySearch searchTerm={searchTerm} onSearchChange={setSearchTerm} />
-
+            <div className="flex flex-col sm:flex-row gap-3 mb-4">
+              <div className="flex-1">
+                <PolicySearch searchTerm={searchTerm} onSearchChange={setSearchTerm} />
+              </div>
+              <PolicyDateFilter
+                fromDate={dateFromFilter}
+                toDate={dateToFilter}
+                onFromDateChange={setDateFromFilter}
+                onToDateChange={setDateToFilter}
+                onClear={handleClearDateFilter}
+              />
+            </div>
             {filteredPolicies.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-gray-600 mb-4">No policies found.</p>
