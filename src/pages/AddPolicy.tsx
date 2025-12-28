@@ -8,7 +8,8 @@ import { MaterialDatePicker } from "@/components/ui/material-date-picker";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { ArrowLeft, Upload, FileText, Loader2, Sparkles, X, Share2, AlertCircle } from "lucide-react";
+import { ArrowLeft, Upload, FileText, Loader2, Sparkles, X, Share2, AlertCircle, RefreshCw } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { format, addDays, parse } from "date-fns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -30,6 +31,10 @@ const AddPolicy = () => {
   const [checkingDuplicate, setCheckingDuplicate] = useState(false);
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [parseError, setParseError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [parseProgress, setParseProgress] = useState(0);
+  const [lastSubmitData, setLastSubmitData] = useState<any>(null);
 
   const [formData, setFormData] = useState(() => {
     // Try to restore from localStorage
@@ -178,6 +183,8 @@ const AddPolicy = () => {
   const parseFile = async (file: File) => {
     setParsing(true);
     setDuplicateError(null);
+    setParseError(null);
+    setParseProgress(10);
     
     try {
       // Validate file before parsing
@@ -197,6 +204,7 @@ const AddPolicy = () => {
       }
 
       console.log("Parsing file:", file.name, "Type:", file.type, "Size:", file.size);
+      setParseProgress(20);
 
       const base64 = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
@@ -214,10 +222,19 @@ const AddPolicy = () => {
       });
 
       console.log("Base64 generated, length:", base64.length);
+      setParseProgress(40);
+
+      // Simulate progress during AI processing
+      const progressInterval = setInterval(() => {
+        setParseProgress(prev => Math.min(prev + 5, 85));
+      }, 500);
 
       const { data, error } = await supabase.functions.invoke('parse-policy-pdf', {
         body: { pdfBase64: base64 }
       });
+
+      clearInterval(progressInterval);
+      setParseProgress(90);
 
       if (error) {
         console.error("Supabase function error:", error);
@@ -282,6 +299,7 @@ const AddPolicy = () => {
           newExpiryDate
         );
 
+        setParseProgress(100);
         toast({
           title: "Document Parsed Successfully",
           description: "Policy details have been extracted. Please review and edit if needed.",
@@ -317,6 +335,9 @@ const AddPolicy = () => {
         }
       }
       
+      // Store error for retry functionality
+      setParseError(errorMessage);
+      
       toast({
         title: errorTitle,
         description: errorMessage,
@@ -324,6 +345,15 @@ const AddPolicy = () => {
       });
     } finally {
       setParsing(false);
+      setParseProgress(0);
+    }
+  };
+
+  // Retry PDF parsing
+  const retryParsing = async () => {
+    if (uploadedFile) {
+      setParseError(null);
+      await parseFile(uploadedFile);
     }
   };
 
@@ -546,13 +576,14 @@ const AddPolicy = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     
     // Prevent double submission
     if (isSubmitting || loading) return;
     
     setDuplicateError(null);
+    setSubmitError(null);
 
     if (!policyActiveDate || !policyExpiryDate) {
       toast({
@@ -589,6 +620,14 @@ const AddPolicy = () => {
       });
       return;
     }
+
+    // Store submit data for retry
+    setLastSubmitData({
+      formData: { ...formData },
+      policyActiveDate,
+      policyExpiryDate,
+      uploadedFile,
+    });
 
     setIsSubmitting(true);
 
@@ -695,15 +734,23 @@ const AddPolicy = () => {
 
       navigate("/policies");
     } catch (error: any) {
+      const errorMessage = error.message || "Failed to add policy";
+      setSubmitError(errorMessage);
       toast({
         title: "Error",
-        description: error.message || "Failed to add policy",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
       setLoading(false);
       setIsSubmitting(false);
     }
+  };
+
+  // Retry submission
+  const retrySubmit = async () => {
+    setSubmitError(null);
+    await handleSubmit();
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -836,15 +883,58 @@ const AddPolicy = () => {
                 />
                 
                 {uploadedFile ? (
-                  <div className="flex items-center gap-2 p-3 bg-white rounded-lg border">
-                    <FileText className="w-5 h-5 text-blue-500" />
-                    <span className="text-sm text-gray-700 flex-1 truncate">{uploadedFile.name}</span>
-                    {parsing ? (
-                      <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
-                    ) : (
-                      <button onClick={clearUploadedFile} className="p-1 hover:bg-gray-100 rounded">
-                        <X className="w-4 h-4 text-gray-400" />
-                      </button>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 p-3 bg-white rounded-lg border">
+                      <FileText className="w-5 h-5 text-blue-500" />
+                      <span className="text-sm text-gray-700 flex-1 truncate">{uploadedFile.name}</span>
+                      {parsing ? (
+                        <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
+                      ) : parseError ? (
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={retryParsing}
+                          className="h-7 px-2 text-xs"
+                        >
+                          <RefreshCw className="w-3 h-3 mr-1" />
+                          Retry
+                        </Button>
+                      ) : (
+                        <button onClick={clearUploadedFile} className="p-1 hover:bg-gray-100 rounded">
+                          <X className="w-4 h-4 text-gray-400" />
+                        </button>
+                      )}
+                    </div>
+                    
+                    {/* Progress indicator */}
+                    {parsing && parseProgress > 0 && (
+                      <div className="space-y-1">
+                        <Progress value={parseProgress} className="h-2" />
+                        <p className="text-xs text-muted-foreground text-center">
+                          {parseProgress < 40 ? "Reading document..." : 
+                           parseProgress < 85 ? "Extracting policy details with AI..." : 
+                           "Finalizing..."}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {/* Parse error with retry */}
+                    {parseError && !parsing && (
+                      <Alert variant="destructive" className="py-2">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription className="flex items-center justify-between">
+                          <span className="text-xs">{parseError}</span>
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            onClick={retryParsing}
+                            className="h-6 px-2 text-xs ml-2"
+                          >
+                            <RefreshCw className="w-3 h-3 mr-1" />
+                            Retry Parsing
+                          </Button>
+                        </AlertDescription>
+                      </Alert>
                     )}
                   </div>
                 ) : (
@@ -1061,6 +1151,25 @@ const AddPolicy = () => {
                   />
                 </div>
               </div>
+
+              {/* Submit error with retry */}
+              {submitError && !loading && !isSubmitting && (
+                <Alert variant="destructive" className="py-2">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription className="flex items-center justify-between">
+                    <span className="text-sm">{submitError}</span>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={retrySubmit}
+                      className="h-7 px-3 text-xs ml-2"
+                    >
+                      <RefreshCw className="w-3 h-3 mr-1" />
+                      Retry
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              )}
 
               <div className="pt-4">
                 <Button
