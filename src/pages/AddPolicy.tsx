@@ -180,22 +180,64 @@ const AddPolicy = () => {
     setDuplicateError(null);
     
     try {
+      // Validate file before parsing
+      if (!file) {
+        throw new Error("No file provided");
+      }
+
+      // Check file size
+      if (file.size > 10 * 1024 * 1024) {
+        throw new Error("File too large. Maximum size is 10MB.");
+      }
+
+      // Check file type
+      const validTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
+      if (!validTypes.includes(file.type) && !file.name.toLowerCase().endsWith('.pdf')) {
+        throw new Error("Unsupported file format. Please upload a PDF or image file.");
+      }
+
+      console.log("Parsing file:", file.name, "Type:", file.type, "Size:", file.size);
+
       const base64 = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => {
           const result = reader.result as string;
           const base64Data = result.split(',')[1];
+          if (!base64Data || base64Data.length === 0) {
+            reject(new Error("Failed to read file. The file may be corrupted."));
+            return;
+          }
           resolve(base64Data);
         };
-        reader.onerror = reject;
+        reader.onerror = () => reject(new Error("Failed to read file. Please try again."));
         reader.readAsDataURL(file);
       });
+
+      console.log("Base64 generated, length:", base64.length);
 
       const { data, error } = await supabase.functions.invoke('parse-policy-pdf', {
         body: { pdfBase64: base64 }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase function error:", error);
+        // Parse specific error messages
+        if (error.message?.includes('Failed to send') || error.message?.includes('Failed to fetch')) {
+          throw new Error("Network error. Please check your connection and try again.");
+        }
+        if (error.message?.includes('Rate limit')) {
+          throw new Error("Too many requests. Please wait a moment and try again.");
+        }
+        if (error.message?.includes('credits')) {
+          throw new Error("AI service temporarily unavailable. Please try again later.");
+        }
+        throw new Error(error.message || "Failed to process document");
+      }
+
+      if (data?.error) {
+        console.error("API returned error:", data.error);
+        throw new Error(data.error);
+      }
 
       if (data?.success && data?.data) {
         const extracted = data.data;
@@ -245,13 +287,39 @@ const AddPolicy = () => {
           description: "Policy details have been extracted. Please review and edit if needed.",
         });
       } else {
-        throw new Error(data?.error || "Failed to extract data");
+        throw new Error("Could not extract data from the document. The PDF may not contain readable policy information.");
       }
     } catch (error: any) {
       console.error("PDF parsing error:", error);
+      
+      // Provide user-friendly error messages
+      let errorMessage = "Could not extract data from the document.";
+      let errorTitle = "Parsing Failed";
+      
+      if (error.message) {
+        if (error.message.includes("Network error") || error.message.includes("Failed to fetch")) {
+          errorTitle = "Connection Error";
+          errorMessage = "Unable to connect to the server. Please check your internet connection and try again.";
+        } else if (error.message.includes("too large")) {
+          errorTitle = "File Too Large";
+          errorMessage = "The file exceeds the 10MB limit. Please upload a smaller file.";
+        } else if (error.message.includes("Unsupported")) {
+          errorTitle = "Unsupported Format";
+          errorMessage = error.message;
+        } else if (error.message.includes("corrupted")) {
+          errorTitle = "Corrupted File";
+          errorMessage = "The file appears to be corrupted. Please try a different file.";
+        } else if (error.message.includes("Rate limit") || error.message.includes("Too many")) {
+          errorTitle = "Please Wait";
+          errorMessage = "Too many requests. Please wait a moment and try again.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       toast({
-        title: "Parsing Failed",
-        description: error.message || "Could not extract data from the document. Please fill in manually.",
+        title: errorTitle,
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
