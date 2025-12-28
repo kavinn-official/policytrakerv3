@@ -237,6 +237,38 @@ const SettingsPage = () => {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
+        {/* Push Notifications */}
+        <Card className="shadow-lg border-0">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Bell className="h-5 w-5 text-primary" />
+              Push Notifications
+            </CardTitle>
+            <CardDescription>
+              Enable browser push notifications for real-time policy expiry alerts
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <PushNotificationToggle />
+          </CardContent>
+        </Card>
+
+        {/* Monthly Premium Report */}
+        <Card className="shadow-lg border-0">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Calendar className="h-5 w-5 text-primary" />
+              Monthly Premium Report
+            </CardTitle>
+            <CardDescription>
+              Generate and download monthly reports of all policies with net premiums
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <MonthlyPremiumReport />
+          </CardContent>
+        </Card>
+
         {/* WhatsApp Reminders Toggle */}
         <Card className="shadow-lg border-0">
           <CardHeader>
@@ -356,7 +388,7 @@ const SettingsPage = () => {
         <Card className="shadow-lg border-0 lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Calendar className="h-5 w-5 text-primary" />
+              <Settings className="h-5 w-5 text-primary" />
               Cron Job Management
               <Tooltip>
                 <TooltipTrigger asChild>

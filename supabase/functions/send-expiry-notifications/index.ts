@@ -78,26 +78,26 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    // Calculate date 7 days from now
+    // Calculate date 30 days from now for policy expiry alerts
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    const sevenDaysFromNow = new Date(today);
-    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+    const thirtyDaysFromNow = new Date(today);
+    thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
 
-    // Get all policies expiring within 7 days
+    // Get all policies expiring within 30 days
     const { data: policies, error: policiesError } = await supabaseClient
       .from('policies')
       .select('id, policy_number, client_name, vehicle_number, vehicle_make, vehicle_model, policy_expiry_date, contact_number, user_id')
       .gte('policy_expiry_date', today.toISOString().split('T')[0])
-      .lte('policy_expiry_date', sevenDaysFromNow.toISOString().split('T')[0]);
+      .lte('policy_expiry_date', thirtyDaysFromNow.toISOString().split('T')[0]);
 
     if (policiesError) {
       console.error("Error fetching policies:", policiesError);
       throw policiesError;
     }
 
-    console.log(`Found ${policies?.length || 0} policies expiring within 7 days`);
+    console.log(`Found ${policies?.length || 0} policies expiring within 30 days`);
 
     if (!policies || policies.length === 0) {
       return new Response(
@@ -166,7 +166,7 @@ serve(async (req) => {
           
           <div style="background: #f9fafb; padding: 30px; border: 1px solid #e5e7eb; border-top: none;">
             <p style="margin: 0 0 20px 0;">Hi ${profile.full_name || 'there'},</p>
-            <p style="margin: 0 0 20px 0;">The following <strong>${userPolicies.length} ${userPolicies.length === 1 ? 'policy is' : 'policies are'}</strong> expiring within the next 7 days:</p>
+            <p style="margin: 0 0 20px 0;">The following <strong>${userPolicies.length} ${userPolicies.length === 1 ? 'policy is' : 'policies are'}</strong> expiring within the next 30 days:</p>
             
             <div style="overflow-x: auto;">
               <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
