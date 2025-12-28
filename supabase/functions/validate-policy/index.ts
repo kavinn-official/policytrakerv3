@@ -1,22 +1,11 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
-// Allowed origins for CORS
-const ALLOWED_ORIGINS = [
-  'https://policytracker.in',
-  'https://www.policytracker.in',
-  'http://localhost:5173',
-  'http://localhost:8080',
-];
-
-function getCorsHeaders(req: Request): Record<string, string> {
-  const origin = req.headers.get('origin') || '';
-  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
-  return {
-    'Access-Control-Allow-Origin': allowedOrigin,
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  };
-}
+// CORS headers - allow all origins for flexibility
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
 // Validation schemas using manual validation (Zod-like validation)
 interface PolicyData {
@@ -30,6 +19,7 @@ interface PolicyData {
   agent_code?: string;
   reference?: string;
   status?: string;
+  net_premium?: number;
   policy_active_date: string;
   policy_expiry_date: string;
   document_url?: string;
@@ -119,6 +109,7 @@ function validatePolicyData(data: any): { valid: boolean; errors: ValidationErro
     agent_code: data.agent_code?.trim() || null,
     reference: data.reference?.trim() || null,
     status: data.status || 'Active',
+    net_premium: data.net_premium ? Number(data.net_premium) : 0,
     policy_active_date: data.policy_active_date,
     policy_expiry_date: data.policy_expiry_date,
     document_url: data.document_url || null,
@@ -128,8 +119,6 @@ function validatePolicyData(data: any): { valid: boolean; errors: ValidationErro
 }
 
 serve(async (req) => {
-  const corsHeaders = getCorsHeaders(req);
-
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -295,7 +284,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("Error in validate-policy function:", error);
     return new Response(JSON.stringify({ error: "An unexpected error occurred while processing your request" }), {
-      headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });
   }
