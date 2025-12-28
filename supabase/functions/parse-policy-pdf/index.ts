@@ -80,7 +80,46 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    // Use Gemini to extract policy details from PDF
+    // Determine the MIME type - try to detect if it's actually an image
+    // PDFs should use file type, images should use image_url
+    const isPdf = pdfBase64.startsWith('JVBERi0') || pdfBase64.substring(0, 20).includes('PDF');
+    
+    console.log("Document type detection - isPdf:", isPdf, "First chars:", pdfBase64.substring(0, 20));
+
+    // Build the appropriate content structure
+    const userContent: any[] = [
+      {
+        type: "text",
+        text: "Extract insurance policy details from this document. Return ONLY a valid JSON object with these fields: policy_number, client_name, vehicle_number, vehicle_make, vehicle_model, company_name, contact_number (10 digits), policy_active_date (YYYY-MM-DD), policy_expiry_date (YYYY-MM-DD), net_premium (number only). If a field cannot be found, use empty string for text or 0 for net_premium."
+      }
+    ];
+
+    if (isPdf) {
+      // For PDFs, use file type with proper MIME
+      userContent.push({
+        type: "file",
+        file: {
+          filename: "policy.pdf",
+          file_data: `data:application/pdf;base64,${pdfBase64}`
+        }
+      });
+    } else {
+      // For images (JPEG, PNG, etc.), use image_url
+      // Try to detect image type from base64 header
+      let mimeType = "image/jpeg"; // default
+      if (pdfBase64.startsWith('/9j/')) mimeType = "image/jpeg";
+      else if (pdfBase64.startsWith('iVBORw0KGgo')) mimeType = "image/png";
+      else if (pdfBase64.startsWith('UklGR')) mimeType = "image/webp";
+      
+      userContent.push({
+        type: "image_url",
+        image_url: {
+          url: `data:${mimeType};base64,${pdfBase64}`
+        }
+      });
+    }
+
+    // Use Gemini to extract policy details
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -93,14 +132,14 @@ serve(async (req) => {
           {
             role: "system",
             content: `You are an expert at extracting insurance policy information from documents. 
-Extract the following fields from the provided policy document image/PDF:
+Extract the following fields:
 - policy_number: The policy number/ID
 - client_name: The policyholder's name
 - vehicle_number: The vehicle registration number
 - vehicle_make: The vehicle manufacturer/make (e.g., Maruti, Honda, Toyota)
 - vehicle_model: The vehicle model name
 - company_name: The insurance company name
-- contact_number: The contact phone number (10 digits)
+- contact_number: The contact phone number (10 digits only)
 - policy_active_date: The policy start date in YYYY-MM-DD format
 - policy_expiry_date: The policy end date in YYYY-MM-DD format
 - net_premium: The net premium amount (numeric value only, no currency symbols)
@@ -110,18 +149,7 @@ Do not include any explanation or markdown formatting.`
           },
           {
             role: "user",
-            content: [
-              {
-                type: "text",
-                text: "Extract policy details from this insurance document:"
-              },
-              {
-                type: "image_url",
-                image_url: {
-                  url: `data:application/pdf;base64,${pdfBase64}`
-                }
-              }
-            ]
+            content: userContent
           }
         ],
       }),
