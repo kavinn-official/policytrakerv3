@@ -1,29 +1,16 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// Allowed origins for CORS
-const ALLOWED_ORIGINS = [
-  'https://policytracker.in',
-  'https://www.policytracker.in',
-  'http://localhost:5173',
-  'http://localhost:8080',
-];
-
-function getCorsHeaders(req: Request): Record<string, string> {
-  const origin = req.headers.get('origin') || '';
-  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
-  return {
-    'Access-Control-Allow-Origin': allowedOrigin,
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  };
-}
+// CORS headers - allow all origins for flexibility
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
 // Max file size: 10MB in base64 (~14MB encoded)
 const MAX_BASE64_SIZE = 14680064;
 
 serve(async (req) => {
-  const corsHeaders = getCorsHeaders(req);
-  
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -80,44 +67,33 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    // Determine the MIME type - try to detect if it's actually an image
-    // PDFs should use file type, images should use image_url
-    const isPdf = pdfBase64.startsWith('JVBERi0') || pdfBase64.substring(0, 20).includes('PDF');
+    // Detect the MIME type from base64 signature
+    let mimeType = "application/pdf"; // default
+    if (pdfBase64.startsWith('JVBERi0')) {
+      mimeType = "application/pdf";
+    } else if (pdfBase64.startsWith('/9j/')) {
+      mimeType = "image/jpeg";
+    } else if (pdfBase64.startsWith('iVBORw0KGgo')) {
+      mimeType = "image/png";
+    } else if (pdfBase64.startsWith('UklGR')) {
+      mimeType = "image/webp";
+    }
     
-    console.log("Document type detection - isPdf:", isPdf, "First chars:", pdfBase64.substring(0, 20));
+    console.log("Document type detection - mimeType:", mimeType, "Base64 length:", pdfBase64.length);
 
-    // Build the appropriate content structure
+    // Build the content structure using image_url format (works for PDFs and images)
     const userContent: any[] = [
       {
         type: "text",
         text: "Extract insurance policy details from this document. Return ONLY a valid JSON object with these fields: policy_number, client_name, vehicle_number, vehicle_make, vehicle_model, company_name, contact_number (10 digits), policy_active_date (YYYY-MM-DD), policy_expiry_date (YYYY-MM-DD), net_premium (number only). If a field cannot be found, use empty string for text or 0 for net_premium."
-      }
-    ];
-
-    if (isPdf) {
-      // For PDFs, use file type with proper MIME
-      userContent.push({
-        type: "file",
-        file: {
-          filename: "policy.pdf",
-          file_data: `data:application/pdf;base64,${pdfBase64}`
-        }
-      });
-    } else {
-      // For images (JPEG, PNG, etc.), use image_url
-      // Try to detect image type from base64 header
-      let mimeType = "image/jpeg"; // default
-      if (pdfBase64.startsWith('/9j/')) mimeType = "image/jpeg";
-      else if (pdfBase64.startsWith('iVBORw0KGgo')) mimeType = "image/png";
-      else if (pdfBase64.startsWith('UklGR')) mimeType = "image/webp";
-      
-      userContent.push({
+      },
+      {
         type: "image_url",
         image_url: {
           url: `data:${mimeType};base64,${pdfBase64}`
         }
-      });
-    }
+      }
+    ];
 
     // Use Gemini to extract policy details
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -226,7 +202,7 @@ Do not include any explanation or markdown formatting.`
       JSON.stringify({ 
         error: error instanceof Error ? error.message : "Failed to parse PDF" 
       }),
-      { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
