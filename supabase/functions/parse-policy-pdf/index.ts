@@ -155,7 +155,7 @@ serve(async (req) => {
     const userContent: any[] = [
       {
         type: "text",
-        text: "Extract insurance policy details from this document. Return ONLY a valid JSON object with these fields: policy_number, client_name, vehicle_number, vehicle_make, vehicle_model, company_name, contact_number (10 digits), policy_active_date (YYYY-MM-DD), policy_expiry_date (YYYY-MM-DD), net_premium (number only), insurance_type (must be one of: 'Vehicle Insurance', 'Health Insurance', 'Life Insurance', 'Other'). If a field cannot be found, use empty string for text or 0 for net_premium. For insurance_type, analyze the document content to determine the type."
+        text: "Extract insurance policy details from this document. Return ONLY a valid JSON object with these fields: policy_number, client_name, vehicle_number, vehicle_make, vehicle_model, company_name, contact_number (10 digits), policy_active_date (YYYY-MM-DD), policy_expiry_date (YYYY-MM-DD), net_premium (number only - MUST be the base premium BEFORE GST/taxes, NOT the total premium), insurance_type (must be one of: 'Vehicle Insurance', 'Health Insurance', 'Life Insurance', 'Other'). IMPORTANT: For net_premium, look for 'Net Premium', 'Basic Premium', 'Base Premium', or 'Premium (Before Tax)'. EXCLUDE any GST components (CGST, SGST, IGST, Service Tax). If only Total Premium is shown with GST breakup, calculate: Net Premium = Total Premium - All GST amounts. If a field cannot be found, use empty string for text or 0 for net_premium."
       },
       {
         type: "image_url",
@@ -177,10 +177,20 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `You are an expert at extracting insurance policy information from documents. 
-Extract the following fields:
+            content: `You are an expert at extracting insurance policy information from Indian insurance documents.
+
+CRITICAL INSTRUCTIONS FOR NET PREMIUM:
+The net_premium field MUST contain the base premium amount BEFORE any GST/taxes are added. This is essential for accurate reporting.
+
+How to find Net Premium:
+1. Look for fields labeled: "Net Premium", "Basic Premium", "Base Premium", "Premium (Before Tax)", "Own Damage Premium + Third Party Premium"
+2. EXCLUDE these from net_premium: CGST, SGST, IGST, GST, Service Tax, Cess, any tax component
+3. If only "Total Premium" or "Gross Premium" is shown WITH a GST breakup, calculate: Net Premium = Total Premium - (CGST + SGST + IGST + any other taxes)
+4. Common pattern: Look for premium breakdown table - the net premium is typically shown before the GST line items
+
+Extract these fields:
 - policy_number: The policy number/ID
-- client_name: The policyholder's name
+- client_name: The policyholder's name  
 - vehicle_number: The vehicle registration number (if applicable)
 - vehicle_make: The vehicle manufacturer/make (e.g., Maruti, Honda, Toyota) - if applicable
 - vehicle_model: The vehicle model name - if applicable
@@ -188,10 +198,10 @@ Extract the following fields:
 - contact_number: The contact phone number (10 digits only)
 - policy_active_date: The policy start date in YYYY-MM-DD format
 - policy_expiry_date: The policy end date in YYYY-MM-DD format
-- net_premium: The net premium amount (numeric value only, no currency symbols)
-- insurance_type: Determine the type of insurance from the document. Must be one of: "Vehicle Insurance", "Health Insurance", "Life Insurance", or "Other". Look for keywords like motor, vehicle, car, bike for Vehicle Insurance; medical, health, hospitalization for Health Insurance; life, term, endowment for Life Insurance.
+- net_premium: The BASE premium amount BEFORE GST (numeric value only, no currency symbols or commas)
+- insurance_type: Determine the type from keywords - "Vehicle Insurance", "Health Insurance", "Life Insurance", or "Other"
 
-Return ONLY a valid JSON object with these fields. If a field cannot be found, use an empty string for text fields or 0 for net_premium. For insurance_type, default to "Vehicle Insurance" if unclear.
+Return ONLY a valid JSON object. If a field cannot be found, use empty string for text or 0 for net_premium. Default insurance_type to "Vehicle Insurance" if unclear.
 Do not include any explanation or markdown formatting.`
           },
           {
