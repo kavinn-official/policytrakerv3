@@ -43,6 +43,60 @@ function isValidUUID(str: string): boolean {
   return uuidRegex.test(str);
 }
 
+// Rate limiting configuration
+const RATE_LIMIT_WINDOW_HOURS = 1;
+const RATE_LIMIT_MAX_REQUESTS = 5; // 5 report requests per hour
+
+// Rate limiting helper
+async function checkRateLimit(supabaseClient: any, userId: string, functionName: string): Promise<{ allowed: boolean; remaining: number }> {
+  const windowStart = new Date();
+  windowStart.setMinutes(0, 0, 0); // Round to current hour
+
+  try {
+    const { data: existing, error: fetchError } = await supabaseClient
+      .from('rate_limits')
+      .select('request_count')
+      .eq('user_id', userId)
+      .eq('function_name', functionName)
+      .eq('window_start', windowStart.toISOString())
+      .single();
+
+    if (fetchError && fetchError.code !== 'PGRST116') {
+      console.error('Rate limit check error:', fetchError);
+      return { allowed: true, remaining: RATE_LIMIT_MAX_REQUESTS };
+    }
+
+    const currentCount = existing?.request_count || 0;
+    
+    if (currentCount >= RATE_LIMIT_MAX_REQUESTS) {
+      return { allowed: false, remaining: 0 };
+    }
+
+    if (existing) {
+      await supabaseClient
+        .from('rate_limits')
+        .update({ request_count: currentCount + 1 })
+        .eq('user_id', userId)
+        .eq('function_name', functionName)
+        .eq('window_start', windowStart.toISOString());
+    } else {
+      await supabaseClient
+        .from('rate_limits')
+        .insert({
+          user_id: userId,
+          function_name: functionName,
+          window_start: windowStart.toISOString(),
+          request_count: 1
+        });
+    }
+
+    return { allowed: true, remaining: RATE_LIMIT_MAX_REQUESTS - currentCount - 1 };
+  } catch (error) {
+    console.error('Rate limit error:', error);
+    return { allowed: true, remaining: RATE_LIMIT_MAX_REQUESTS };
+  }
+}
+
 const handler = async (req: Request): Promise<Response> => {
   const corsHeaders = getCorsHeaders(req);
   
@@ -107,6 +161,18 @@ const handler = async (req: Request): Promise<Response> => {
           error: "Unauthorized to trigger reports for other users" 
         }), {
           status: 403,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
+
+      // Rate limiting check for manual triggers
+      const rateLimit = await checkRateLimit(supabaseClient, user_id, 'send-policy-report');
+      if (!rateLimit.allowed) {
+        console.log(`Rate limit exceeded for user ${user_id.substring(0, 8)}...`);
+        return new Response(JSON.stringify({ 
+          error: "Too many report requests. Please try again later." 
+        }), {
+          status: 429,
           headers: { "Content-Type": "application/json", ...corsHeaders },
         });
       }

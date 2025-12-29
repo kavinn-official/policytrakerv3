@@ -28,6 +28,64 @@ const VALID_PLAN_TYPES = Object.keys(PLAN_PRICES);
 const MIN_AMOUNT = 1;
 const MAX_AMOUNT = 100000;
 
+// Rate limiting configuration
+const RATE_LIMIT_WINDOW_HOURS = 1;
+const RATE_LIMIT_MAX_REQUESTS = 10; // 10 payment attempts per hour
+
+// Rate limiting helper
+async function checkRateLimit(supabaseService: any, userId: string, functionName: string): Promise<{ allowed: boolean; remaining: number }> {
+  const windowStart = new Date();
+  windowStart.setMinutes(0, 0, 0); // Round to current hour
+
+  try {
+    // Try to get existing rate limit record
+    const { data: existing, error: fetchError } = await supabaseService
+      .from('rate_limits')
+      .select('request_count')
+      .eq('user_id', userId)
+      .eq('function_name', functionName)
+      .eq('window_start', windowStart.toISOString())
+      .single();
+
+    if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 = no rows
+      console.error('Rate limit check error:', fetchError);
+      // Fail open - allow request if rate limiting check fails
+      return { allowed: true, remaining: RATE_LIMIT_MAX_REQUESTS };
+    }
+
+    const currentCount = existing?.request_count || 0;
+    
+    if (currentCount >= RATE_LIMIT_MAX_REQUESTS) {
+      return { allowed: false, remaining: 0 };
+    }
+
+    // Increment or insert rate limit record
+    if (existing) {
+      await supabaseService
+        .from('rate_limits')
+        .update({ request_count: currentCount + 1 })
+        .eq('user_id', userId)
+        .eq('function_name', functionName)
+        .eq('window_start', windowStart.toISOString());
+    } else {
+      await supabaseService
+        .from('rate_limits')
+        .insert({
+          user_id: userId,
+          function_name: functionName,
+          window_start: windowStart.toISOString(),
+          request_count: 1
+        });
+    }
+
+    return { allowed: true, remaining: RATE_LIMIT_MAX_REQUESTS - currentCount - 1 };
+  } catch (error) {
+    console.error('Rate limit error:', error);
+    // Fail open
+    return { allowed: true, remaining: RATE_LIMIT_MAX_REQUESTS };
+  }
+}
+
 serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
   
@@ -80,6 +138,24 @@ serve(async (req) => {
     }
 
     console.log("User authenticated:", user.id.substring(0, 8) + "...");
+
+    // Rate limiting check
+    const supabaseService = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
+    );
+
+    const rateLimit = await checkRateLimit(supabaseService, user.id, 'create-razorpay-payment');
+    if (!rateLimit.allowed) {
+      console.log(`Rate limit exceeded for user ${user.id.substring(0, 8)}...`);
+      return new Response(JSON.stringify({ 
+        error: "Too many payment attempts. Please try again later." 
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 429,
+      });
+    }
 
     // Parse and validate request body
     let amount = 99; // Default ₹99
@@ -180,12 +256,7 @@ serve(async (req) => {
 
     console.log("Razorpay order created successfully");
 
-    // Store payment request in database for tracking
-    const supabaseService = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      { auth: { persistSession: false } }
-    );
+    // Store payment request in database for tracking (reuse supabaseService from rate limiting)
 
     const { error: insertError } = await supabaseService.from("payment_requests").insert({
       user_id: user.id,
