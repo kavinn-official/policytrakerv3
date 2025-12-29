@@ -10,6 +10,60 @@ const corsHeaders = {
 // Max file size: 10MB in base64 (~14MB encoded)
 const MAX_BASE64_SIZE = 14680064;
 
+// Rate limiting configuration
+const RATE_LIMIT_WINDOW_HOURS = 1;
+const RATE_LIMIT_MAX_REQUESTS = 20; // 20 PDF parses per hour
+
+// Rate limiting helper
+async function checkRateLimit(supabaseService: any, userId: string, functionName: string): Promise<{ allowed: boolean; remaining: number }> {
+  const windowStart = new Date();
+  windowStart.setMinutes(0, 0, 0); // Round to current hour
+
+  try {
+    const { data: existing, error: fetchError } = await supabaseService
+      .from('rate_limits')
+      .select('request_count')
+      .eq('user_id', userId)
+      .eq('function_name', functionName)
+      .eq('window_start', windowStart.toISOString())
+      .single();
+
+    if (fetchError && fetchError.code !== 'PGRST116') {
+      console.error('Rate limit check error:', fetchError);
+      return { allowed: true, remaining: RATE_LIMIT_MAX_REQUESTS };
+    }
+
+    const currentCount = existing?.request_count || 0;
+    
+    if (currentCount >= RATE_LIMIT_MAX_REQUESTS) {
+      return { allowed: false, remaining: 0 };
+    }
+
+    if (existing) {
+      await supabaseService
+        .from('rate_limits')
+        .update({ request_count: currentCount + 1 })
+        .eq('user_id', userId)
+        .eq('function_name', functionName)
+        .eq('window_start', windowStart.toISOString());
+    } else {
+      await supabaseService
+        .from('rate_limits')
+        .insert({
+          user_id: userId,
+          function_name: functionName,
+          window_start: windowStart.toISOString(),
+          request_count: 1
+        });
+    }
+
+    return { allowed: true, remaining: RATE_LIMIT_MAX_REQUESTS - currentCount - 1 };
+  } catch (error) {
+    console.error('Rate limit error:', error);
+    return { allowed: true, remaining: RATE_LIMIT_MAX_REQUESTS };
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -43,6 +97,22 @@ serve(async (req) => {
     }
 
     console.log("Authenticated user:", userData.user.id);
+
+    // Rate limiting check
+    const supabaseService = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
+    );
+
+    const rateLimit = await checkRateLimit(supabaseService, userData.user.id, 'parse-policy-pdf');
+    if (!rateLimit.allowed) {
+      console.log(`Rate limit exceeded for user ${userData.user.id.substring(0, 8)}...`);
+      return new Response(
+        JSON.stringify({ error: "Too many requests. Please try again later." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     const { pdfBase64 } = await req.json();
     
