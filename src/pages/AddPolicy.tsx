@@ -21,6 +21,8 @@ const INSURANCE_TYPES = [
   "Other"
 ] as const;
 
+// Use sessionStorage instead of localStorage for sensitive form data
+// This ensures data is cleared when browser is closed (more secure for shared devices)
 const STORAGE_KEY = 'addPolicy_formData';
 const FILE_STORAGE_KEY = 'addPolicy_uploadedFile';
 
@@ -45,8 +47,8 @@ const AddPolicy = () => {
   const [lastSubmitData, setLastSubmitData] = useState<any>(null);
 
   const [formData, setFormData] = useState(() => {
-    // Try to restore from localStorage
-    const saved = localStorage.getItem(STORAGE_KEY);
+    // Try to restore from sessionStorage (more secure - cleared on browser close)
+    const saved = sessionStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
         return JSON.parse(saved);
@@ -71,7 +73,7 @@ const AddPolicy = () => {
   });
 
   const [policyActiveDate, setPolicyActiveDate] = useState<Date | undefined>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const saved = sessionStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -86,7 +88,7 @@ const AddPolicy = () => {
   });
 
   const [policyExpiryDate, setPolicyExpiryDate] = useState<Date | undefined>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const saved = sessionStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -100,20 +102,20 @@ const AddPolicy = () => {
     return undefined;
   });
 
-  // Persist form data to localStorage
+  // Persist form data to sessionStorage (cleared on browser close for security)
   useEffect(() => {
     const dataToSave = {
       ...formData,
       _policyActiveDate: policyActiveDate?.toISOString(),
       _policyExpiryDate: policyExpiryDate?.toISOString(),
     };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
   }, [formData, policyActiveDate, policyExpiryDate]);
 
   // Clear form data after successful submission
   const clearSavedFormData = () => {
-    localStorage.removeItem(STORAGE_KEY);
-    localStorage.removeItem(FILE_STORAGE_KEY);
+    sessionStorage.removeItem(STORAGE_KEY);
+    sessionStorage.removeItem(FILE_STORAGE_KEY);
   };
 
   // Handle shared files from external apps
