@@ -22,6 +22,7 @@ import {
   IndianRupee
 } from "lucide-react";
 import * as XLSX from 'xlsx';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 
 interface PolicyStats {
   totalPolicies: number;
@@ -32,6 +33,8 @@ interface PolicyStats {
   otherInsurance: { count: number; premium: number };
   policies: any[];
 }
+
+const COLORS = ['#3B82F6', '#EF4444', '#22C55E', '#A855F7'];
 
 const ReportsPage = () => {
   const navigate = useNavigate();
@@ -152,20 +155,32 @@ const ReportsPage = () => {
     const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
     XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary');
 
-    // Policies sheet
-    const policyData = stats.policies.map(p => ({
+    // Policies sheet with all details
+    const policyData = stats.policies.map((p, index) => ({
+      'S.No': index + 1,
       'Policy Number': p.policy_number,
       'Client Name': p.client_name,
       'Insurance Type': p.insurance_type || 'Vehicle Insurance',
-      'Company': p.company_name,
-      'Vehicle Number': p.vehicle_number,
+      'Company': p.company_name || '',
+      'Vehicle Number': p.vehicle_number || '',
+      'Vehicle Make': p.vehicle_make || '',
+      'Vehicle Model': p.vehicle_model || '',
       'Active Date': p.policy_active_date,
       'Expiry Date': p.policy_expiry_date,
-      'Net Premium': p.net_premium,
+      'Net Premium': p.net_premium || 0,
       'Status': p.status,
-      'Contact': p.contact_number,
+      'Contact': p.contact_number || '',
+      'Agent Code': p.agent_code || '',
+      'Reference': p.reference || '',
     }));
     const policiesSheet = XLSX.utils.json_to_sheet(policyData);
+    
+    // Set column widths
+    policiesSheet['!cols'] = [
+      { wch: 6 }, { wch: 22 }, { wch: 20 }, { wch: 18 }, { wch: 25 },
+      { wch: 14 }, { wch: 14 }, { wch: 18 }, { wch: 12 }, { wch: 12 },
+      { wch: 12 }, { wch: 10 }, { wch: 12 }, { wch: 15 }, { wch: 20 },
+    ];
     XLSX.utils.book_append_sheet(workbook, policiesSheet, 'Policies');
 
     const fileName = `Policy_Report_${format(startDate!, 'yyyyMMdd')}_${format(endDate!, 'yyyyMMdd')}.xlsx`;
@@ -173,7 +188,7 @@ const ReportsPage = () => {
 
     toast({
       title: "Report Downloaded",
-      description: `${fileName} has been downloaded`,
+      description: `${fileName} has been downloaded with ${stats.policies.length} policies`,
     });
   };
 
@@ -193,9 +208,6 @@ const ReportsPage = () => {
         body: {
           manual_trigger: true,
           user_id: user?.id,
-          report_type: 'custom',
-          start_date: format(startDate!, 'yyyy-MM-dd'),
-          end_date: format(endDate!, 'yyyy-MM-dd'),
         }
       });
 
@@ -215,6 +227,27 @@ const ReportsPage = () => {
     } finally {
       setEmailing(false);
     }
+  };
+
+  // Prepare chart data
+  const getPieChartData = () => {
+    if (!stats) return [];
+    return [
+      { name: 'Vehicle', value: stats.vehicleInsurance.premium, count: stats.vehicleInsurance.count },
+      { name: 'Health', value: stats.healthInsurance.premium, count: stats.healthInsurance.count },
+      { name: 'Life', value: stats.lifeInsurance.premium, count: stats.lifeInsurance.count },
+      { name: 'Other', value: stats.otherInsurance.premium, count: stats.otherInsurance.count },
+    ].filter(item => item.count > 0);
+  };
+
+  const getBarChartData = () => {
+    if (!stats) return [];
+    return [
+      { name: 'Vehicle', premium: stats.vehicleInsurance.premium, count: stats.vehicleInsurance.count },
+      { name: 'Health', premium: stats.healthInsurance.premium, count: stats.healthInsurance.count },
+      { name: 'Life', premium: stats.lifeInsurance.premium, count: stats.lifeInsurance.count },
+      { name: 'Other', premium: stats.otherInsurance.premium, count: stats.otherInsurance.count },
+    ];
   };
 
   const StatCard = ({ 
@@ -247,6 +280,23 @@ const ReportsPage = () => {
       </CardContent>
     </Card>
   );
+
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-background border rounded-lg p-3 shadow-lg">
+          <p className="font-medium">{payload[0].name}</p>
+          <p className="text-sm text-muted-foreground">
+            Premium: {formatCurrency(payload[0].value)}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Policies: {payload[0].payload.count}
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
 
   return (
     <div className="space-y-4 sm:space-y-6 px-2 sm:px-4 lg:px-6 pb-4 sm:pb-6">
@@ -366,6 +416,79 @@ const ReportsPage = () => {
               </CardContent>
             </Card>
           </div>
+
+          {/* Charts Section */}
+          {stats.totalPolicies > 0 && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Pie Chart */}
+              <Card className="shadow-lg border-0">
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <TrendingUp className="h-5 w-5 text-primary" />
+                    Premium Distribution
+                  </CardTitle>
+                  <CardDescription>
+                    Premium breakdown by insurance type
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={getPieChartData()}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          outerRadius={100}
+                          fill="#8884d8"
+                          dataKey="value"
+                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        >
+                          {getPieChartData().map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip content={<CustomTooltip />} />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Bar Chart */}
+              <Card className="shadow-lg border-0">
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <TrendingUp className="h-5 w-5 text-primary" />
+                    Policy Count by Type
+                  </CardTitle>
+                  <CardDescription>
+                    Number of policies by insurance type
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={getBarChartData()} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip
+                          formatter={(value: number, name: string) => {
+                            if (name === 'count') return [value, 'Policies'];
+                            return [formatCurrency(value), 'Premium'];
+                          }}
+                        />
+                        <Bar dataKey="count" fill="#3B82F6" name="count" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
           {/* Insurance Type Breakdown */}
           <Card className="shadow-lg border-0">
