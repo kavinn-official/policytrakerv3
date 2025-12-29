@@ -19,8 +19,12 @@ function getCorsHeaders(req: Request): Record<string, string> {
   };
 }
 
-// Input validation constants
-const VALID_PLAN_TYPES = ["Premium", "Basic"] as const;
+// Input validation constants with server-side pricing enforcement
+const PLAN_PRICES: Record<string, number> = {
+  "Premium": 99,
+  "Basic": 49
+} as const;
+const VALID_PLAN_TYPES = Object.keys(PLAN_PRICES);
 const MIN_AMOUNT = 1;
 const MAX_AMOUNT = 100000;
 
@@ -111,6 +115,13 @@ serve(async (req) => {
             });
           }
           planType = requestData.planType;
+          
+          // Server-side price enforcement - override client amount with correct plan price
+          const expectedAmount = PLAN_PRICES[planType];
+          if (amount !== expectedAmount) {
+            console.log(`Amount mismatch for ${planType}: client sent ${amount}, expected ${expectedAmount}. Using server-side price.`);
+            amount = expectedAmount;
+          }
         }
       }
     } catch (parseError) {
@@ -208,10 +219,9 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
-    console.error("Error in create-razorpay-payment");
+    console.error("Error in create-razorpay-payment:", error);
     return new Response(JSON.stringify({ 
-      error: "An unexpected error occurred",
-      details: "Check function logs for more information"
+      error: "An unexpected error occurred. Please try again later."
     }), {
       headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       status: 500,

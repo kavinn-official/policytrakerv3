@@ -43,19 +43,25 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Validate cron secret for scheduled invocations
+  // Validate cron secret for scheduled invocations - MANDATORY
   const authHeader = req.headers.get('Authorization');
   const cronSecret = Deno.env.get('CRON_SECRET');
   
-  // If CRON_SECRET is configured, require it for access
-  if (cronSecret && cronSecret.length > 0) {
-    if (!authHeader || authHeader !== `Bearer ${cronSecret}`) {
-      console.error("Unauthorized access attempt to send-expiry-notifications");
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+  // CRON_SECRET is required for security - fail if not configured
+  if (!cronSecret || cronSecret.length === 0) {
+    console.error("CRON_SECRET not configured - function access denied");
+    return new Response(
+      JSON.stringify({ error: "Service not configured" }),
+      { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+  
+  if (!authHeader || authHeader !== `Bearer ${cronSecret}`) {
+    console.error("Unauthorized access attempt to send-expiry-notifications");
+    return new Response(
+      JSON.stringify({ error: "Unauthorized" }),
+      { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   }
 
   try {

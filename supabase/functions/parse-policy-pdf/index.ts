@@ -136,20 +136,15 @@ Do not include any explanation or markdown formatting.`
       const errorText = await response.text();
       console.error("AI Gateway error:", response.status, errorText);
       
-      if (response.status === 429) {
+      // Return generic error messages to clients - keep specifics in server logs only
+      if (response.status === 429 || response.status === 402 || response.status >= 500) {
         return new Response(
-          JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "AI credits depleted. Please add credits to continue." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ error: "Unable to process document. Please try again later." }),
+          { status: response.status === 429 ? 429 : 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
       
-      throw new Error(`AI processing failed: ${errorText}`);
+      throw new Error("Document processing failed");
     }
 
     const aiResponse = await response.json();

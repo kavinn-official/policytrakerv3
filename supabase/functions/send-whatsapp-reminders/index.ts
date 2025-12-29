@@ -43,19 +43,25 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Validate cron secret for scheduled invocations
+  // Validate cron secret for scheduled invocations - MANDATORY
   const authHeader = req.headers.get('Authorization');
   const cronSecret = Deno.env.get('CRON_SECRET');
   
-  // If CRON_SECRET is configured, require it for access
-  if (cronSecret && cronSecret.length > 0) {
-    if (!authHeader || authHeader !== `Bearer ${cronSecret}`) {
-      console.error("Unauthorized access attempt to send-whatsapp-reminders");
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 401,
-      });
-    }
+  // CRON_SECRET is required for security - fail if not configured
+  if (!cronSecret || cronSecret.length === 0) {
+    console.error("CRON_SECRET not configured - function access denied");
+    return new Response(JSON.stringify({ error: "Service not configured" }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 503,
+    });
+  }
+  
+  if (!authHeader || authHeader !== `Bearer ${cronSecret}`) {
+    console.error("Unauthorized access attempt to send-whatsapp-reminders");
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 401,
+    });
   }
 
   try {
