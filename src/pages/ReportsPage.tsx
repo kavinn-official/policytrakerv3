@@ -431,26 +431,31 @@ const ReportsPage = () => {
                     Premium breakdown by insurance type
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <div className="h-[300px]">
+                <CardContent className="px-2 sm:px-6">
+                  <div className="h-[280px] sm:h-[300px]">
                     <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
+                      <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
                         <Pie
                           data={getPieChartData()}
                           cx="50%"
-                          cy="50%"
+                          cy="45%"
                           labelLine={false}
-                          outerRadius={100}
+                          outerRadius="70%"
+                          innerRadius="30%"
                           fill="#8884d8"
                           dataKey="value"
-                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          label={({ name, percent }) => window.innerWidth > 640 ? `${name} ${(percent * 100).toFixed(0)}%` : `${(percent * 100).toFixed(0)}%`}
                         >
                           {getPieChartData().map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                           ))}
                         </Pie>
                         <Tooltip content={<CustomTooltip />} />
-                        <Legend />
+                        <Legend 
+                          wrapperStyle={{ fontSize: '12px' }}
+                          layout="horizontal"
+                          verticalAlign="bottom"
+                        />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
@@ -468,18 +473,34 @@ const ReportsPage = () => {
                     Number of policies by insurance type
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <div className="h-[300px]">
+                <CardContent className="px-2 sm:px-6">
+                  <div className="h-[280px] sm:h-[300px]">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={getBarChartData()} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                      <BarChart 
+                        data={getBarChartData()} 
+                        margin={{ 
+                          top: 20, 
+                          right: window.innerWidth > 640 ? 30 : 10, 
+                          left: window.innerWidth > 640 ? 20 : 0, 
+                          bottom: 5 
+                        }}
+                      >
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis />
+                        <XAxis 
+                          dataKey="name" 
+                          tick={{ fontSize: 12 }}
+                          interval={0}
+                        />
+                        <YAxis 
+                          tick={{ fontSize: 12 }}
+                          width={40}
+                        />
                         <Tooltip
                           formatter={(value: number, name: string) => {
                             if (name === 'count') return [value, 'Policies'];
                             return [formatCurrency(value), 'Premium'];
                           }}
+                          contentStyle={{ fontSize: '12px' }}
                         />
                         <Bar dataKey="count" fill="#3B82F6" name="count" radius={[4, 4, 0, 0]} />
                       </BarChart>
