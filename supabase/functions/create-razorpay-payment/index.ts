@@ -21,8 +21,8 @@ function getCorsHeaders(req: Request): Record<string, string> {
 
 // Input validation constants with server-side pricing enforcement
 const PLAN_PRICES: Record<string, number> = {
-  "Premium": 99,
-  "Basic": 49
+  "Premium": 199,
+  "Basic": 99
 } as const;
 const VALID_PLAN_TYPES = Object.keys(PLAN_PRICES);
 const MIN_AMOUNT = 1;
@@ -158,7 +158,7 @@ serve(async (req) => {
     }
 
     // Parse and validate request body
-    let amount = 99; // Default ₹99
+    let amount = 199; // Default ₹199
     let planType = "Premium";
     
     try {

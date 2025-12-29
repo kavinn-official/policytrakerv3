@@ -22,8 +22,9 @@ interface Policy {
   agent_code: string;
   reference: string;
   contact_number: string | null;
-  mode: string | null;
   company_name: string | null;
+  insurance_type: string;
+  net_premium: number | null;
 }
 
 // Input validation helper
@@ -34,12 +35,12 @@ function isValidUUID(str: string): boolean {
 
 // Rate limiting configuration
 const RATE_LIMIT_WINDOW_HOURS = 1;
-const RATE_LIMIT_MAX_REQUESTS = 5; // 5 report requests per hour
+const RATE_LIMIT_MAX_REQUESTS = 5;
 
 // Rate limiting helper
 async function checkRateLimit(supabaseClient: any, userId: string, functionName: string): Promise<{ allowed: boolean; remaining: number }> {
   const windowStart = new Date();
-  windowStart.setMinutes(0, 0, 0); // Round to current hour
+  windowStart.setMinutes(0, 0, 0);
 
   try {
     const { data: existing, error: fetchError } = await supabaseClient
@@ -86,6 +87,41 @@ async function checkRateLimit(supabaseClient: any, userId: string, functionName:
   }
 }
 
+// Group policies by insurance type
+function groupPoliciesByType(policies: Policy[]): Record<string, Policy[]> {
+  return policies.reduce((acc, policy) => {
+    const type = policy.insurance_type || 'Vehicle Insurance';
+    if (!acc[type]) acc[type] = [];
+    acc[type].push(policy);
+    return acc;
+  }, {} as Record<string, Policy[]>);
+}
+
+// Calculate premium breakup by insurance type
+function calculatePremiumBreakup(policies: Policy[]): Record<string, { count: number; premium: number }> {
+  const breakup: Record<string, { count: number; premium: number }> = {
+    'Vehicle Insurance': { count: 0, premium: 0 },
+    'Health Insurance': { count: 0, premium: 0 },
+    'Life Insurance': { count: 0, premium: 0 },
+    'Other': { count: 0, premium: 0 },
+  };
+
+  policies.forEach(policy => {
+    const type = policy.insurance_type || 'Vehicle Insurance';
+    const premium = Number(policy.net_premium) || 0;
+    
+    if (breakup[type]) {
+      breakup[type].count++;
+      breakup[type].premium += premium;
+    } else {
+      breakup['Other'].count++;
+      breakup['Other'].premium += premium;
+    }
+  });
+
+  return breakup;
+}
+
 const handler = async (req: Request): Promise<Response> => {
   
   if (req.method === "OPTIONS") {
@@ -100,13 +136,11 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Starting policy report generation...");
 
-    // Get the request body
-    const { manual_trigger, user_id } = await req.json().catch(() => ({}));
+    const { manual_trigger, user_id, report_type, month } = await req.json().catch(() => ({}));
     
     let profiles;
     
     if (manual_trigger && user_id) {
-      // Validate user_id format
       if (typeof user_id !== 'string' || !isValidUUID(user_id)) {
         console.error("Invalid user_id format");
         return new Response(JSON.stringify({ 
@@ -117,7 +151,6 @@ const handler = async (req: Request): Promise<Response> => {
         });
       }
 
-      // For manual trigger, verify authorization
       const authHeader = req.headers.get("Authorization");
       if (!authHeader) {
         console.error("Authorization required for manual trigger");
@@ -142,7 +175,6 @@ const handler = async (req: Request): Promise<Response> => {
         });
       }
 
-      // SECURITY: Verify the authenticated user matches the requested user_id
       if (authData.user.id !== user_id) {
         console.error("Unauthorized: User cannot trigger reports for other users");
         return new Response(JSON.stringify({ 
@@ -153,7 +185,6 @@ const handler = async (req: Request): Promise<Response> => {
         });
       }
 
-      // Rate limiting check for manual triggers
       const rateLimit = await checkRateLimit(supabaseClient, user_id, 'send-policy-report');
       if (!rateLimit.allowed) {
         console.log(`Rate limit exceeded for user ${user_id.substring(0, 8)}...`);
@@ -165,7 +196,6 @@ const handler = async (req: Request): Promise<Response> => {
         });
       }
 
-      // For manual trigger, get specific user profile, or create one if missing
       const { data: profileData, error: profileError } = await supabaseClient
         .from('profiles')
         .select('id, email, full_name')
@@ -173,7 +203,6 @@ const handler = async (req: Request): Promise<Response> => {
         .single();
       
       if (profileError || !profileData) {
-        // Profile doesn't exist, create one using auth user data
         console.log(`Profile not found for user ${user_id.substring(0, 8)}..., creating one`);
         
         const { data: authUserData } = await supabaseClient.auth.admin.getUserById(user_id);
@@ -203,7 +232,6 @@ const handler = async (req: Request): Promise<Response> => {
       }
       console.log(`Manual trigger for user (ID: ${user_id.substring(0, 8)}...)`);
     } else {
-      // For scheduled runs, get all users
       const { data, error } = await supabaseClient
         .from('profiles')
         .select('id, email, full_name');
@@ -217,15 +245,49 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Processing ${profiles?.length || 0} users`);
 
-    // Process each user
     for (const profile of profiles || []) {
       try {
-        // Get user's policies
-        const { data: policies, error: policiesError } = await supabaseClient
+        // Determine date range based on report type
+        let startDate: Date | null = null;
+        let endDate: Date | null = null;
+        let isMonthlyReport = report_type === 'monthly_premium';
+
+        if (isMonthlyReport && month) {
+          const now = new Date();
+          let targetMonth: Date;
+          
+          switch (month) {
+            case "previous":
+              targetMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+              break;
+            case "2months":
+              targetMonth = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+              break;
+            case "3months":
+              targetMonth = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+              break;
+            default:
+              targetMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+          }
+          
+          startDate = new Date(targetMonth.getFullYear(), targetMonth.getMonth(), 1);
+          endDate = new Date(targetMonth.getFullYear(), targetMonth.getMonth() + 1, 0);
+        }
+
+        // Build query based on report type
+        let query = supabaseClient
           .from('policies')
           .select('*')
           .eq('user_id', profile.id)
           .order('policy_expiry_date', { ascending: true });
+
+        if (isMonthlyReport && startDate && endDate) {
+          query = query
+            .gte('created_at', startDate.toISOString())
+            .lte('created_at', endDate.toISOString());
+        }
+
+        const { data: policies, error: policiesError } = await query;
 
         if (policiesError) {
           console.error(`Error fetching policies for user ${profile.id.substring(0, 8)}...`);
@@ -239,7 +301,12 @@ const handler = async (req: Request): Promise<Response> => {
 
         console.log(`Found ${policies.length} policies for user ${profile.id.substring(0, 8)}...`);
 
-        // Calculate policy statistics
+        // Calculate statistics
+        const totalPremium = policies.reduce((sum: number, p: Policy) => sum + (Number(p.net_premium) || 0), 0);
+        const premiumBreakup = calculatePremiumBreakup(policies);
+        const groupedPolicies = groupPoliciesByType(policies);
+
+        // Calculate expiring/expired for general report
         const today = new Date();
         const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
         
@@ -254,18 +321,37 @@ const handler = async (req: Request): Promise<Response> => {
         });
 
         // Generate Excel file
-        const excelBuffer = await generateExcelFile(policies);
+        const excelBuffer = await generateExcelFile(policies, isMonthlyReport, startDate, endDate);
         const excelBase64 = btoa(String.fromCharCode(...new Uint8Array(excelBuffer)));
 
-        // Generate HTML email content
-        const emailContent = generateEmailContent(
-          profile.full_name || profile.email,
-          policies,
-          expiringPolicies,
-          expiredPolicies
-        );
+        // Generate appropriate email content
+        let emailContent: string;
+        let emailSubject: string;
 
-        // Send email using Resend with Excel attachment to the actual user
+        if (isMonthlyReport && startDate) {
+          const monthLabel = startDate.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+          emailSubject = `Monthly Premium Report - ${monthLabel} | Policy Tracker.in`;
+          emailContent = generateMonthlyReportEmail(
+            profile.full_name || profile.email,
+            policies,
+            totalPremium,
+            premiumBreakup,
+            groupedPolicies,
+            monthLabel
+          );
+        } else {
+          emailSubject = `Policy Report - ${new Date().toLocaleDateString()} | Policy Tracker.in`;
+          emailContent = generateGeneralReportEmail(
+            profile.full_name || profile.email,
+            policies,
+            totalPremium,
+            premiumBreakup,
+            groupedPolicies,
+            expiringPolicies,
+            expiredPolicies
+          );
+        }
+
         const resendApiKey = Deno.env.get('RESEND_API_KEY');
         if (!resendApiKey) {
           console.error("RESEND_API_KEY not configured");
@@ -283,11 +369,13 @@ const handler = async (req: Request): Promise<Response> => {
           body: JSON.stringify({
             from: 'Policy Tracker <no-reply@policytracker.in>',
             to: [profile.email],
-            subject: `Policy Report - ${new Date().toLocaleDateString()} | Policy Tracker.in`,
+            subject: emailSubject,
             html: emailContent,
             attachments: [
               {
-                filename: `policy_report_${new Date().toISOString().split('T')[0]}.xlsx`,
+                filename: isMonthlyReport 
+                  ? `monthly_premium_report_${startDate?.toISOString().split('T')[0]}.xlsx`
+                  : `policy_report_${new Date().toISOString().split('T')[0]}.xlsx`,
                 content: excelBase64,
               }
             ],
@@ -310,7 +398,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     return new Response(JSON.stringify({ 
       success: true, 
-      message: "Policy reports with Excel files sent successfully",
+      message: "Policy reports sent successfully",
       usersProcessed: profiles?.length || 0
     }), {
       status: 200,
@@ -328,7 +416,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 };
 
-async function generateExcelFile(policies: Policy[]): Promise<ArrayBuffer> {
+async function generateExcelFile(policies: Policy[], isMonthly: boolean, startDate: Date | null, endDate: Date | null): Promise<ArrayBuffer> {
   const getDaysToExpiry = (expiryDate: string) => {
     const today = new Date();
     const expiry = new Date(expiryDate);
@@ -337,32 +425,220 @@ async function generateExcelFile(policies: Policy[]): Promise<ArrayBuffer> {
     return diffDays;
   };
 
-  const worksheet = XLSX.utils.json_to_sheet(policies.map(policy => ({
+  const totalPremium = policies.reduce((sum, p) => sum + (Number(p.net_premium) || 0), 0);
+  const premiumBreakup = calculatePremiumBreakup(policies);
+
+  // Summary sheet data
+  const summaryData: any[][] = [
+    [isMonthly ? 'Monthly Premium Report' : 'Policy Report'],
+    isMonthly && startDate && endDate 
+      ? ['Period', `${startDate.toLocaleDateString('en-IN')} - ${endDate.toLocaleDateString('en-IN')}`]
+      : ['Generated On', new Date().toLocaleDateString('en-IN')],
+    [],
+    ['Summary'],
+    ['Total Policies', policies.length],
+    ['Total Net Premium', totalPremium],
+    [],
+    ['Premium Breakup by Insurance Type'],
+    ['Type', 'Policy Count', 'Net Premium'],
+    ['Vehicle Insurance', premiumBreakup['Vehicle Insurance'].count, premiumBreakup['Vehicle Insurance'].premium],
+    ['Health Insurance', premiumBreakup['Health Insurance'].count, premiumBreakup['Health Insurance'].premium],
+    ['Life Insurance', premiumBreakup['Life Insurance'].count, premiumBreakup['Life Insurance'].premium],
+    ['Other', premiumBreakup['Other'].count, premiumBreakup['Other'].premium],
+  ];
+
+  const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+
+  const worksheet = XLSX.utils.json_to_sheet(policies.map((policy, index) => ({
+    'S.No': index + 1,
     'Policy Number': policy.policy_number,
     'Client Name': policy.client_name,
-    'Vehicle Number': policy.vehicle_number,
-    'Vehicle Make': policy.vehicle_make,
-    'Vehicle Model': policy.vehicle_model,
+    'Insurance Type': policy.insurance_type || 'Vehicle Insurance',
+    'Vehicle Number': policy.vehicle_number || '',
+    'Vehicle Make': policy.vehicle_make || '',
+    'Vehicle Model': policy.vehicle_model || '',
     'Active Date': new Date(policy.policy_active_date).toLocaleDateString(),
     'Expiry Date': new Date(policy.policy_expiry_date).toLocaleDateString(),
     'Days to Expiry': getDaysToExpiry(policy.policy_expiry_date),
+    'Net Premium': Number(policy.net_premium) || 0,
     'Status': policy.status,
-    'Agent Code': policy.agent_code,
+    'Agent Code': policy.agent_code || '',
     'Contact Number': policy.contact_number || '',
-    'Mode': policy.mode || '',
     'Company Name': policy.company_name || '',
-    'Reference': policy.reference
+    'Reference': policy.reference || ''
   })));
 
   const workbook = (XLSX as any).utils.book_new();
+  (XLSX as any).utils.book_append_sheet(workbook, summarySheet, 'Summary');
   (XLSX as any).utils.book_append_sheet(workbook, worksheet, 'All Policies');
   
   return (XLSX as any).write(workbook, { type: 'buffer', bookType: 'xlsx' });
 }
 
-function generateEmailContent(
+function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
+function generateMonthlyReportEmail(
   userName: string,
-  allPolicies: Policy[],
+  policies: Policy[],
+  totalPremium: number,
+  premiumBreakup: Record<string, { count: number; premium: number }>,
+  groupedPolicies: Record<string, Policy[]>,
+  monthLabel: string
+): string {
+  const policyListByType = Object.entries(groupedPolicies).map(([type, typePolicies]) => {
+    const typeTotal = typePolicies.reduce((sum, p) => sum + (Number(p.net_premium) || 0), 0);
+    const policyRows = typePolicies.map(p => `
+      <tr>
+        <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; font-size: 13px;">${p.policy_number}</td>
+        <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; font-size: 13px;">${p.client_name}</td>
+        <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; font-size: 13px;">${formatCurrency(Number(p.net_premium) || 0)}</td>
+      </tr>
+    `).join('');
+    
+    return `
+      <div style="margin-bottom: 24px;">
+        <h4 style="color: #1e293b; margin: 0 0 12px 0; font-size: 16px; font-weight: 600;">
+          ${type} (${typePolicies.length} policies - ${formatCurrency(typeTotal)})
+        </h4>
+        <table width="100%" cellpadding="0" cellspacing="0" style="background: #f8fafc; border-radius: 8px; overflow: hidden;">
+          <thead>
+            <tr style="background: #e2e8f0;">
+              <th style="padding: 10px 12px; text-align: left; font-size: 12px; color: #64748b;">Policy No.</th>
+              <th style="padding: 10px 12px; text-align: left; font-size: 12px; color: #64748b;">Client</th>
+              <th style="padding: 10px 12px; text-align: left; font-size: 12px; color: #64748b;">Premium</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${policyRows}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Monthly Premium Report - Policy Tracker</title>
+    </head>
+    <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f4f8; line-height: 1.6;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f0f4f8; padding: 20px 0;">
+            <tr>
+                <td align="center">
+                    <table width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
+                        <!-- Header -->
+                        <tr>
+                            <td style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); padding: 40px 30px; border-radius: 16px 16px 0 0; text-align: center;">
+                                <h1 style="color: #ffffff; margin: 0 0 8px 0; font-size: 28px; font-weight: 700;">📊 Monthly Premium Report</h1>
+                                <p style="color: rgba(255,255,255,0.9); margin: 0; font-size: 16px; font-weight: 500;">${monthLabel}</p>
+                            </td>
+                        </tr>
+                        
+                        <!-- Main Content -->
+                        <tr>
+                            <td style="background-color: #ffffff; padding: 30px;">
+                                <h2 style="color: #1e293b; margin: 0 0 8px 0; font-size: 22px; font-weight: 600;">Hello ${userName}! 👋</h2>
+                                <p style="color: #64748b; margin: 0 0 24px 0; font-size: 15px;">Here's your monthly premium summary for <strong>${monthLabel}</strong></p>
+                                
+                                <!-- Stats Cards -->
+                                <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
+                                    <tr>
+                                        <td width="50%" style="padding: 8px;">
+                                            <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); border-radius: 12px; text-align: center; padding: 20px 10px;">
+                                                <tr><td style="color: #ffffff; font-size: 32px; font-weight: 700;">${policies.length}</td></tr>
+                                                <tr><td style="color: rgba(255,255,255,0.9); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Monthly Policies</td></tr>
+                                            </table>
+                                        </td>
+                                        <td width="50%" style="padding: 8px;">
+                                            <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); border-radius: 12px; text-align: center; padding: 20px 10px;">
+                                                <tr><td style="color: #ffffff; font-size: 32px; font-weight: 700;">${formatCurrency(totalPremium)}</td></tr>
+                                                <tr><td style="color: rgba(255,255,255,0.9); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Monthly Premium</td></tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                </table>
+
+                                <!-- Premium Breakup -->
+                                <div style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+                                    <h3 style="color: #1e293b; margin: 0 0 16px 0; font-size: 16px; font-weight: 600;">Premium Breakup by Insurance Type</h3>
+                                    <table width="100%" cellpadding="0" cellspacing="0">
+                                        <tr style="background: #e2e8f0; border-radius: 8px;">
+                                            <th style="padding: 10px; text-align: left; font-size: 12px; color: #64748b;">Type</th>
+                                            <th style="padding: 10px; text-align: center; font-size: 12px; color: #64748b;">Count</th>
+                                            <th style="padding: 10px; text-align: right; font-size: 12px; color: #64748b;">Premium</th>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 10px; font-size: 14px; color: #1e293b;">🚗 Vehicle</td>
+                                            <td style="padding: 10px; text-align: center; font-size: 14px; color: #1e293b;">${premiumBreakup['Vehicle Insurance'].count}</td>
+                                            <td style="padding: 10px; text-align: right; font-size: 14px; color: #1e293b; font-weight: 600;">${formatCurrency(premiumBreakup['Vehicle Insurance'].premium)}</td>
+                                        </tr>
+                                        <tr style="background: #f1f5f9;">
+                                            <td style="padding: 10px; font-size: 14px; color: #1e293b;">❤️ Health</td>
+                                            <td style="padding: 10px; text-align: center; font-size: 14px; color: #1e293b;">${premiumBreakup['Health Insurance'].count}</td>
+                                            <td style="padding: 10px; text-align: right; font-size: 14px; color: #1e293b; font-weight: 600;">${formatCurrency(premiumBreakup['Health Insurance'].premium)}</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 10px; font-size: 14px; color: #1e293b;">🛡️ Life</td>
+                                            <td style="padding: 10px; text-align: center; font-size: 14px; color: #1e293b;">${premiumBreakup['Life Insurance'].count}</td>
+                                            <td style="padding: 10px; text-align: right; font-size: 14px; color: #1e293b; font-weight: 600;">${formatCurrency(premiumBreakup['Life Insurance'].premium)}</td>
+                                        </tr>
+                                        <tr style="background: #f1f5f9;">
+                                            <td style="padding: 10px; font-size: 14px; color: #1e293b;">📋 Other</td>
+                                            <td style="padding: 10px; text-align: center; font-size: 14px; color: #1e293b;">${premiumBreakup['Other'].count}</td>
+                                            <td style="padding: 10px; text-align: right; font-size: 14px; color: #1e293b; font-weight: 600;">${formatCurrency(premiumBreakup['Other'].premium)}</td>
+                                        </tr>
+                                    </table>
+                                </div>
+
+                                <!-- Policy Details by Type -->
+                                <h3 style="color: #1e293b; margin: 24px 0 16px 0; font-size: 18px; font-weight: 600;">Policy Details</h3>
+                                ${policyListByType}
+
+                                <!-- Attachment Notice -->
+                                <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border-radius: 12px; margin-top: 24px; border-left: 4px solid #10b981;">
+                                    <tr>
+                                        <td style="padding: 20px;">
+                                            <p style="margin: 0; color: #065f46; font-size: 14px;">
+                                                📎 <strong>Excel Report Attached</strong> - Complete monthly premium data with all policy details.
+                                            </p>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                        
+                        <!-- Footer -->
+                        <tr>
+                            <td style="background-color: #1e293b; padding: 24px; border-radius: 0 0 16px 16px; text-align: center;">
+                                <p style="color: #94a3b8; margin: 0; font-size: 12px;">
+                                    © ${new Date().getFullYear()} Policy Tracker. All rights reserved.
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </body>
+    </html>
+  `;
+}
+
+function generateGeneralReportEmail(
+  userName: string,
+  policies: Policy[],
+  totalPremium: number,
+  premiumBreakup: Record<string, { count: number; premium: number }>,
+  groupedPolicies: Record<string, Policy[]>,
   expiringPolicies: Policy[],
   expiredPolicies: Policy[]
 ): string {
@@ -371,6 +647,42 @@ function generateEmailContent(
     month: 'long', 
     year: 'numeric' 
   });
+
+  const policyListByType = Object.entries(groupedPolicies).map(([type, typePolicies]) => {
+    const typeTotal = typePolicies.reduce((sum, p) => sum + (Number(p.net_premium) || 0), 0);
+    const policyRows = typePolicies.slice(0, 10).map(p => `
+      <tr>
+        <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; font-size: 13px;">${p.policy_number}</td>
+        <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; font-size: 13px;">${p.client_name}</td>
+        <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; font-size: 13px;">${new Date(p.policy_expiry_date).toLocaleDateString('en-IN')}</td>
+        <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; font-size: 13px;">${formatCurrency(Number(p.net_premium) || 0)}</td>
+      </tr>
+    `).join('');
+
+    const moreCount = typePolicies.length > 10 ? typePolicies.length - 10 : 0;
+    
+    return `
+      <div style="margin-bottom: 24px;">
+        <h4 style="color: #1e293b; margin: 0 0 12px 0; font-size: 16px; font-weight: 600;">
+          ${type} (${typePolicies.length} policies - ${formatCurrency(typeTotal)})
+        </h4>
+        <table width="100%" cellpadding="0" cellspacing="0" style="background: #f8fafc; border-radius: 8px; overflow: hidden;">
+          <thead>
+            <tr style="background: #e2e8f0;">
+              <th style="padding: 10px 12px; text-align: left; font-size: 12px; color: #64748b;">Policy No.</th>
+              <th style="padding: 10px 12px; text-align: left; font-size: 12px; color: #64748b;">Client</th>
+              <th style="padding: 10px 12px; text-align: left; font-size: 12px; color: #64748b;">Expiry</th>
+              <th style="padding: 10px 12px; text-align: left; font-size: 12px; color: #64748b;">Premium</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${policyRows}
+            ${moreCount > 0 ? `<tr><td colspan="4" style="padding: 10px; text-align: center; font-size: 12px; color: #64748b;">... and ${moreCount} more policies (see attached Excel)</td></tr>` : ''}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }).join('');
   
   return `
     <!DOCTYPE html>
@@ -396,148 +708,82 @@ function generateEmailContent(
                         <!-- Main Content -->
                         <tr>
                             <td style="background-color: #ffffff; padding: 30px;">
-                                <!-- Greeting -->
                                 <h2 style="color: #1e293b; margin: 0 0 8px 0; font-size: 22px; font-weight: 600;">Hello ${userName}! 👋</h2>
                                 <p style="color: #64748b; margin: 0 0 24px 0; font-size: 15px;">Here's your policy report as of <strong>${today}</strong></p>
                                 
                                 <!-- Stats Cards -->
                                 <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
                                     <tr>
-                                        <td width="33%" style="padding: 8px;">
-                                            <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%); border-radius: 12px; text-align: center; padding: 20px 10px;">
-                                                <tr><td style="color: #ffffff; font-size: 32px; font-weight: 700;">${allPolicies.length}</td></tr>
-                                                <tr><td style="color: rgba(255,255,255,0.9); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Total Policies</td></tr>
+                                        <td width="25%" style="padding: 6px;">
+                                            <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%); border-radius: 12px; text-align: center; padding: 16px 8px;">
+                                                <tr><td style="color: #ffffff; font-size: 28px; font-weight: 700;">${policies.length}</td></tr>
+                                                <tr><td style="color: rgba(255,255,255,0.9); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Total</td></tr>
                                             </table>
                                         </td>
-                                        <td width="33%" style="padding: 8px;">
-                                            <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%); border-radius: 12px; text-align: center; padding: 20px 10px;">
-                                                <tr><td style="color: #ffffff; font-size: 32px; font-weight: 700;">${expiringPolicies.length}</td></tr>
-                                                <tr><td style="color: rgba(255,255,255,0.9); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Expiring Soon</td></tr>
+                                        <td width="25%" style="padding: 6px;">
+                                            <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); border-radius: 12px; text-align: center; padding: 16px 8px;">
+                                                <tr><td style="color: #ffffff; font-size: 18px; font-weight: 700;">${formatCurrency(totalPremium)}</td></tr>
+                                                <tr><td style="color: rgba(255,255,255,0.9); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Premium</td></tr>
                                             </table>
                                         </td>
-                                        <td width="33%" style="padding: 8px;">
-                                            <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #ef4444 0%, #f87171 100%); border-radius: 12px; text-align: center; padding: 20px 10px;">
-                                                <tr><td style="color: #ffffff; font-size: 32px; font-weight: 700;">${expiredPolicies.length}</td></tr>
-                                                <tr><td style="color: rgba(255,255,255,0.9); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Expired</td></tr>
+                                        <td width="25%" style="padding: 6px;">
+                                            <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%); border-radius: 12px; text-align: center; padding: 16px 8px;">
+                                                <tr><td style="color: #ffffff; font-size: 28px; font-weight: 700;">${expiringPolicies.length}</td></tr>
+                                                <tr><td style="color: rgba(255,255,255,0.9); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Expiring</td></tr>
+                                            </table>
+                                        </td>
+                                        <td width="25%" style="padding: 6px;">
+                                            <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #ef4444 0%, #f87171 100%); border-radius: 12px; text-align: center; padding: 16px 8px;">
+                                                <tr><td style="color: #ffffff; font-size: 28px; font-weight: 700;">${expiredPolicies.length}</td></tr>
+                                                <tr><td style="color: rgba(255,255,255,0.9); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Expired</td></tr>
                                             </table>
                                         </td>
                                     </tr>
                                 </table>
+
+                                <!-- Premium Breakup -->
+                                <div style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+                                    <h3 style="color: #1e293b; margin: 0 0 16px 0; font-size: 16px; font-weight: 600;">Premium Breakup by Insurance Type</h3>
+                                    <table width="100%" cellpadding="0" cellspacing="0">
+                                        <tr style="background: #e2e8f0; border-radius: 8px;">
+                                            <th style="padding: 10px; text-align: left; font-size: 12px; color: #64748b;">Type</th>
+                                            <th style="padding: 10px; text-align: center; font-size: 12px; color: #64748b;">Count</th>
+                                            <th style="padding: 10px; text-align: right; font-size: 12px; color: #64748b;">Premium</th>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 10px; font-size: 14px; color: #1e293b;">🚗 Vehicle</td>
+                                            <td style="padding: 10px; text-align: center; font-size: 14px; color: #1e293b;">${premiumBreakup['Vehicle Insurance'].count}</td>
+                                            <td style="padding: 10px; text-align: right; font-size: 14px; color: #1e293b; font-weight: 600;">${formatCurrency(premiumBreakup['Vehicle Insurance'].premium)}</td>
+                                        </tr>
+                                        <tr style="background: #f1f5f9;">
+                                            <td style="padding: 10px; font-size: 14px; color: #1e293b;">❤️ Health</td>
+                                            <td style="padding: 10px; text-align: center; font-size: 14px; color: #1e293b;">${premiumBreakup['Health Insurance'].count}</td>
+                                            <td style="padding: 10px; text-align: right; font-size: 14px; color: #1e293b; font-weight: 600;">${formatCurrency(premiumBreakup['Health Insurance'].premium)}</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 10px; font-size: 14px; color: #1e293b;">🛡️ Life</td>
+                                            <td style="padding: 10px; text-align: center; font-size: 14px; color: #1e293b;">${premiumBreakup['Life Insurance'].count}</td>
+                                            <td style="padding: 10px; text-align: right; font-size: 14px; color: #1e293b; font-weight: 600;">${formatCurrency(premiumBreakup['Life Insurance'].premium)}</td>
+                                        </tr>
+                                        <tr style="background: #f1f5f9;">
+                                            <td style="padding: 10px; font-size: 14px; color: #1e293b;">📋 Other</td>
+                                            <td style="padding: 10px; text-align: center; font-size: 14px; color: #1e293b;">${premiumBreakup['Other'].count}</td>
+                                            <td style="padding: 10px; text-align: right; font-size: 14px; color: #1e293b; font-weight: 600;">${formatCurrency(premiumBreakup['Other'].premium)}</td>
+                                        </tr>
+                                    </table>
+                                </div>
+
+                                <!-- Policy Details by Type -->
+                                <h3 style="color: #1e293b; margin: 24px 0 16px 0; font-size: 18px; font-weight: 600;">Policies by Insurance Type</h3>
+                                ${policyListByType}
                                 
                                 <!-- Attachment Notice -->
-                                <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border-radius: 12px; margin-bottom: 24px; border-left: 4px solid #10b981;">
+                                <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border-radius: 12px; margin-top: 24px; border-left: 4px solid #10b981;">
                                     <tr>
                                         <td style="padding: 20px;">
-                                            <table cellpadding="0" cellspacing="0">
-                                                <tr>
-                                                    <td style="vertical-align: top; padding-right: 12px;">
-                                                        <span style="font-size: 24px;">📎</span>
-                                                    </td>
-                                                    <td>
-                                                        <h3 style="color: #059669; margin: 0 0 4px 0; font-size: 16px; font-weight: 600;">Excel Report Attached</h3>
-                                                        <p style="color: #047857; margin: 0; font-size: 14px;">Complete policy details are attached for offline analysis</p>
-                                                    </td>
-                                                </tr>
-                                            </table>
-                                        </td>
-                                    </tr>
-                                </table>
-
-                                ${expiringPolicies.length > 0 ? `
-                                <!-- Expiring Policies -->
-                                <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
-                                    <tr>
-                                        <td style="padding-bottom: 12px;">
-                                            <h3 style="color: #1e293b; margin: 0; font-size: 18px; font-weight: 600;">
-                                                <span style="color: #f59e0b;">⚠️</span> Policies Expiring Soon
-                                            </h3>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <table width="100%" cellpadding="0" cellspacing="0" style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
-                                                <tr style="background-color: #f8fafc;">
-                                                    <th style="padding: 12px 16px; text-align: left; font-size: 12px; color: #64748b; text-transform: uppercase; border-bottom: 1px solid #e2e8f0;">Policy</th>
-                                                    <th style="padding: 12px 16px; text-align: left; font-size: 12px; color: #64748b; text-transform: uppercase; border-bottom: 1px solid #e2e8f0;">Client</th>
-                                                    <th style="padding: 12px 16px; text-align: center; font-size: 12px; color: #64748b; text-transform: uppercase; border-bottom: 1px solid #e2e8f0;">Days Left</th>
-                                                </tr>
-                                                ${expiringPolicies.slice(0, 5).map((policy, index) => {
-                                                  const daysLeft = Math.ceil((new Date(policy.policy_expiry_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-                                                  const bgColor = index % 2 === 0 ? '#ffffff' : '#f8fafc';
-                                                  const urgencyColor = daysLeft <= 7 ? '#ef4444' : daysLeft <= 15 ? '#f59e0b' : '#3b82f6';
-                                                  return `
-                                                    <tr style="background-color: ${bgColor};">
-                                                        <td style="padding: 12px 16px; font-size: 14px; color: #334155;">${policy.policy_number}</td>
-                                                        <td style="padding: 12px 16px; font-size: 14px; color: #334155;">${policy.client_name}</td>
-                                                        <td style="padding: 12px 16px; text-align: center;">
-                                                            <span style="background-color: ${urgencyColor}; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">${daysLeft} days</span>
-                                                        </td>
-                                                    </tr>
-                                                  `;
-                                                }).join('')}
-                                                ${expiringPolicies.length > 5 ? `
-                                                <tr style="background-color: #f8fafc;">
-                                                    <td colspan="3" style="padding: 12px 16px; text-align: center; color: #64748b; font-size: 13px;">
-                                                        + ${expiringPolicies.length - 5} more policies (see attached Excel)
-                                                    </td>
-                                                </tr>
-                                                ` : ''}
-                                            </table>
-                                        </td>
-                                    </tr>
-                                </table>
-                                ` : ''}
-
-                                ${expiredPolicies.length > 0 ? `
-                                <!-- Expired Policies -->
-                                <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
-                                    <tr>
-                                        <td style="padding-bottom: 12px;">
-                                            <h3 style="color: #1e293b; margin: 0; font-size: 18px; font-weight: 600;">
-                                                <span style="color: #ef4444;">🚨</span> Expired Policies
-                                            </h3>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <table width="100%" cellpadding="0" cellspacing="0" style="border: 1px solid #fecaca; border-radius: 12px; overflow: hidden; background-color: #fef2f2;">
-                                                <tr style="background-color: #fee2e2;">
-                                                    <th style="padding: 12px 16px; text-align: left; font-size: 12px; color: #991b1b; text-transform: uppercase; border-bottom: 1px solid #fecaca;">Policy</th>
-                                                    <th style="padding: 12px 16px; text-align: left; font-size: 12px; color: #991b1b; text-transform: uppercase; border-bottom: 1px solid #fecaca;">Client</th>
-                                                    <th style="padding: 12px 16px; text-align: center; font-size: 12px; color: #991b1b; text-transform: uppercase; border-bottom: 1px solid #fecaca;">Overdue</th>
-                                                </tr>
-                                                ${expiredPolicies.slice(0, 5).map((policy, index) => {
-                                                  const daysOverdue = Math.ceil((new Date().getTime() - new Date(policy.policy_expiry_date).getTime()) / (1000 * 60 * 60 * 24));
-                                                  return `
-                                                    <tr>
-                                                        <td style="padding: 12px 16px; font-size: 14px; color: #991b1b; border-bottom: 1px solid #fecaca;">${policy.policy_number}</td>
-                                                        <td style="padding: 12px 16px; font-size: 14px; color: #991b1b; border-bottom: 1px solid #fecaca;">${policy.client_name}</td>
-                                                        <td style="padding: 12px 16px; text-align: center; border-bottom: 1px solid #fecaca;">
-                                                            <span style="color: #dc2626; font-weight: 600;">${daysOverdue} days</span>
-                                                        </td>
-                                                    </tr>
-                                                  `;
-                                                }).join('')}
-                                                ${expiredPolicies.length > 5 ? `
-                                                <tr>
-                                                    <td colspan="3" style="padding: 12px 16px; text-align: center; color: #991b1b; font-size: 13px;">
-                                                        + ${expiredPolicies.length - 5} more expired policies (see attached Excel)
-                                                    </td>
-                                                </tr>
-                                                ` : ''}
-                                            </table>
-                                        </td>
-                                    </tr>
-                                </table>
-                                ` : ''}
-
-                                <!-- CTA Button -->
-                                <table width="100%" cellpadding="0" cellspacing="0">
-                                    <tr>
-                                        <td align="center" style="padding: 20px 0;">
-                                            <a href="https://policytracker.in" style="display: inline-block; background: linear-gradient(135deg, #0d9488 0%, #0891b2 100%); color: #ffffff; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px;">
-                                                View Dashboard →
-                                            </a>
+                                            <p style="margin: 0; color: #065f46; font-size: 14px;">
+                                                📎 <strong>Excel Report Attached</strong> - Complete policy data with premium details for all ${policies.length} policies.
+                                            </p>
                                         </td>
                                     </tr>
                                 </table>
@@ -546,10 +792,9 @@ function generateEmailContent(
                         
                         <!-- Footer -->
                         <tr>
-                            <td style="background-color: #1e293b; padding: 30px; border-radius: 0 0 16px 16px; text-align: center;">
-                                <p style="color: #94a3b8; margin: 0 0 8px 0; font-size: 14px;">📧 Automated policy report • Sent every 15 days</p>
-                                <p style="color: #64748b; margin: 0; font-size: 13px;">
-                                    <a href="https://policytracker.in" style="color: #38bdf8; text-decoration: none;">policytracker.in</a> — Your Insurance Policy Management Partner
+                            <td style="background-color: #1e293b; padding: 24px; border-radius: 0 0 16px 16px; text-align: center;">
+                                <p style="color: #94a3b8; margin: 0; font-size: 12px;">
+                                    © ${new Date().getFullYear()} Policy Tracker. All rights reserved.
                                 </p>
                             </td>
                         </tr>
