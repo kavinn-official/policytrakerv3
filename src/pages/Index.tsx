@@ -38,7 +38,6 @@ const Index = () => {
     { name: 'Policies', path: '/policies', icon: FileText, color: 'from-indigo-500 to-indigo-600' },
     { name: 'Due Policies', path: '/due-policies', icon: AlertTriangle, color: 'from-orange-500 to-orange-600' },
     { name: 'Reports', path: '/reports', icon: BarChart3, color: 'from-teal-500 to-teal-600' },
-    { name: 'Subscription', path: '/subscription', icon: CreditCard, color: 'from-purple-500 to-purple-600' },
   ];
 
   return (
@@ -61,7 +60,7 @@ const Index = () => {
             <CardTitle className="text-base sm:text-lg font-semibold text-gray-900">Quick Access</CardTitle>
           </CardHeader>
           <CardContent className="p-4">
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {quickAccessButtons.map((button) => (
                 <Button
                   key={button.path}

@@ -28,7 +28,16 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 const POLICIES_PER_PAGE = 10;
+const INSURANCE_TYPES = ['All', 'Vehicle Insurance', 'Health Insurance', 'Life Insurance', 'Other'] as const;
 
 const PolicyList = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -46,6 +55,7 @@ const PolicyList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [dateFromFilter, setDateFromFilter] = useState<Date | undefined>(undefined);
   const [dateToFilter, setDateToFilter] = useState<Date | undefined>(undefined);
+  const [insuranceTypeFilter, setInsuranceTypeFilter] = useState<string>('All');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -96,14 +106,20 @@ const PolicyList = () => {
     }
   };
 
-  // Filter policies based on search term and date range
+  // Filter policies based on search term, date range, and insurance type
   const filteredPolicies = filterPolicies(policies, searchTerm).filter((policy) => {
+    // Date filter
     const createdAt = new Date(policy.created_at);
     if (dateFromFilter && createdAt < dateFromFilter) return false;
     if (dateToFilter) {
       const endOfDay = new Date(dateToFilter);
       endOfDay.setHours(23, 59, 59, 999);
       if (createdAt > endOfDay) return false;
+    }
+    // Insurance type filter
+    if (insuranceTypeFilter !== 'All') {
+      const policyType = (policy as any).insurance_type || 'Vehicle Insurance';
+      if (policyType !== insuranceTypeFilter) return false;
     }
     return true;
   });
@@ -113,10 +129,10 @@ const PolicyList = () => {
   const startIndex = (currentPage - 1) * POLICIES_PER_PAGE;
   const paginatedPolicies = filteredPolicies.slice(startIndex, startIndex + POLICIES_PER_PAGE);
 
-  // Reset to page 1 when search term or date filter changes
+  // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, dateFromFilter, dateToFilter]);
+  }, [searchTerm, dateFromFilter, dateToFilter, insuranceTypeFilter]);
 
   const handleClearDateFilter = () => {
     setDateFromFilter(undefined);
@@ -384,17 +400,33 @@ const PolicyList = () => {
             </div>
           </CardHeader>
           <CardContent className="px-4 sm:px-6">
-            <div className="flex flex-col sm:flex-row gap-3 mb-4">
-              <div className="flex-1">
-                <PolicySearch searchTerm={searchTerm} onSearchChange={setSearchTerm} />
+            <div className="flex flex-col gap-3 mb-4">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex-1">
+                  <PolicySearch searchTerm={searchTerm} onSearchChange={setSearchTerm} />
+                </div>
+                <div className="w-full sm:w-48">
+                  <Select value={insuranceTypeFilter} onValueChange={setInsuranceTypeFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Insurance Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {INSURANCE_TYPES.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type === 'All' ? 'All Types' : type}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <PolicyDateFilter
+                  fromDate={dateFromFilter}
+                  toDate={dateToFilter}
+                  onFromDateChange={setDateFromFilter}
+                  onToDateChange={setDateToFilter}
+                  onClear={handleClearDateFilter}
+                />
               </div>
-              <PolicyDateFilter
-                fromDate={dateFromFilter}
-                toDate={dateToFilter}
-                onFromDateChange={setDateFromFilter}
-                onToDateChange={setDateToFilter}
-                onClear={handleClearDateFilter}
-              />
             </div>
             {filteredPolicies.length === 0 ? (
               <div className="text-center py-8">
