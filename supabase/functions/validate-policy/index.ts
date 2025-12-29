@@ -19,6 +19,8 @@ function getCorsHeaders(req: Request): Record<string, string> {
 }
 
 // Validation schemas using manual validation (Zod-like validation)
+const VALID_INSURANCE_TYPES = ['Vehicle Insurance', 'Health Insurance', 'Life Insurance', 'Other'];
+
 interface PolicyData {
   policy_number: string;
   client_name: string;
@@ -34,6 +36,7 @@ interface PolicyData {
   policy_active_date: string;
   policy_expiry_date: string;
   document_url?: string;
+  insurance_type: string;
 }
 
 interface ValidationError {
@@ -104,6 +107,13 @@ function validatePolicyData(data: any): { valid: boolean; errors: ValidationErro
     errors.push({ field: 'reference', message: 'Reference must be less than 200 characters' });
   }
 
+  // Insurance type validation
+  if (!data.insurance_type || typeof data.insurance_type !== 'string') {
+    errors.push({ field: 'insurance_type', message: 'Insurance type is required' });
+  } else if (!VALID_INSURANCE_TYPES.includes(data.insurance_type)) {
+    errors.push({ field: 'insurance_type', message: 'Invalid insurance type' });
+  }
+
   if (errors.length > 0) {
     return { valid: false, errors };
   }
@@ -124,6 +134,7 @@ function validatePolicyData(data: any): { valid: boolean; errors: ValidationErro
     policy_active_date: data.policy_active_date,
     policy_expiry_date: data.policy_expiry_date,
     document_url: data.document_url || null,
+    insurance_type: data.insurance_type || 'Vehicle Insurance',
   };
 
   return { valid: true, errors: [], sanitized };

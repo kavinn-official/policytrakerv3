@@ -95,6 +95,7 @@ export type Database = {
           created_at: string
           document_url: string | null
           id: string
+          insurance_type: string
           net_premium: number | null
           policy_active_date: string
           policy_expiry_date: string
@@ -116,6 +117,7 @@ export type Database = {
           created_at?: string
           document_url?: string | null
           id?: string
+          insurance_type?: string
           net_premium?: number | null
           policy_active_date: string
           policy_expiry_date: string
@@ -137,6 +139,7 @@ export type Database = {
           created_at?: string
           document_url?: string | null
           id?: string
+          insurance_type?: string
           net_premium?: number | null
           policy_active_date?: string
           policy_expiry_date?: string

@@ -14,6 +14,7 @@ import ProfilePage from "./pages/ProfilePage";
 import SettingsPage from "./pages/SettingsPage";
 import AddClient from "./pages/AddClient";
 import AddPolicy from "./pages/AddPolicy";
+import ReportsPage from "./pages/ReportsPage";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
@@ -89,6 +90,13 @@ const App = () => (
               <ProtectedRoute>
                 <Layout>
                   <AddPolicy />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/reports" element={
+              <ProtectedRoute>
+                <Layout>
+                  <ReportsPage />
                 </Layout>
               </ProtectedRoute>
             } />
