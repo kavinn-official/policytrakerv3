@@ -12,6 +12,14 @@ import { ArrowLeft, Upload, FileText, Loader2, Sparkles, X, Share2, AlertCircle,
 import { Progress } from "@/components/ui/progress";
 import { format, addDays, parse } from "date-fns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const INSURANCE_TYPES = [
+  "Vehicle Insurance",
+  "Health Insurance", 
+  "Life Insurance",
+  "Other"
+] as const;
 
 const STORAGE_KEY = 'addPolicy_formData';
 const FILE_STORAGE_KEY = 'addPolicy_uploadedFile';
@@ -58,6 +66,7 @@ const AddPolicy = () => {
       reference: "",
       status: "Active",
       net_premium: "",
+      insurance_type: "Vehicle Insurance",
     };
   });
 
@@ -269,6 +278,9 @@ const AddPolicy = () => {
           company_name: extracted.company_name || formData.company_name,
           contact_number: extracted.contact_number?.replace(/\D/g, '').substring(0, 10) || formData.contact_number,
           net_premium: extracted.net_premium ? String(extracted.net_premium) : formData.net_premium,
+          insurance_type: INSURANCE_TYPES.includes(extracted.insurance_type) 
+            ? extracted.insurance_type 
+            : formData.insurance_type,
         };
         
         setFormData(newFormData);
@@ -807,6 +819,7 @@ const AddPolicy = () => {
       reference: "",
       status: "Active",
       net_premium: "",
+      insurance_type: "Vehicle Insurance",
     });
     setPolicyActiveDate(undefined);
     setPolicyExpiryDate(undefined);
@@ -989,6 +1002,28 @@ const AddPolicy = () => {
                     placeholder="ABC-123-XYZ"
                   />
                   <p className="text-xs text-gray-500">Letters, numbers, and special characters (auto CAPS)</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="insurance_type" className="text-sm font-medium">
+                    Type of Insurance <span className="text-red-500">*</span>
+                  </Label>
+                  <Select
+                    value={formData.insurance_type}
+                    onValueChange={(value) => setFormData({ ...formData, insurance_type: value })}
+                  >
+                    <SelectTrigger className="h-10 text-sm">
+                      <SelectValue placeholder="Select insurance type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {INSURANCE_TYPES.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500">Auto-detected from document (editable)</p>
                 </div>
 
                 <div className="space-y-2">

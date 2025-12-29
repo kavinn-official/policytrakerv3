@@ -1,22 +1,43 @@
-
+import { useState, useEffect } from "react";
 import DashboardStats from "@/components/DashboardStats";
 import DuePolicies from "@/components/DuePolicies";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
-import { FileText, Shield, Phone, Mail, Scale, AlertTriangle, CreditCard, Plus } from "lucide-react";
+import { FileText, Shield, Phone, Mail, Scale, AlertTriangle, CreditCard, Plus, BarChart3 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const [fullName, setFullName] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user?.id) return;
+      
+      const { data } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user.id)
+        .maybeSingle();
+      
+      if (data?.full_name) {
+        setFullName(data.full_name);
+      }
+    };
+    
+    fetchProfile();
+  }, [user?.id]);
 
   const quickAccessButtons = [
     { name: 'Add Policy', path: '/add-policy', icon: Plus, color: 'from-green-500 to-green-600' },
     { name: 'Policies', path: '/policies', icon: FileText, color: 'from-indigo-500 to-indigo-600' },
     { name: 'Due Policies', path: '/due-policies', icon: AlertTriangle, color: 'from-orange-500 to-orange-600' },
+    { name: 'Reports', path: '/reports', icon: BarChart3, color: 'from-teal-500 to-teal-600' },
     { name: 'Subscription', path: '/subscription', icon: CreditCard, color: 'from-purple-500 to-purple-600' },
   ];
 
@@ -25,7 +46,7 @@ const Index = () => {
       <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
         <div>
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
-            Welcome back, {user?.email?.split('@')[0] || 'User'}!
+            Welcome back, {fullName || user?.email?.split('@')[0] || 'User'}!
           </h1>
           <p className="text-gray-600 text-sm sm:text-base lg:text-lg">
             Here's an overview of your insurance portfolio
@@ -40,7 +61,7 @@ const Index = () => {
             <CardTitle className="text-base sm:text-lg font-semibold text-gray-900">Quick Access</CardTitle>
           </CardHeader>
           <CardContent className="p-4">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
               {quickAccessButtons.map((button) => (
                 <Button
                   key={button.path}

@@ -85,7 +85,7 @@ serve(async (req) => {
     const userContent: any[] = [
       {
         type: "text",
-        text: "Extract insurance policy details from this document. Return ONLY a valid JSON object with these fields: policy_number, client_name, vehicle_number, vehicle_make, vehicle_model, company_name, contact_number (10 digits), policy_active_date (YYYY-MM-DD), policy_expiry_date (YYYY-MM-DD), net_premium (number only). If a field cannot be found, use empty string for text or 0 for net_premium."
+        text: "Extract insurance policy details from this document. Return ONLY a valid JSON object with these fields: policy_number, client_name, vehicle_number, vehicle_make, vehicle_model, company_name, contact_number (10 digits), policy_active_date (YYYY-MM-DD), policy_expiry_date (YYYY-MM-DD), net_premium (number only), insurance_type (must be one of: 'Vehicle Insurance', 'Health Insurance', 'Life Insurance', 'Other'). If a field cannot be found, use empty string for text or 0 for net_premium. For insurance_type, analyze the document content to determine the type."
       },
       {
         type: "image_url",
@@ -111,16 +111,17 @@ serve(async (req) => {
 Extract the following fields:
 - policy_number: The policy number/ID
 - client_name: The policyholder's name
-- vehicle_number: The vehicle registration number
-- vehicle_make: The vehicle manufacturer/make (e.g., Maruti, Honda, Toyota)
-- vehicle_model: The vehicle model name
+- vehicle_number: The vehicle registration number (if applicable)
+- vehicle_make: The vehicle manufacturer/make (e.g., Maruti, Honda, Toyota) - if applicable
+- vehicle_model: The vehicle model name - if applicable
 - company_name: The insurance company name
 - contact_number: The contact phone number (10 digits only)
 - policy_active_date: The policy start date in YYYY-MM-DD format
 - policy_expiry_date: The policy end date in YYYY-MM-DD format
 - net_premium: The net premium amount (numeric value only, no currency symbols)
+- insurance_type: Determine the type of insurance from the document. Must be one of: "Vehicle Insurance", "Health Insurance", "Life Insurance", or "Other". Look for keywords like motor, vehicle, car, bike for Vehicle Insurance; medical, health, hospitalization for Health Insurance; life, term, endowment for Life Insurance.
 
-Return ONLY a valid JSON object with these fields. If a field cannot be found, use an empty string for text fields or 0 for net_premium.
+Return ONLY a valid JSON object with these fields. If a field cannot be found, use an empty string for text fields or 0 for net_premium. For insurance_type, default to "Vehicle Insurance" if unclear.
 Do not include any explanation or markdown formatting.`
           },
           {
@@ -186,6 +187,7 @@ Do not include any explanation or markdown formatting.`
         policy_active_date: "",
         policy_expiry_date: "",
         net_premium: 0,
+        insurance_type: "Vehicle Insurance",
       };
     }
 
