@@ -1,16 +1,16 @@
-
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MessageSquare, Phone, AlertTriangle, Calendar, Bell, Download, Send, Search, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
+import { MessageSquare, Phone, AlertTriangle, Calendar, Bell, Download, Send, Search, ChevronLeft, ChevronRight, RefreshCw, Edit } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { addDays, format } from "date-fns";
+import { format } from "date-fns";
 import * as XLSX from 'xlsx';
 
 interface PolicyData {
@@ -40,11 +40,13 @@ const DuePolicies = () => {
   const [duePolicies, setDuePolicies] = useState<DuePolicy[]>([]);
   const [selectedPolicies, setSelectedPolicies] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
+  const [isRenewing, setIsRenewing] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [weekFilter, setWeekFilter] = useState<number | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (user) {
@@ -253,43 +255,37 @@ Please contact us for renewal.`;
     }
   };
 
-  // Handle policy renewal - update dates and remove from due list
-  const handleRenewPolicy = async (policy: DuePolicy) => {
-    try {
-      // Calculate new dates - new active date is current expiry date, new expiry is 1 year later
-      const currentExpiryDate = new Date(policy.policy_expiry_date);
-      const newActiveDate = currentExpiryDate;
-      const newExpiryDate = addDays(currentExpiryDate, 365);
+  // Handle policy renewal - redirect to Edit Policy page for proper renewal flow
+  const handleRenewPolicy = (policy: DuePolicy) => {
+    navigate(`/edit-policy/${policy.id}?renewal=true`);
+  };
 
-      const { error } = await supabase
-        .from('policies')
-        .update({
-          policy_active_date: format(newActiveDate, 'yyyy-MM-dd'),
-          policy_expiry_date: format(newExpiryDate, 'yyyy-MM-dd'),
-          status: 'Active',
-          whatsapp_reminder_count: 0, // Reset reminder count for renewed policy
-        })
-        .eq('id', policy.id);
-
-      if (error) {
-        console.error('Error renewing policy:', error);
-        throw error;
-      }
-
+  // Handle bulk renewal - redirect to first selected policy for renewal
+  const handleBulkRenewal = async () => {
+    const selectedIds = Array.from(selectedPolicies);
+    if (selectedIds.length === 0) {
       toast({
-        title: "Policy Renewed",
-        description: `Policy ${policy.policy_number} has been renewed. New expiry: ${format(newExpiryDate, 'dd/MM/yyyy')}`,
-      });
-
-      // Refresh the list - the renewed policy will be removed from due list automatically
-      fetchDuePolicies();
-    } catch (error) {
-      console.error('Error renewing policy:', error);
-      toast({
-        title: "Error",
-        description: "Failed to renew policy. Please try again.",
+        title: "No Policies Selected",
+        description: "Please select at least one policy to renew.",
         variant: "destructive",
       });
+      return;
+    }
+
+    if (selectedIds.length === 1) {
+      // Single policy - navigate directly
+      navigate(`/edit-policy/${selectedIds[0]}?renewal=true`);
+    } else {
+      // Multiple policies - show confirmation and process sequentially
+      setIsRenewing(selectedIds[0]);
+      toast({
+        title: "Bulk Renewal",
+        description: `Starting renewal for ${selectedIds.length} policies. Opening first policy...`,
+      });
+      
+      // Store remaining policy IDs in session storage for sequential renewal
+      sessionStorage.setItem('bulkRenewalQueue', JSON.stringify(selectedIds.slice(1)));
+      navigate(`/edit-policy/${selectedIds[0]}?renewal=true&bulk=true`);
     }
   };
 
@@ -564,9 +560,10 @@ Please contact us for renewal.`;
                           size="sm" 
                           className="bg-blue-600 hover:bg-blue-700 text-white min-h-[40px] flex-1 sm:flex-none"
                           onClick={() => handleRenewPolicy(policy)}
+                          disabled={isRenewing === policy.id}
                         >
-                          <RefreshCw className="h-4 w-4 mr-2" />
-                          Renewed
+                          <Edit className="h-4 w-4 mr-2" />
+                          {isRenewing === policy.id ? "Opening..." : "Renew"}
                         </Button>
                         <Button 
                           size="sm" 
@@ -654,12 +651,21 @@ Please contact us for renewal.`;
         <div className="flex flex-col sm:flex-row justify-center space-y-2 sm:space-y-0 sm:space-x-4 px-4 sm:px-0">
           <Button 
             variant="default"
+            onClick={handleBulkRenewal}
+            disabled={selectedPolicies.size === 0}
+            className="bg-blue-600 hover:bg-blue-700 text-white min-h-[44px] w-full sm:w-auto"
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Renew Selected ({selectedPolicies.size})
+          </Button>
+          <Button 
+            variant="default"
             onClick={handleBulkWhatsApp}
             disabled={selectedPolicies.size === 0}
             className="bg-green-600 hover:bg-green-700 text-white min-h-[44px] w-full sm:w-auto"
           >
             <Send className="h-4 w-4 mr-2" />
-            Send WhatsApp to Selected ({selectedPolicies.size})
+            Send WhatsApp ({selectedPolicies.size})
           </Button>
           <Button 
             variant="outline"
@@ -667,7 +673,7 @@ Please contact us for renewal.`;
             className="hover:bg-blue-50 border-blue-200 text-blue-700 hover:text-blue-800 min-h-[44px] w-full sm:w-auto"
           >
             <Download className="h-4 w-4 mr-2" />
-            Download Expiring Policies
+            Download
           </Button>
         </div>
       )}

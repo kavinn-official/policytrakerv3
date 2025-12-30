@@ -2,22 +2,12 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 
-// Allowed origins for CORS
-const ALLOWED_ORIGINS = [
-  'https://policytracker.in',
-  'https://www.policytracker.in',
-  'http://localhost:5173',
-  'http://localhost:8080',
-];
-
-function getCorsHeaders(req: Request): Record<string, string> {
-  const origin = req.headers.get('origin') || '';
-  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
-  return {
-    'Access-Control-Allow-Origin': allowedOrigin,
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  };
-}
+// Standard CORS headers for all origins
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+};
 
 interface Policy {
   id: string;
@@ -37,11 +27,15 @@ interface Profile {
 }
 
 serve(async (req) => {
-  const corsHeaders = getCorsHeaders(req);
-
+  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const startTime = Date.now();
+  console.log("=== Expiry Notification Function Started ===");
+  console.log("Timestamp:", new Date().toISOString());
+  console.log("Request method:", req.method);
 
   // Validate cron secret for scheduled invocations - MANDATORY
   const authHeader = req.headers.get('Authorization');
@@ -49,40 +43,58 @@ serve(async (req) => {
   
   // CRON_SECRET is required for security - fail if not configured
   if (!cronSecret || cronSecret.length === 0) {
-    console.error("CRON_SECRET not configured - function access denied");
+    console.error("ERROR: CRON_SECRET not configured - function access denied");
     return new Response(
-      JSON.stringify({ error: "Service not configured" }),
+      JSON.stringify({ 
+        error: "Service not configured",
+        details: "CRON_SECRET environment variable is not set"
+      }),
       { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
   
   if (!authHeader || authHeader !== `Bearer ${cronSecret}`) {
-    console.error("Unauthorized access attempt to send-expiry-notifications");
+    console.error("ERROR: Unauthorized access attempt - invalid or missing auth header");
     return new Response(
-      JSON.stringify({ error: "Unauthorized" }),
+      JSON.stringify({ 
+        error: "Unauthorized",
+        details: "Invalid authorization header" 
+      }),
       { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 
-  try {
-    console.log("Expiry notification function started at:", new Date().toISOString());
+  console.log("Authorization validated successfully");
 
+  try {
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
     if (!resendApiKey) {
-      console.error("RESEND_API_KEY not configured");
+      console.error("ERROR: RESEND_API_KEY not configured");
       return new Response(
-        JSON.stringify({ error: "Email service not configured" }),
+        JSON.stringify({ 
+          error: "Email service not configured",
+          details: "RESEND_API_KEY environment variable is not set"
+        }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    console.log("RESEND_API_KEY is configured");
     const resend = new Resend(resendApiKey);
 
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      { auth: { persistSession: false } }
-    );
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error("ERROR: Missing Supabase configuration");
+      throw new Error("Database configuration missing");
+    }
+
+    const supabaseClient = createClient(supabaseUrl, supabaseServiceKey, { 
+      auth: { persistSession: false } 
+    });
+
+    console.log("Supabase client initialized");
 
     // Calculate date 30 days from now for policy expiry alerts
     const today = new Date();
@@ -90,6 +102,8 @@ serve(async (req) => {
     
     const thirtyDaysFromNow = new Date(today);
     thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+
+    console.log(`Checking for policies expiring between ${today.toISOString().split('T')[0]} and ${thirtyDaysFromNow.toISOString().split('T')[0]}`);
 
     // Get all policies expiring within 30 days
     const { data: policies, error: policiesError } = await supabaseClient
@@ -99,7 +113,7 @@ serve(async (req) => {
       .lte('policy_expiry_date', thirtyDaysFromNow.toISOString().split('T')[0]);
 
     if (policiesError) {
-      console.error("Error fetching policies:", policiesError);
+      console.error("ERROR: Failed to fetch policies:", policiesError.message);
       throw policiesError;
     }
 
@@ -107,7 +121,13 @@ serve(async (req) => {
 
     if (!policies || policies.length === 0) {
       return new Response(
-        JSON.stringify({ success: true, message: "No policies expiring soon", emailsSent: 0 }),
+        JSON.stringify({ 
+          success: true, 
+          message: "No policies expiring soon", 
+          emailsSent: 0,
+          timestamp: new Date().toISOString(),
+          executionTimeMs: Date.now() - startTime
+        }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -121,10 +141,15 @@ serve(async (req) => {
       policiesByUser[policy.user_id].push(policy);
     }
 
+    console.log(`Policies grouped into ${Object.keys(policiesByUser).length} users`);
+
     let emailsSent = 0;
     let emailsFailed = 0;
+    const errors: string[] = [];
 
     for (const [userId, userPolicies] of Object.entries(policiesByUser)) {
+      console.log(`\n--- Processing user ${userId.substring(0, 8)}... (${userPolicies.length} policies) ---`);
+      
       // Get user profile
       const { data: profile, error: profileError } = await supabaseClient
         .from('profiles')
@@ -132,10 +157,23 @@ serve(async (req) => {
         .eq('id', userId)
         .maybeSingle();
 
-      if (profileError || !profile) {
-        console.error(`Could not fetch profile for user ${userId}`);
+      if (profileError) {
+        const errMsg = `Database error fetching profile for user ${userId.substring(0, 8)}: ${profileError.message}`;
+        console.error("ERROR:", errMsg);
+        errors.push(errMsg);
+        emailsFailed++;
         continue;
       }
+
+      if (!profile) {
+        const errMsg = `No profile found for user ${userId.substring(0, 8)}`;
+        console.error("ERROR:", errMsg);
+        errors.push(errMsg);
+        emailsFailed++;
+        continue;
+      }
+
+      console.log(`User email: ${profile.email}, Name: ${profile.full_name || 'N/A'}`);
 
       // Build email content
       const policyRows = userPolicies.map(policy => {
@@ -212,7 +250,9 @@ serve(async (req) => {
       `;
 
       try {
-        const { error: emailError } = await resend.emails.send({
+        console.log(`Attempting to send email to ${profile.email}...`);
+        
+        const { data: emailData, error: emailError } = await resend.emails.send({
           from: "PolicyTracker <notifications@resend.dev>",
           to: [profile.email],
           subject: `⚠️ ${userPolicies.length} ${userPolicies.length === 1 ? 'Policy' : 'Policies'} Expiring Soon - Action Required`,
@@ -220,19 +260,33 @@ serve(async (req) => {
         });
 
         if (emailError) {
-          console.error(`Failed to send email to ${profile.email}:`, emailError);
+          const errMsg = `Failed to send email to ${profile.email}: ${JSON.stringify(emailError)}`;
+          console.error("ERROR:", errMsg);
+          errors.push(errMsg);
           emailsFailed++;
         } else {
-          console.log(`Email sent successfully to ${profile.email} for ${userPolicies.length} policies`);
+          console.log(`SUCCESS: Email sent to ${profile.email} for ${userPolicies.length} policies. Email ID: ${emailData?.id || 'N/A'}`);
           emailsSent++;
         }
       } catch (emailErr) {
-        console.error(`Error sending email to ${profile.email}:`, emailErr);
+        const errMsg = `Exception sending email to ${profile.email}: ${emailErr instanceof Error ? emailErr.message : String(emailErr)}`;
+        console.error("ERROR:", errMsg);
+        errors.push(errMsg);
         emailsFailed++;
       }
     }
 
-    console.log(`Completed: ${emailsSent} emails sent, ${emailsFailed} failed`);
+    const executionTimeMs = Date.now() - startTime;
+
+    console.log("\n=== Expiry Notification Function Completed ===");
+    console.log(`Emails sent: ${emailsSent}`);
+    console.log(`Emails failed: ${emailsFailed}`);
+    console.log(`Execution time: ${executionTimeMs}ms`);
+    
+    if (errors.length > 0) {
+      console.log(`Errors encountered: ${errors.length}`);
+      errors.forEach((err, i) => console.log(`  ${i + 1}. ${err}`));
+    }
 
     return new Response(
       JSON.stringify({
@@ -240,15 +294,28 @@ serve(async (req) => {
         message: `Sent ${emailsSent} notification emails`,
         emailsSent,
         emailsFailed,
-        timestamp: new Date().toISOString()
+        errors: errors.length > 0 ? errors : undefined,
+        timestamp: new Date().toISOString(),
+        executionTimeMs
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
   } catch (error) {
-    console.error("Error in send-expiry-notifications function:", error);
+    const executionTimeMs = Date.now() - startTime;
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    
+    console.error("=== FATAL ERROR in send-expiry-notifications ===");
+    console.error("Error:", errorMessage);
+    console.error("Execution time:", executionTimeMs, "ms");
+    
     return new Response(
-      JSON.stringify({ error: "Failed to send notifications" }),
+      JSON.stringify({ 
+        error: "Failed to send notifications",
+        details: errorMessage,
+        timestamp: new Date().toISOString(),
+        executionTimeMs
+      }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
