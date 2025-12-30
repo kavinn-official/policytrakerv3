@@ -6,10 +6,11 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MessageSquare, Phone, AlertTriangle, Calendar, Bell, Download, Send, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { MessageSquare, Phone, AlertTriangle, Calendar, Bell, Download, Send, Search, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { addDays, format } from "date-fns";
 import * as XLSX from 'xlsx';
 
 interface PolicyData {
@@ -247,6 +248,46 @@ Please contact us for renewal.`;
       toast({
         title: "No Contact Number",
         description: `No contact number available for ${policy.client_name}`,
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle policy renewal - update dates and remove from due list
+  const handleRenewPolicy = async (policy: DuePolicy) => {
+    try {
+      // Calculate new dates - new active date is current expiry date, new expiry is 1 year later
+      const currentExpiryDate = new Date(policy.policy_expiry_date);
+      const newActiveDate = currentExpiryDate;
+      const newExpiryDate = addDays(currentExpiryDate, 365);
+
+      const { error } = await supabase
+        .from('policies')
+        .update({
+          policy_active_date: format(newActiveDate, 'yyyy-MM-dd'),
+          policy_expiry_date: format(newExpiryDate, 'yyyy-MM-dd'),
+          status: 'Active',
+          whatsapp_reminder_count: 0, // Reset reminder count for renewed policy
+        })
+        .eq('id', policy.id);
+
+      if (error) {
+        console.error('Error renewing policy:', error);
+        throw error;
+      }
+
+      toast({
+        title: "Policy Renewed",
+        description: `Policy ${policy.policy_number} has been renewed. New expiry: ${format(newExpiryDate, 'dd/MM/yyyy')}`,
+      });
+
+      // Refresh the list - the renewed policy will be removed from due list automatically
+      fetchDuePolicies();
+    } catch (error) {
+      console.error('Error renewing policy:', error);
+      toast({
+        title: "Error",
+        description: "Failed to renew policy. Please try again.",
         variant: "destructive",
       });
     }
@@ -519,6 +560,14 @@ Please contact us for renewal.`;
                       </div>
 
                       <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 pt-2">
+                        <Button 
+                          size="sm" 
+                          className="bg-blue-600 hover:bg-blue-700 text-white min-h-[40px] flex-1 sm:flex-none"
+                          onClick={() => handleRenewPolicy(policy)}
+                        >
+                          <RefreshCw className="h-4 w-4 mr-2" />
+                          Renewed
+                        </Button>
                         <Button 
                           size="sm" 
                           className="bg-green-600 hover:bg-green-700 text-white min-h-[40px] flex-1 sm:flex-none"

@@ -145,8 +145,7 @@ const PolicyList = () => {
   };
 
   const handleEditPolicy = (policy: Policy) => {
-    setSelectedPolicy(policy);
-    setEditDialogOpen(true);
+    navigate(`/edit-policy/${policy.id}`);
   };
 
   const handleDeletePolicy = (policy: Policy) => {
