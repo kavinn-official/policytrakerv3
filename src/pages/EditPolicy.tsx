@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,11 +8,12 @@ import { MaterialDatePicker } from "@/components/ui/material-date-picker";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { ArrowLeft, Upload, FileText, Loader2, Sparkles, X, AlertCircle, RefreshCw, Trash2 } from "lucide-react";
+import { ArrowLeft, Upload, FileText, Loader2, Sparkles, X, AlertCircle, RefreshCw, Trash2, ChevronRight, CheckCircle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { format, addDays, parse } from "date-fns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 
 const INSURANCE_TYPES = [
   "Vehicle Insurance",
@@ -24,6 +25,7 @@ const INSURANCE_TYPES = [
 const EditPolicy = () => {
   const navigate = useNavigate();
   const { policyId } = useParams<{ policyId: string }>();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -39,6 +41,26 @@ const EditPolicy = () => {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [parseProgress, setParseProgress] = useState(0);
   const [isRemovingDocument, setIsRemovingDocument] = useState(false);
+  
+  // Bulk renewal flow state
+  const isRenewal = searchParams.get('renewal') === 'true';
+  const isBulkRenewal = searchParams.get('bulk') === 'true';
+  const [bulkRenewalQueue, setBulkRenewalQueue] = useState<string[]>([]);
+  const [showSuccessState, setShowSuccessState] = useState(false);
+
+  // Load bulk renewal queue from session storage
+  useEffect(() => {
+    if (isBulkRenewal) {
+      const queue = sessionStorage.getItem('bulkRenewalQueue');
+      if (queue) {
+        try {
+          setBulkRenewalQueue(JSON.parse(queue));
+        } catch (e) {
+          console.error('Failed to parse bulk renewal queue:', e);
+        }
+      }
+    }
+  }, [isBulkRenewal]);
 
   const [formData, setFormData] = useState({
     policy_number: "",
@@ -487,10 +509,17 @@ const EditPolicy = () => {
 
       toast({
         title: "Success",
-        description: "Policy updated successfully!",
+        description: isRenewal ? "Policy renewed successfully!" : "Policy updated successfully!",
       });
 
-      navigate("/policies");
+      // Handle bulk renewal flow
+      if (isBulkRenewal && bulkRenewalQueue.length > 0) {
+        setShowSuccessState(true);
+      } else {
+        // Clear any remaining queue
+        sessionStorage.removeItem('bulkRenewalQueue');
+        navigate(isRenewal ? "/due-policies" : "/policies");
+      }
     } catch (error: any) {
       const errorMessage = error.message || "Failed to update policy";
       setSubmitError(errorMessage);
@@ -543,6 +572,33 @@ const EditPolicy = () => {
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+  };
+
+  // Handle next policy in bulk renewal
+  const handleNextPolicy = () => {
+    if (bulkRenewalQueue.length > 0) {
+      const nextPolicyId = bulkRenewalQueue[0];
+      const remainingQueue = bulkRenewalQueue.slice(1);
+      
+      // Update session storage with remaining queue
+      if (remainingQueue.length > 0) {
+        sessionStorage.setItem('bulkRenewalQueue', JSON.stringify(remainingQueue));
+      } else {
+        sessionStorage.removeItem('bulkRenewalQueue');
+      }
+      
+      // Navigate to next policy
+      navigate(`/edit-policy/${nextPolicyId}?renewal=true${remainingQueue.length > 0 ? '&bulk=true' : ''}`);
+    } else {
+      sessionStorage.removeItem('bulkRenewalQueue');
+      navigate('/due-policies');
+    }
+  };
+
+  // Handle finish bulk renewal
+  const handleFinishBulkRenewal = () => {
+    sessionStorage.removeItem('bulkRenewalQueue');
+    navigate('/due-policies');
   };
 
   if (initialLoading) {
@@ -922,21 +978,62 @@ const EditPolicy = () => {
                 </Alert>
               )}
 
-              <div className="pt-4">
-                <Button
-                  type="submit"
-                  disabled={loading || isSubmitting}
-                  className="w-full h-10 text-sm"
-                >
-                  {loading || isSubmitting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Updating Policy...
-                    </>
-                  ) : (
-                    "Update Policy"
-                  )}
-                </Button>
+              <div className="pt-4 space-y-3">
+                {/* Success state for bulk renewal */}
+                {showSuccessState && (
+                  <Alert className="bg-green-50 border-green-200">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <AlertDescription className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                      <span className="text-green-800 font-medium">
+                        Policy renewed successfully! {bulkRenewalQueue.length} more {bulkRenewalQueue.length === 1 ? 'policy' : 'policies'} remaining.
+                      </span>
+                      <div className="flex gap-2">
+                        <Button 
+                          type="button"
+                          size="sm" 
+                          variant="outline"
+                          onClick={handleFinishBulkRenewal}
+                          className="h-8"
+                        >
+                          Finish
+                        </Button>
+                        <Button 
+                          type="button"
+                          size="sm"
+                          onClick={handleNextPolicy}
+                          className="h-8 bg-green-600 hover:bg-green-700"
+                        >
+                          Next Policy
+                          <ChevronRight className="h-4 w-4 ml-1" />
+                        </Button>
+                      </div>
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {!showSuccessState && (
+                  <Button
+                    type="submit"
+                    disabled={loading || isSubmitting}
+                    className="w-full h-10 text-sm"
+                  >
+                    {loading || isSubmitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        {isRenewal ? "Renewing Policy..." : "Updating Policy..."}
+                      </>
+                    ) : (
+                      <>
+                        {isRenewal ? "Renew Policy" : "Update Policy"}
+                        {isBulkRenewal && bulkRenewalQueue.length > 0 && (
+                          <Badge variant="secondary" className="ml-2 text-xs">
+                            +{bulkRenewalQueue.length} more
+                          </Badge>
+                        )}
+                      </>
+                    )}
+                  </Button>
+                )}
               </div>
             </form>
           </CardContent>
