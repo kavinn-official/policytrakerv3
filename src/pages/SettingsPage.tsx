@@ -15,7 +15,10 @@ import {
   RefreshCw,
   CheckCircle,
   AlertCircle,
-  Info
+  Info,
+  Mail,
+  XCircle,
+  Loader2
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -55,6 +58,11 @@ const SettingsPage = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [settings, setSettings] = useState<UserSettings | null>(null);
   
+  // Email verification state
+  const [userEmail, setUserEmail] = useState<string>("");
+  const [emailVerified, setEmailVerified] = useState<boolean | null>(null);
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+  
   // Form state
   const [autoRemindersEnabled, setAutoRemindersEnabled] = useState(false);
   const [reminderDays, setReminderDays] = useState<number[]>([7, 15, 30]);
@@ -66,8 +74,40 @@ const SettingsPage = () => {
   useEffect(() => {
     if (user) {
       fetchSettings();
+      checkEmailVerification();
     }
   }, [user]);
+
+  const checkEmailVerification = async () => {
+    if (!user) return;
+    
+    setIsCheckingEmail(true);
+    try {
+      // Get user email from auth
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (authUser?.email) {
+        setUserEmail(authUser.email);
+        // Check if email is confirmed in auth
+        setEmailVerified(authUser.email_confirmed_at !== null);
+      }
+      
+      // Also check if profile email matches
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('id', user.id)
+        .maybeSingle();
+      
+      if (profile?.email && profile.email !== authUser?.email) {
+        // Profile email differs from auth email
+        setUserEmail(profile.email);
+      }
+    } catch (error) {
+      console.error('Error checking email verification:', error);
+    } finally {
+      setIsCheckingEmail(false);
+    }
+  };
 
   const fetchSettings = async () => {
     if (!user) return;
@@ -237,6 +277,68 @@ const SettingsPage = () => {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
+        {/* Email Notification Status */}
+        <Card className="shadow-lg border-0">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Mail className="h-5 w-5 text-primary" />
+              Email Notifications
+            </CardTitle>
+            <CardDescription>
+              Check if your email is configured to receive policy expiry notifications
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {isCheckingEmail ? (
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Checking email status...
+              </div>
+            ) : (
+              <>
+                <div className="p-4 bg-muted/50 rounded-lg space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Registered Email</span>
+                    <span className="text-sm text-muted-foreground">{userEmail || 'Not set'}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Email Status</span>
+                    {emailVerified === true ? (
+                      <Badge variant="default" className="bg-green-600">
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        Verified
+                      </Badge>
+                    ) : emailVerified === false ? (
+                      <Badge variant="destructive">
+                        <XCircle className="h-3 w-3 mr-1" />
+                        Not Verified
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary">Unknown</Badge>
+                    )}
+                  </div>
+                </div>
+                
+                {emailVerified === true ? (
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-sm text-green-800">
+                      <CheckCircle className="h-4 w-4 inline mr-2" />
+                      Your email is verified and ready to receive policy expiry notifications.
+                    </p>
+                  </div>
+                ) : emailVerified === false ? (
+                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                    <p className="text-sm text-amber-800">
+                      <AlertCircle className="h-4 w-4 inline mr-2" />
+                      Please verify your email to receive notifications. Check your inbox for a verification link.
+                    </p>
+                  </div>
+                ) : null}
+              </>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Push Notifications */}
         <Card className="shadow-lg border-0">
           <CardHeader>
@@ -445,18 +547,32 @@ const SettingsPage = () => {
                 />
               </div>
 
-              <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                <h4 className="font-medium text-amber-800 flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4" />
-                  Manual Cron Setup Required
+              <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                <h4 className="font-medium text-green-800 flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4" />
+                  Cron Job Setup Instructions
                 </h4>
-                <p className="text-sm text-amber-700 mt-2">
-                  To enable automated WhatsApp reminders, you need to set up a cron job in your backend. 
-                  The cron job should call the <code className="bg-amber-100 px-1 rounded">send-whatsapp-reminders</code> edge function.
+                <p className="text-sm text-green-700 mt-2">
+                  The <code className="bg-green-100 px-1 rounded">CRON_SECRET</code> is configured. To enable automated reminders, set up a scheduled job to call the edge functions.
                 </p>
-                <div className="mt-3 p-3 bg-amber-100 rounded text-xs font-mono text-amber-800 overflow-x-auto">
-                  # Example cron expression for daily at 9 AM IST<br/>
-                  0 3 * * * # (3:30 AM UTC = 9:00 AM IST)
+                <div className="mt-3 space-y-2">
+                  <p className="text-xs font-medium text-green-800">SQL to create the cron job:</p>
+                  <div className="p-3 bg-green-100 rounded text-xs font-mono text-green-900 overflow-x-auto whitespace-pre">
+{`-- Enable extensions
+SELECT cron.schedule(
+  'send-whatsapp-reminders-daily',
+  '30 3 * * *', -- 9:00 AM IST (3:30 UTC)
+  $$
+  SELECT net.http_post(
+    url:='https://ctftagajzjnwqimiosvr.supabase.co/functions/v1/send-whatsapp-reminders',
+    headers:='{"Authorization": "Bearer YOUR_CRON_SECRET"}'::jsonb
+  );
+  $$
+);`}
+                  </div>
+                  <p className="text-xs text-green-700">
+                    Replace <code className="bg-green-100 px-1 rounded">YOUR_CRON_SECRET</code> with the secret you configured.
+                  </p>
                 </div>
               </div>
             </div>
