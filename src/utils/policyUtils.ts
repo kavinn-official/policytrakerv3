@@ -37,11 +37,11 @@ export const filterPolicies = (policies: Policy[], searchTerm: string) => {
   
   const term = searchTerm.toLowerCase();
   return policies.filter(policy =>
-    policy.policy_number.toLowerCase().includes(term) ||
-    policy.client_name.toLowerCase().includes(term) ||
-    policy.vehicle_number.toLowerCase().includes(term) ||
-    policy.vehicle_make.toLowerCase().includes(term) ||
-    policy.vehicle_model.toLowerCase().includes(term) ||
+    (policy.policy_number && policy.policy_number.toLowerCase().includes(term)) ||
+    (policy.client_name && policy.client_name.toLowerCase().includes(term)) ||
+    (policy.vehicle_number && policy.vehicle_number.toLowerCase().includes(term)) ||
+    (policy.vehicle_make && policy.vehicle_make.toLowerCase().includes(term)) ||
+    (policy.vehicle_model && policy.vehicle_model.toLowerCase().includes(term)) ||
     (policy.agent_code && policy.agent_code.toLowerCase().includes(term)) ||
     (policy.company_name && policy.company_name.toLowerCase().includes(term))
   );
