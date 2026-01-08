@@ -599,37 +599,41 @@ const AddPolicy = () => {
     setDuplicateError(null);
     setSubmitError(null);
 
+    // Validate required fields
+    const validationErrors: string[] = [];
+    
     if (!policyActiveDate || !policyExpiryDate) {
-      toast({
-        title: "Error",
-        description: "Please select policy active date",
-        variant: "destructive",
-      });
-      return;
+      validationErrors.push("Policy active date is required");
     }
 
     if (!formData.policy_number || formData.policy_number.trim() === "") {
-      toast({
-        title: "Error",
-        description: "Policy number is required",
-        variant: "destructive",
-      });
-      return;
+      validationErrors.push("Policy number is required");
+    } else if (formData.policy_number.trim().length < 3) {
+      validationErrors.push("Policy number must be at least 3 characters");
+    }
+
+    if (!formData.client_name || formData.client_name.trim() === "") {
+      validationErrors.push("Client name is required");
+    } else if (formData.client_name.trim().length < 2) {
+      validationErrors.push("Client name must be at least 2 characters");
     }
 
     if (!formData.vehicle_number || formData.vehicle_number.trim() === "") {
-      toast({
-        title: "Error",
-        description: "Vehicle number is required",
-        variant: "destructive",
-      });
-      return;
+      validationErrors.push("Vehicle number is required");
     }
 
     if (formData.contact_number && formData.contact_number.replace(/\D/g, '').length !== 10) {
+      validationErrors.push("Contact number must be exactly 10 digits");
+    }
+
+    if (formData.net_premium && isNaN(parseFloat(formData.net_premium))) {
+      validationErrors.push("Net premium must be a valid number");
+    }
+
+    if (validationErrors.length > 0) {
       toast({
-        title: "Error",
-        description: "Contact number must be exactly 10 digits",
+        title: "Validation Error",
+        description: validationErrors[0],
         variant: "destructive",
       });
       return;
