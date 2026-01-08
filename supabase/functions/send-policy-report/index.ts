@@ -97,6 +97,17 @@ function groupPoliciesByType(policies: Policy[]): Record<string, Policy[]> {
   }, {} as Record<string, Policy[]>);
 }
 
+// HTML escape function to prevent XSS in email templates
+function escapeHtml(unsafe: string | null | undefined): string {
+  if (unsafe == null) return '';
+  return String(unsafe)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 // Calculate premium breakup by insurance type
 function calculatePremiumBreakup(policies: Policy[]): Record<string, { count: number; premium: number }> {
   const breakup: Record<string, { count: number; premium: number }> = {
@@ -495,8 +506,8 @@ function generateMonthlyReportEmail(
     const typeTotal = typePolicies.reduce((sum, p) => sum + (Number(p.net_premium) || 0), 0);
     const policyRows = typePolicies.map(p => `
       <tr>
-        <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; font-size: 13px;">${p.policy_number}</td>
-        <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; font-size: 13px;">${p.client_name}</td>
+        <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; font-size: 13px;">${escapeHtml(p.policy_number)}</td>
+        <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; font-size: 13px;">${escapeHtml(p.client_name)}</td>
         <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; font-size: 13px;">${formatCurrency(Number(p.net_premium) || 0)}</td>
       </tr>
     `).join('');
@@ -546,8 +557,8 @@ function generateMonthlyReportEmail(
                         <!-- Main Content -->
                         <tr>
                             <td style="background-color: #ffffff; padding: 30px;">
-                                <h2 style="color: #1e293b; margin: 0 0 8px 0; font-size: 22px; font-weight: 600;">Hello ${userName}! 👋</h2>
-                                <p style="color: #64748b; margin: 0 0 24px 0; font-size: 15px;">Here's your monthly premium summary for <strong>${monthLabel}</strong></p>
+                                <h2 style="color: #1e293b; margin: 0 0 8px 0; font-size: 22px; font-weight: 600;">Hello ${escapeHtml(userName)}! 👋</h2>
+                                <p style="color: #64748b; margin: 0 0 24px 0; font-size: 15px;">Here's your monthly premium summary for <strong>${escapeHtml(monthLabel)}</strong></p>
                                 
                                 <!-- Stats Cards -->
                                 <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
@@ -652,8 +663,8 @@ function generateGeneralReportEmail(
     const typeTotal = typePolicies.reduce((sum, p) => sum + (Number(p.net_premium) || 0), 0);
     const policyRows = typePolicies.slice(0, 10).map(p => `
       <tr>
-        <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; font-size: 13px;">${p.policy_number}</td>
-        <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; font-size: 13px;">${p.client_name}</td>
+        <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; font-size: 13px;">${escapeHtml(p.policy_number)}</td>
+        <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; font-size: 13px;">${escapeHtml(p.client_name)}</td>
         <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; font-size: 13px;">${new Date(p.policy_expiry_date).toLocaleDateString('en-IN')}</td>
         <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; font-size: 13px;">${formatCurrency(Number(p.net_premium) || 0)}</td>
       </tr>
@@ -708,7 +719,7 @@ function generateGeneralReportEmail(
                         <!-- Main Content -->
                         <tr>
                             <td style="background-color: #ffffff; padding: 30px;">
-                                <h2 style="color: #1e293b; margin: 0 0 8px 0; font-size: 22px; font-weight: 600;">Hello ${userName}! 👋</h2>
+                                <h2 style="color: #1e293b; margin: 0 0 8px 0; font-size: 22px; font-weight: 600;">Hello ${escapeHtml(userName)}! 👋</h2>
                                 <p style="color: #64748b; margin: 0 0 24px 0; font-size: 15px;">Here's your policy report as of <strong>${today}</strong></p>
                                 
                                 <!-- Stats Cards -->
