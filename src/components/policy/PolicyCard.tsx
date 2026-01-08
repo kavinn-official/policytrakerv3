@@ -1,8 +1,9 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Car, User, Eye, Edit, Building, Trash2, FileText } from "lucide-react";
+import { Calendar, Car, User, Eye, Edit, Building, Trash2, FileText, AlertTriangle } from "lucide-react";
 import { Policy } from "@/utils/policyUtils";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface PolicyCardProps {
   policy: Policy;
@@ -14,18 +15,46 @@ interface PolicyCardProps {
   onPreviewDocument?: (policy: Policy) => void;
 }
 
+// Check for missing required fields
+const getMissingFields = (policy: Policy): string[] => {
+  const missing: string[] = [];
+  if (!policy.policy_number?.trim()) missing.push("Policy Number");
+  if (!policy.client_name?.trim()) missing.push("Client Name");
+  if (!policy.vehicle_number?.trim()) missing.push("Vehicle Number");
+  if (!policy.policy_active_date) missing.push("Active Date");
+  if (!policy.policy_expiry_date) missing.push("Expiry Date");
+  return missing;
+};
+
 const PolicyCard = ({ policy, daysToExpiry, statusColor, onViewPolicy, onEditPolicy, onDeletePolicy, onPreviewDocument }: PolicyCardProps) => {
+  const missingFields = getMissingFields(policy);
+  const hasWarning = missingFields.length > 0;
   return (
-    <Card className="shadow-sm hover:shadow-lg transition-all duration-200 border-gray-200">
+    <Card className={`shadow-sm hover:shadow-lg transition-all duration-200 ${hasWarning ? 'border-amber-400 border-2' : 'border-gray-200'}`}>
       <CardContent className="p-6">
         <div className="flex justify-between items-start mb-4">
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-blue-600 text-lg">{policy.policy_number}</h3>
+              <h3 className="font-semibold text-blue-600 text-lg">{policy.policy_number || "No Policy #"}</h3>
               {policy.document_url && (
                 <span title="Document attached">
                   <FileText className="h-4 w-4 text-purple-500" />
                 </span>
+              )}
+              {hasWarning && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="cursor-help">
+                      <AlertTriangle className="h-4 w-4 text-amber-500" />
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">
+                    <p className="font-medium text-amber-600">Missing fields:</p>
+                    <ul className="text-sm list-disc list-inside">
+                      {missingFields.map(field => <li key={field}>{field}</li>)}
+                    </ul>
+                  </TooltipContent>
+                </Tooltip>
               )}
             </div>
             <p className="text-sm text-gray-600">{policy.company_name}</p>
