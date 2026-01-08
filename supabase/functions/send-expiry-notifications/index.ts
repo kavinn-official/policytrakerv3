@@ -26,6 +26,17 @@ interface Profile {
   full_name: string | null;
 }
 
+// HTML escape function to prevent XSS in email templates
+function escapeHtml(unsafe: string | null | undefined): string {
+  if (unsafe == null) return '';
+  return String(unsafe)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -180,14 +191,14 @@ serve(async (req) => {
         const expiryDate = new Date(policy.policy_expiry_date);
         const daysToExpiry = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
         const vehicleDetails = policy.vehicle_make && policy.vehicle_model 
-          ? `${policy.vehicle_make} ${policy.vehicle_model}`
-          : policy.vehicle_make || 'N/A';
+          ? `${escapeHtml(policy.vehicle_make)} ${escapeHtml(policy.vehicle_model)}`
+          : escapeHtml(policy.vehicle_make) || 'N/A';
         
         return `
           <tr>
-            <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${policy.client_name}</td>
-            <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${policy.policy_number}</td>
-            <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${policy.vehicle_number}</td>
+            <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${escapeHtml(policy.client_name)}</td>
+            <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${escapeHtml(policy.policy_number)}</td>
+            <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${escapeHtml(policy.vehicle_number)}</td>
             <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${vehicleDetails}</td>
             <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${expiryDate.toLocaleDateString('en-IN')}</td>
             <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; color: ${daysToExpiry <= 3 ? '#ef4444' : '#f59e0b'}; font-weight: 600;">${daysToExpiry} days</td>
@@ -209,7 +220,7 @@ serve(async (req) => {
           </div>
           
           <div style="background: #f9fafb; padding: 30px; border: 1px solid #e5e7eb; border-top: none;">
-            <p style="margin: 0 0 20px 0;">Hi ${profile.full_name || 'there'},</p>
+            <p style="margin: 0 0 20px 0;">Hi ${escapeHtml(profile.full_name) || 'there'},</p>
             <p style="margin: 0 0 20px 0;">The following <strong>${userPolicies.length} ${userPolicies.length === 1 ? 'policy is' : 'policies are'}</strong> expiring within the next 30 days:</p>
             
             <div style="overflow-x: auto;">
