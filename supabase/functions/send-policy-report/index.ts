@@ -198,7 +198,7 @@ const handler = async (req: Request): Promise<Response> => {
 
       const rateLimit = await checkRateLimit(supabaseClient, user_id, 'send-policy-report');
       if (!rateLimit.allowed) {
-        console.log(`Rate limit exceeded for user ${user_id.substring(0, 8)}...`);
+        console.log("Rate limit exceeded for user");
         return new Response(JSON.stringify({ 
           error: "Too many report requests. Please try again later." 
         }), {
@@ -214,7 +214,7 @@ const handler = async (req: Request): Promise<Response> => {
         .single();
       
       if (profileError || !profileData) {
-        console.log(`Profile not found for user ${user_id.substring(0, 8)}..., creating one`);
+        console.log("Profile not found for user, creating one");
         
         const { data: authUserData } = await supabaseClient.auth.admin.getUserById(user_id);
         
@@ -241,7 +241,7 @@ const handler = async (req: Request): Promise<Response> => {
       } else {
         profiles = [profileData];
       }
-      console.log(`Manual trigger for user (ID: ${user_id.substring(0, 8)}...)`);
+      console.log("Manual trigger received");
     } else {
       const { data, error } = await supabaseClient
         .from('profiles')
@@ -301,16 +301,16 @@ const handler = async (req: Request): Promise<Response> => {
         const { data: policies, error: policiesError } = await query;
 
         if (policiesError) {
-          console.error(`Error fetching policies for user ${profile.id.substring(0, 8)}...`);
+          console.error("Error fetching policies for user");
           continue;
         }
 
         if (!policies || policies.length === 0) {
-          console.log(`No policies found for user ${profile.id.substring(0, 8)}...`);
+          console.log("No policies found for user");
           continue;
         }
 
-        console.log(`Found ${policies.length} policies for user ${profile.id.substring(0, 8)}...`);
+        console.log(`Found ${policies.length} policies for user`);
 
         // Calculate statistics
         const totalPremium = policies.reduce((sum: number, p: Policy) => sum + (Number(p.net_premium) || 0), 0);
@@ -369,7 +369,7 @@ const handler = async (req: Request): Promise<Response> => {
           throw new Error("Email service not configured. Please contact support.");
         }
 
-        console.log(`Sending email to user ${profile.id.substring(0, 8)}...`);
+        console.log("Sending email to user");
 
         const emailResponse = await fetch('https://api.resend.com/emails', {
           method: 'POST',
@@ -396,14 +396,14 @@ const handler = async (req: Request): Promise<Response> => {
         const emailResult = await emailResponse.json();
 
         if (!emailResponse.ok) {
-          console.error(`Failed to send email to user ${profile.id.substring(0, 8)}...`);
+          console.error("Failed to send email to user");
           throw new Error(emailResult.message || 'Failed to send email');
         } else {
-          console.log(`Email sent successfully to user ${profile.id.substring(0, 8)}...`);
+          console.log("Email sent successfully");
         }
 
       } catch (userError) {
-        console.error(`Error processing user ${profile.id.substring(0, 8)}...`);
+        console.error("Error processing user");
       }
     }
 
