@@ -20,6 +20,7 @@ import addPolicyImg from '@/assets/screenshots/add-policy.png';
 import duePoliciesImg from '@/assets/screenshots/due-policies.png';
 import whatsappImg from '@/assets/screenshots/whatsapp-reminders.png';
 import reportsImg from '@/assets/screenshots/reports.png';
+import WhatsAppFloatingButton from '@/components/WhatsAppFloatingButton';
 
 const LandingPage = () => {
   const features = [
@@ -348,6 +349,7 @@ const LandingPage = () => {
               <ul className="space-y-2 text-sm">
                 <li><Link to="/auth" className="hover:text-white transition-colors">Login</Link></li>
                 <li><Link to="/auth" className="hover:text-white transition-colors">Sign Up</Link></li>
+                <li><Link to="/enquiry" className="hover:text-white transition-colors">Enquiry</Link></li>
                 <li><Link to="/contact" className="hover:text-white transition-colors">Contact Us</Link></li>
               </ul>
             </div>
@@ -365,6 +367,8 @@ const LandingPage = () => {
           </div>
         </div>
       </footer>
+
+      <WhatsAppFloatingButton />
     </div>
   );
 };
