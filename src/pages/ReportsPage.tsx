@@ -97,13 +97,14 @@ const ReportsPage = () => {
             stats.otherInsurance.premium += premium;
         }
 
-        // Aggregate by company name
-        const companyName = policy.company_name || 'Unknown';
-        if (!stats.byCompany[companyName]) {
-          stats.byCompany[companyName] = { count: 0, premium: 0 };
+        // Aggregate by company name - normalize company names to merge duplicates
+        const rawCompanyName = policy.company_name || 'Unknown';
+        const normalizedCompanyName = rawCompanyName.trim().toUpperCase().replace(/\s+/g, ' ');
+        if (!stats.byCompany[normalizedCompanyName]) {
+          stats.byCompany[normalizedCompanyName] = { count: 0, premium: 0 };
         }
-        stats.byCompany[companyName].count++;
-        stats.byCompany[companyName].premium += premium;
+        stats.byCompany[normalizedCompanyName].count++;
+        stats.byCompany[normalizedCompanyName].premium += premium;
       });
 
       setStats(stats);
@@ -239,25 +240,27 @@ const ReportsPage = () => {
     }
   };
 
-  // Prepare chart data
+  // Prepare chart data - filter out zero values to prevent blank charts
   const getPieChartData = () => {
     if (!stats) return [];
-    return [
+    const data = [
       { name: 'Vehicle', value: stats.vehicleInsurance.premium, count: stats.vehicleInsurance.count },
       { name: 'Health', value: stats.healthInsurance.premium, count: stats.healthInsurance.count },
       { name: 'Life', value: stats.lifeInsurance.premium, count: stats.lifeInsurance.count },
       { name: 'Other', value: stats.otherInsurance.premium, count: stats.otherInsurance.count },
-    ].filter(item => item.count > 0);
+    ].filter(item => item.count > 0 && item.value > 0);
+    return data;
   };
 
   const getBarChartData = () => {
     if (!stats) return [];
+    // Only include types that have at least 1 policy
     return [
       { name: 'Vehicle', premium: stats.vehicleInsurance.premium, count: stats.vehicleInsurance.count },
       { name: 'Health', premium: stats.healthInsurance.premium, count: stats.healthInsurance.count },
       { name: 'Life', premium: stats.lifeInsurance.premium, count: stats.lifeInsurance.count },
       { name: 'Other', premium: stats.otherInsurance.premium, count: stats.otherInsurance.count },
-    ];
+    ].filter(item => item.count > 0);
   };
 
   const StatCard = ({ 
