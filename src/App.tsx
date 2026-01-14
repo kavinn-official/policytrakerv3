@@ -24,6 +24,7 @@ import TermsConditions from "./pages/TermsConditions";
 import Privacy from "./pages/Privacy";
 import Contact from "./pages/Contact";
 import LandingPage from "./pages/LandingPage";
+import EnquiryPage from "./pages/EnquiryPage";
 
 const queryClient = new QueryClient();
 
@@ -112,6 +113,7 @@ const App = () => (
             <Route path="/terms-conditions" element={<TermsConditions />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/enquiry" element={<EnquiryPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
