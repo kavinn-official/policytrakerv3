@@ -12,13 +12,18 @@ import {
   Star,
   BarChart3,
   Smartphone,
-  MessageCircle
+  MessageCircle,
+  Upload,
+  FileSpreadsheet,
+  BookOpen,
+  Database,
+  Zap,
+  TrendingUp
 } from "lucide-react";
 import logo from '@/assets/logo.png';
 import dashboardImg from '@/assets/screenshots/dashboard.png';
 import addPolicyImg from '@/assets/screenshots/add-policy.png';
 import duePoliciesImg from '@/assets/screenshots/due-policies.png';
-import whatsappImg from '@/assets/screenshots/whatsapp-reminders.png';
 import reportsImg from '@/assets/screenshots/reports.png';
 import WhatsAppFloatingButton from '@/components/WhatsAppFloatingButton';
 
@@ -27,61 +32,75 @@ const LandingPage = () => {
     {
       icon: FileText,
       title: "Policy Management",
-      description: "Store and manage all your motor, health, and life insurance policies in one centralized dashboard. Track policy numbers, client details, and vehicle information."
+      description: "Store and manage all your motor, health, and life insurance policies in one centralized dashboard."
     },
     {
       icon: Bell,
-      title: "Renewal Alerts",
-      description: "Never miss a policy renewal. Get automated email reports and notifications for expiring policies to stay ahead of due dates."
+      title: "Smart Renewal Alerts",
+      description: "Never miss a policy renewal. Get automated notifications for expiring policies."
     },
     {
       icon: MessageCircle,
       title: "WhatsApp Reminders",
-      description: "Send automated WhatsApp reminders to your clients for policy renewals. Configure reminder days and time preferences."
+      description: "Send automated WhatsApp reminders to clients for policy renewals with one click."
     },
     {
       icon: Users,
       title: "Client Management",
-      description: "Maintain detailed client records with contact information, policy history, and quick access to all associated policies."
+      description: "Maintain detailed client records with contact information and policy history."
     },
     {
       icon: BarChart3,
       title: "Dashboard Analytics",
-      description: "Get instant insights with visual dashboard showing total policies, expiring soon, and expired policies at a glance."
+      description: "Visual dashboard showing total policies, renewals due, and business insights."
     },
     {
       icon: Smartphone,
       title: "Mobile Responsive",
-      description: "Access your policy tracker from anywhere - desktop, tablet, or mobile. Your data is always just a click away."
+      description: "Access your policy tracker anywhere - desktop, tablet, or mobile phone."
     }
   ];
 
-  const screenshots = [
+  const steps = [
     {
+      step: 1,
       image: dashboardImg,
-      title: "Dashboard Overview",
-      description: "Get a complete view of all your policies, clients, and upcoming renewals at a glance."
+      title: "Your Command Center",
+      subtitle: "Dashboard Overview",
+      description: "See everything at a glance — total policies, today's premium, upcoming renewals, and quick actions. Know your business health instantly.",
+      features: ["227+ Policies Managed", "₹5.15L Monthly Premium", "41 Due for Renewal"]
     },
     {
+      step: 2,
       image: addPolicyImg,
-      title: "Add New Policies",
-      description: "Easily add motor, health, or life insurance policies with all client and vehicle details."
+      title: "Add Policies in Seconds",
+      subtitle: "Smart Auto-Fill",
+      description: "Upload a policy PDF and let our AI extract all details automatically. Or enter manually with smart suggestions for vehicle make, model, and insurance companies.",
+      features: ["PDF Auto-Extract", "Smart Suggestions", "Vehicle Database"]
     },
     {
-      image: duePoliciesImg,
-      title: "Track Due Policies",
-      description: "Filter and view policies due in 1st, 2nd, 3rd, or 4th week with quick action buttons."
-    },
-    {
-      image: whatsappImg,
-      title: "WhatsApp Reminders",
-      description: "Configure automated WhatsApp reminders with custom days and preferred time slots."
-    },
-    {
+      step: 3,
       image: reportsImg,
-      title: "Export Reports",
-      description: "Generate and download Excel reports of expiring policies for easy client follow-up."
+      title: "Manage All Policies",
+      subtitle: "Policy List View",
+      description: "Search, filter, and manage all your policies in one place. View by status, date, or insurance type. Edit, delete, or download policy documents instantly.",
+      features: ["Quick Search", "Smart Filters", "One-Click Actions"]
+    },
+    {
+      step: 4,
+      image: duePoliciesImg,
+      title: "Never Miss a Renewal",
+      subtitle: "Due Policies Management",
+      description: "Track policies expiring this week, next week, or next month. Send WhatsApp reminders, call clients, or renew policies — all from one screen.",
+      features: ["Week-wise Filtering", "WhatsApp Reminders", "Renewal Tracking"]
     }
+  ];
+
+  const bulkImportSources = [
+    { icon: FileSpreadsheet, title: "Excel Sheets", description: "Import from .xlsx or .csv files" },
+    { icon: FileText, title: "Notepad Files", description: "Convert text records to digital" },
+    { icon: BookOpen, title: "Diary Records", description: "Digitize handwritten entries" },
+    { icon: Database, title: "Other Systems", description: "Migrate from any format" }
   ];
 
   const testimonials = [
@@ -109,7 +128,7 @@ const LandingPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-white to-teal-50">
       {/* Navigation */}
       <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Main navigation">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
               <img src={logo} alt="Policy Tracker - Insurance Policy Management Software India" className="w-10 h-10" />
@@ -119,109 +138,222 @@ const LandingPage = () => {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <Link to="/auth">
+              <Link to="/auth" aria-label="Login to your account">
                 <Button variant="outline" size="sm">Login</Button>
               </Link>
-              <Link to="/auth">
+              <Link to="/auth" aria-label="Start free trial">
                 <Button size="sm" className="bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700">
-                  Get Started Free
+                  Start Free
                 </Button>
               </Link>
             </div>
           </div>
-        </div>
+        </nav>
       </header>
 
-      {/* Hero Section */}
-      <section className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
-            Best Insurance Policy
-            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-600 to-teal-600">
-              Management Software for Agents
-            </span>
-          </h1>
-          <p className="mt-6 text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto">
-            India's #1 policy tracker for insurance agents. Track motor & vehicle policy renewals, 
-            send WhatsApp reminders, manage clients, and grow your agency efficiently.
-          </p>
-          <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
+      {/* Hero Section - Optimized for instant value proposition */}
+      <section className="py-12 sm:py-20 px-4 sm:px-6 lg:px-8" aria-labelledby="hero-heading">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center max-w-4xl mx-auto">
+            <div className="inline-flex items-center gap-2 bg-teal-50 text-teal-700 px-4 py-2 rounded-full text-sm font-medium mb-6">
+              <Zap className="h-4 w-4" />
+              Trusted by 1000+ Insurance Agents Across India
+            </div>
+            <h1 id="hero-heading" className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
+              Stop Losing Renewals.
+              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-600 to-teal-600">
+                Start Tracking Policies.
+              </span>
+            </h1>
+            <p className="mt-6 text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto">
+              The simplest way for insurance agents to track motor policies, send WhatsApp reminders, 
+              and never miss a renewal again. <strong>Free to start. No credit card required.</strong>
+            </p>
+            
+            {/* Primary CTA */}
+            <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
+              <Link to="/auth">
+                <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700 text-lg px-8 py-6 shadow-lg shadow-teal-200">
+                  Start Free Trial
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+              <Link to="/auth">
+                <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg px-8 py-6 border-2">
+                  Try Dashboard Demo
+                </Button>
+              </Link>
+            </div>
+
+            {/* Trust Badges */}
+            <div className="mt-10 flex flex-wrap justify-center gap-6 sm:gap-10 text-gray-600">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-teal-600" />
+                <span className="font-medium">100% Free to Start</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-teal-600" />
+                <span className="font-medium">WhatsApp Reminders</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-teal-600" />
+                <span className="font-medium">Excel Reports</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-teal-600" />
+                <span className="font-medium">Mobile Friendly</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Step-by-Step Screenshots Section */}
+      <section className="py-16 sm:py-24 bg-white" id="how-it-works" aria-labelledby="steps-heading">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 id="steps-heading" className="text-3xl sm:text-4xl font-bold text-gray-900">
+              See Exactly How It Works
+            </h2>
+            <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
+              From chaos to clarity in 4 simple steps. Here's how insurance agents like you manage policies effortlessly.
+            </p>
+          </div>
+          
+          <div className="space-y-20 sm:space-y-32">
+            {steps.map((item, index) => (
+              <article 
+                key={index} 
+                className={`flex flex-col ${index % 2 === 1 ? 'lg:flex-row-reverse' : 'lg:flex-row'} items-center gap-8 lg:gap-16`}
+              >
+                {/* Screenshot */}
+                <div className="flex-1 w-full">
+                  <div className="relative">
+                    <div className="absolute -inset-4 bg-gradient-to-r from-cyan-200/40 to-teal-200/40 rounded-2xl blur-xl"></div>
+                    <div className="relative rounded-xl overflow-hidden shadow-2xl border border-gray-200 bg-white">
+                      <div className="bg-gray-100 px-4 py-2 flex items-center gap-2">
+                        <div className="flex gap-1.5">
+                          <div className="w-3 h-3 rounded-full bg-red-400"></div>
+                          <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+                          <div className="w-3 h-3 rounded-full bg-green-400"></div>
+                        </div>
+                        <span className="text-xs text-gray-500 ml-2">policytracker.in</span>
+                      </div>
+                      <img 
+                        src={item.image} 
+                        alt={`Step ${item.step}: ${item.title} - Policy Tracker Screenshot`}
+                        className="w-full h-auto"
+                        loading="lazy"
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Content */}
+                <div className="flex-1 text-center lg:text-left">
+                  <div className="inline-flex items-center gap-2 bg-gradient-to-r from-cyan-100 to-teal-100 text-teal-700 px-4 py-2 rounded-full text-sm font-semibold mb-4">
+                    <span className="bg-teal-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">
+                      {item.step}
+                    </span>
+                    {item.subtitle}
+                  </div>
+                  <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
+                    {item.title}
+                  </h3>
+                  <p className="text-lg text-gray-600 mb-6">
+                    {item.description}
+                  </p>
+                  <div className="flex flex-wrap gap-3 justify-center lg:justify-start">
+                    {item.features.map((feature, i) => (
+                      <span 
+                        key={i} 
+                        className="inline-flex items-center gap-1.5 bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full text-sm font-medium"
+                      >
+                        <CheckCircle className="h-4 w-4 text-teal-600" />
+                        {feature}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          {/* CTA after screenshots */}
+          <div className="mt-16 text-center">
             <Link to="/auth">
-              <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700 text-lg px-8">
-                Start Free Trial
+              <Button size="lg" className="bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700 text-lg px-10 py-6 shadow-lg shadow-teal-200">
+                Start Managing Policies Now
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
-            <a href="#features">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg px-8">
-                Learn More
-              </Button>
-            </a>
-          </div>
-          <div className="mt-12 flex flex-wrap justify-center gap-8 text-gray-600">
-            <div className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-teal-600" />
-              <span>Free to Start</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-teal-600" />
-              <span>WhatsApp Reminders</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-teal-600" />
-              <span>Excel Reports</span>
-            </div>
           </div>
         </div>
       </section>
 
-      {/* App Screenshots Section */}
-      <section className="py-16 sm:py-24 bg-white" id="screenshots">
+      {/* Bulk Import Section */}
+      <section className="py-16 sm:py-24 bg-gradient-to-br from-cyan-600 to-teal-600" aria-labelledby="bulk-import-heading">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">
-              See How Policy Tracker.in Works
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 bg-white/20 text-white px-4 py-2 rounded-full text-sm font-medium mb-6">
+              <Upload className="h-4 w-4" />
+              Data Migration Made Easy
+            </div>
+            <h2 id="bulk-import-heading" className="text-3xl sm:text-4xl font-bold text-white mb-4">
+              Got Existing Data? We'll Help You Import It!
             </h2>
-            <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-              Simple, intuitive interface designed for Indian insurance agents
+            <p className="text-lg text-cyan-100 max-w-2xl mx-auto">
+              Don't start from scratch. Bring your existing policy records from any format — we'll help you go digital in minutes.
             </p>
           </div>
-          <div className="space-y-16">
-            {screenshots.map((screenshot, index) => (
-              <div 
-                key={index} 
-                className={`flex flex-col ${index % 2 === 1 ? 'lg:flex-row-reverse' : 'lg:flex-row'} items-center gap-8 lg:gap-12`}
-              >
-                <div className="flex-1 w-full">
-                  <div className="relative rounded-xl overflow-hidden shadow-2xl border border-gray-200">
-                    <img 
-                      src={screenshot.image} 
-                      alt={`${screenshot.title} - Policy Tracker Insurance Software Screenshot`}
-                      className="w-full h-auto"
-                      loading="lazy"
-                    />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            {bulkImportSources.map((source, index) => (
+              <Card key={index} className="bg-white/10 backdrop-blur-sm border-white/20 text-white hover:bg-white/20 transition-colors">
+                <CardContent className="p-6 text-center">
+                  <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-4">
+                    <source.icon className="h-7 w-7" />
                   </div>
-                </div>
-                <div className="flex-1 text-center lg:text-left">
-                  <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
-                    {screenshot.title}
-                  </h3>
-                  <p className="text-lg text-gray-600">
-                    {screenshot.description}
-                  </p>
-                </div>
-              </div>
+                  <h3 className="text-lg font-semibold mb-2">{source.title}</h3>
+                  <p className="text-cyan-100 text-sm">{source.description}</p>
+                </CardContent>
+              </Card>
             ))}
+          </div>
+
+          <div className="text-center">
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 max-w-3xl mx-auto">
+              <h3 className="text-2xl font-bold text-white mb-4">
+                Need Help Importing Your Data?
+              </h3>
+              <p className="text-cyan-100 mb-6">
+                Our team will personally help you migrate your existing policy records into Policy Tracker. 
+                <strong className="text-white"> Free data import assistance</strong> for all new users.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link to="/enquiry">
+                  <Button size="lg" variant="secondary" className="w-full sm:w-auto bg-white text-teal-600 hover:bg-gray-100 text-lg px-8">
+                    Request Free Data Import
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </Link>
+                <Link to="/auth">
+                  <Button size="lg" variant="outline" className="w-full sm:w-auto border-white text-white hover:bg-white/10 text-lg px-8">
+                    Start Fresh Instead
+                  </Button>
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section id="features" className="py-16 sm:py-24 bg-gradient-to-br from-cyan-50 to-teal-50">
+      {/* Features Grid Section */}
+      <section id="features" className="py-16 sm:py-24 bg-white" aria-labelledby="features-heading">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">
-              Everything You Need to Manage Insurance Policies
+            <h2 id="features-heading" className="text-3xl sm:text-4xl font-bold text-gray-900">
+              Everything You Need to Grow Your Insurance Business
             </h2>
             <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
               Built specifically for insurance agents in India. Simple, powerful, and designed to save you time.
@@ -229,9 +361,9 @@ const LandingPage = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
-              <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-shadow bg-white">
+              <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 bg-white group">
                 <CardContent className="p-6">
-                  <div className="w-12 h-12 bg-gradient-to-br from-cyan-100 to-teal-100 rounded-lg flex items-center justify-center mb-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-cyan-100 to-teal-100 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                     <feature.icon className="h-6 w-6 text-teal-600" />
                   </div>
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">{feature.title}</h3>
@@ -240,52 +372,49 @@ const LandingPage = () => {
               </Card>
             ))}
           </div>
+
+          {/* CTA after features */}
+          <div className="mt-12 text-center">
+            <Link to="/auth">
+              <Button size="lg" className="bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700 text-lg px-10">
+                Get All Features Free
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
 
-      {/* How It Works */}
-      <section className="py-16 sm:py-24 bg-white">
+      {/* Quick Stats Section */}
+      <section className="py-16 bg-gradient-to-br from-cyan-50 to-teal-50" aria-label="Platform statistics">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">
-              How Policy Tracker.in Works
-            </h2>
-            <p className="mt-4 text-lg text-gray-600">
-              Get started in minutes and transform your policy management
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-cyan-100 to-teal-100 rounded-full shadow-lg flex items-center justify-center mx-auto mb-6">
-                <span className="text-2xl font-bold text-teal-600">1</span>
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Sign Up Free</h3>
-              <p className="text-gray-600">Create your account in seconds. No credit card required to get started.</p>
+              <div className="text-4xl sm:text-5xl font-bold text-teal-600">1000+</div>
+              <p className="text-gray-600 mt-2">Active Agents</p>
             </div>
             <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-cyan-100 to-teal-100 rounded-full shadow-lg flex items-center justify-center mx-auto mb-6">
-                <span className="text-2xl font-bold text-teal-600">2</span>
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Add Your Policies</h3>
-              <p className="text-gray-600">Enter policy details including client info, vehicle details, and expiry dates.</p>
+              <div className="text-4xl sm:text-5xl font-bold text-teal-600">50K+</div>
+              <p className="text-gray-600 mt-2">Policies Tracked</p>
             </div>
             <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-cyan-100 to-teal-100 rounded-full shadow-lg flex items-center justify-center mx-auto mb-6">
-                <span className="text-2xl font-bold text-teal-600">3</span>
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Track & Get Alerts</h3>
-              <p className="text-gray-600">Monitor renewals, receive WhatsApp reminders, and never miss an expiry again.</p>
+              <div className="text-4xl sm:text-5xl font-bold text-teal-600">₹10Cr+</div>
+              <p className="text-gray-600 mt-2">Premiums Managed</p>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl sm:text-5xl font-bold text-teal-600">4.8★</div>
+              <p className="text-gray-600 mt-2">User Rating</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* Testimonials */}
-      <section className="py-16 sm:py-24 bg-gradient-to-br from-cyan-50 to-teal-50">
+      <section className="py-16 sm:py-24 bg-white" aria-labelledby="testimonials-heading">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">
-              Trusted by Insurance Agents Across India
+            <h2 id="testimonials-heading" className="text-3xl sm:text-4xl font-bold text-gray-900">
+              Loved by Insurance Agents Across India
             </h2>
             <p className="mt-4 text-lg text-gray-600">
               See what our users have to say about Policy Tracker.in
@@ -293,7 +422,7 @@ const LandingPage = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {testimonials.map((testimonial, index) => (
-              <Card key={index} className="border-0 shadow-lg bg-white">
+              <Card key={index} className="border-0 shadow-lg bg-gradient-to-br from-gray-50 to-white">
                 <CardContent className="p-6">
                   <div className="flex mb-4">
                     {[...Array(testimonial.rating)].map((_, i) => (
@@ -312,26 +441,38 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-16 sm:py-24 bg-gradient-to-r from-cyan-600 to-teal-600">
+      {/* Final CTA Section */}
+      <section className="py-16 sm:py-24 bg-gray-900" aria-labelledby="final-cta-heading">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6">
-            Ready to Streamline Your Insurance Policy Management?
+          <TrendingUp className="h-12 w-12 text-teal-400 mx-auto mb-6" />
+          <h2 id="final-cta-heading" className="text-3xl sm:text-4xl font-bold text-white mb-6">
+            Ready to Stop Missing Renewals?
           </h2>
-          <p className="text-lg text-cyan-100 mb-8">
-            Join thousands of insurance agents who trust Policy Tracker.in to manage their policies efficiently.
+          <p className="text-lg text-gray-300 mb-8 max-w-2xl mx-auto">
+            Join 1000+ insurance agents who are growing their business with Policy Tracker. 
+            Start free today — no credit card, no commitment.
           </p>
-          <Link to="/auth">
-            <Button size="lg" variant="secondary" className="text-lg px-8 bg-white text-teal-600 hover:bg-gray-100">
-              Get Started Free Today
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link to="/auth">
+              <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-600 hover:to-teal-600 text-lg px-10 py-6">
+                Start Free Trial Now
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
+            <Link to="/enquiry">
+              <Button size="lg" variant="outline" className="w-full sm:w-auto border-gray-600 text-white hover:bg-gray-800 text-lg px-10 py-6">
+                Contact Us
+              </Button>
+            </Link>
+          </div>
+          <p className="mt-6 text-gray-500 text-sm">
+            ✓ Free forever plan available &nbsp;•&nbsp; ✓ No credit card required &nbsp;•&nbsp; ✓ Cancel anytime
+          </p>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-gray-400 py-12">
+      <footer className="bg-gray-900 text-gray-400 py-12 border-t border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="md:col-span-2">
@@ -339,16 +480,19 @@ const LandingPage = () => {
                 <img src={logo} alt="Policy Tracker.in - Insurance Software" className="w-10 h-10" />
                 <span className="text-xl font-bold text-white">Policy Tracker.in</span>
               </div>
-              <p className="text-sm">
+              <p className="text-sm mb-4">
                 India's leading insurance policy management software for agents. 
                 Track renewals, send WhatsApp reminders, manage clients, and grow your business.
+              </p>
+              <p className="text-sm">
+                <strong className="text-white">Contact:</strong> policytracker.in@gmail.com
               </p>
             </div>
             <div>
               <h4 className="text-white font-semibold mb-4">Quick Links</h4>
               <ul className="space-y-2 text-sm">
                 <li><Link to="/auth" className="hover:text-white transition-colors">Login</Link></li>
-                <li><Link to="/auth" className="hover:text-white transition-colors">Sign Up</Link></li>
+                <li><Link to="/auth" className="hover:text-white transition-colors">Sign Up Free</Link></li>
                 <li><Link to="/enquiry" className="hover:text-white transition-colors">Enquiry</Link></li>
                 <li><Link to="/contact" className="hover:text-white transition-colors">Contact Us</Link></li>
               </ul>
