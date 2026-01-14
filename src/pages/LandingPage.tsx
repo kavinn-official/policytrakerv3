@@ -28,14 +28,10 @@ import {
   Lock,
   Award,
   Headphones,
-  Play,
   ShieldCheck
 } from "lucide-react";
 import logo from '@/assets/logo.png';
-import dashboardImg from '@/assets/screenshots/dashboard.png';
-import addPolicyImg from '@/assets/screenshots/add-policy.png';
-import duePoliciesImg from '@/assets/screenshots/due-policies.png';
-import reportsImg from '@/assets/screenshots/reports.png';
+import howItWorksImg from '@/assets/screenshots/how-it-works.png';
 import WhatsAppFloatingButton from '@/components/WhatsAppFloatingButton';
 
 // Declare global trackSignupClick function
@@ -82,35 +78,23 @@ const LandingPage = () => {
   const steps = [
     {
       step: 1,
-      image: dashboardImg,
-      title: "Your Command Center",
-      subtitle: "Dashboard Overview",
-      description: "See everything at a glance — total policies, today's premium, upcoming renewals, and quick actions. Know your business health instantly.",
-      features: ["227+ Policies Managed", "₹5.15L Monthly Premium", "41 Due for Renewal"]
+      title: "Dashboard Overview",
+      description: "Get an overview of all your insurance policies with a quick glance at active, due, expired, and new policies."
     },
     {
       step: 2,
-      image: addPolicyImg,
-      title: "Add Policies in Seconds",
-      subtitle: "Smart Auto-Fill",
-      description: "Upload a policy PDF and let our AI extract all details automatically. Or enter manually with smart suggestions for vehicle make, model, and insurance companies.",
-      features: ["PDF Auto-Extract", "Smart Suggestions", "Vehicle Database"]
+      title: "Add New Policy",
+      description: "Easily input new policy details with our smart auto-fill feature that extracts data from PDFs and images."
     },
     {
       step: 3,
-      image: reportsImg,
-      title: "Manage All Policies",
-      subtitle: "Policy List View",
-      description: "Search, filter, and manage all your policies in one place. View by status, date, or insurance type. Edit, delete, or download policy documents instantly.",
-      features: ["Quick Search", "Smart Filters", "One-Click Actions"]
+      title: "Manage Policies",
+      description: "View, edit, and organize all your policies in one convenient list."
     },
     {
       step: 4,
-      image: duePoliciesImg,
-      title: "Never Miss a Renewal",
-      subtitle: "Due Policies Management",
-      description: "Track policies expiring this week, next week, or next month. Send WhatsApp reminders, call clients, or renew policies — all from one screen.",
-      features: ["Week-wise Filtering", "WhatsApp Reminders", "Renewal Tracking"]
+      title: "Track and Renew Due Policies",
+      description: "Get alerts for policies up for renewal and easily send reminders or renew them with a few clicks."
     }
   ];
 
@@ -268,57 +252,6 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Animated Demo Section */}
-      <section className="py-12 sm:py-16 bg-white" aria-labelledby="video-demo-heading">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10">
-            <h2 id="video-demo-heading" className="text-2xl sm:text-3xl font-bold text-gray-900">
-              See Policy Tracker in Action
-            </h2>
-            <p className="mt-3 text-gray-600">
-              Watch the quick walkthrough to see how easy it is to manage your insurance policies
-            </p>
-          </div>
-          
-          {/* Animated Demo with Screenshots */}
-          <div className="relative rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-gray-900 to-gray-800 aspect-video">
-            {/* Animated Screenshots Slideshow */}
-            <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
-              <div className="animate-slide-show flex gap-8 absolute">
-                <img src={dashboardImg} alt="Dashboard" className="w-[80%] h-auto rounded-lg shadow-xl opacity-90" />
-                <img src={addPolicyImg} alt="Add Policy" className="w-[80%] h-auto rounded-lg shadow-xl opacity-90" />
-                <img src={reportsImg} alt="Reports" className="w-[80%] h-auto rounded-lg shadow-xl opacity-90" />
-                <img src={duePoliciesImg} alt="Due Policies" className="w-[80%] h-auto rounded-lg shadow-xl opacity-90" />
-              </div>
-            </div>
-            
-            {/* Overlay with CTA */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end justify-center pb-8">
-              <div className="text-center text-white">
-                <p className="text-lg font-semibold mb-2">📸 Live Screenshots Showcase</p>
-                <p className="text-sm text-gray-300">Dashboard → Add Policy → Reports → Due Policies</p>
-              </div>
-            </div>
-
-            {/* Animated decorations */}
-            <div className="absolute top-4 right-4 flex gap-2">
-              <div className="w-3 h-3 rounded-full bg-red-500"></div>
-              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-              <div className="w-3 h-3 rounded-full bg-green-500"></div>
-            </div>
-          </div>
-
-          <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/auth" onClick={() => window.trackSignupClick?.('demo_section')}>
-              <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700">
-                Try It Yourself — Free
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
       {/* Trust Badges Section */}
       <section className="py-8 bg-gray-50 border-y border-gray-200" aria-label="Trust indicators">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -338,10 +271,10 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Step-by-Step Screenshots Section */}
+      {/* Step-by-Step Section with Single Image */}
       <section className="py-16 sm:py-24 bg-white" id="how-it-works" aria-labelledby="steps-heading">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <h2 id="steps-heading" className="text-3xl sm:text-4xl font-bold text-gray-900">
               See Exactly How It Works
             </h2>
@@ -350,62 +283,37 @@ const LandingPage = () => {
             </p>
           </div>
           
-          <div className="space-y-20 sm:space-y-32">
+          {/* Single Combined Screenshot */}
+          <div className="relative mb-12">
+            <div className="absolute -inset-4 bg-gradient-to-r from-cyan-200/40 to-teal-200/40 rounded-2xl blur-xl"></div>
+            <div className="relative rounded-xl overflow-hidden shadow-2xl border border-gray-200 bg-white">
+              <div className="bg-gray-100 px-4 py-2 flex items-center gap-2">
+                <div className="flex gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-red-400"></div>
+                  <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+                  <div className="w-3 h-3 rounded-full bg-green-400"></div>
+                </div>
+                <span className="text-xs text-gray-500 ml-2">policytracker.in</span>
+              </div>
+              <img 
+                src={howItWorksImg} 
+                alt="Policy Tracker - How it works: Dashboard, Add Policy, Manage Policies, Due Policies"
+                className="w-full h-auto"
+                loading="lazy"
+              />
+            </div>
+          </div>
+
+          {/* Steps Description */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {steps.map((item, index) => (
-              <article 
-                key={index} 
-                className={`flex flex-col ${index % 2 === 1 ? 'lg:flex-row-reverse' : 'lg:flex-row'} items-center gap-8 lg:gap-16`}
-              >
-                {/* Screenshot */}
-                <div className="flex-1 w-full">
-                  <div className="relative">
-                    <div className="absolute -inset-4 bg-gradient-to-r from-cyan-200/40 to-teal-200/40 rounded-2xl blur-xl"></div>
-                    <div className="relative rounded-xl overflow-hidden shadow-2xl border border-gray-200 bg-white">
-                      <div className="bg-gray-100 px-4 py-2 flex items-center gap-2">
-                        <div className="flex gap-1.5">
-                          <div className="w-3 h-3 rounded-full bg-red-400"></div>
-                          <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
-                          <div className="w-3 h-3 rounded-full bg-green-400"></div>
-                        </div>
-                        <span className="text-xs text-gray-500 ml-2">policytracker.in</span>
-                      </div>
-                      <img 
-                        src={item.image} 
-                        alt={`Step ${item.step}: ${item.title} - Policy Tracker Screenshot`}
-                        className="w-full h-auto"
-                        loading="lazy"
-                      />
-                    </div>
-                  </div>
+              <div key={index} className="text-center p-6 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-100 shadow-sm">
+                <div className="inline-flex items-center justify-center w-10 h-10 bg-gradient-to-r from-cyan-600 to-teal-600 text-white rounded-full font-bold mb-4">
+                  {item.step}
                 </div>
-                
-                {/* Content */}
-                <div className="flex-1 text-center lg:text-left">
-                  <div className="inline-flex items-center gap-2 bg-gradient-to-r from-cyan-100 to-teal-100 text-teal-700 px-4 py-2 rounded-full text-sm font-semibold mb-4">
-                    <span className="bg-teal-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">
-                      {item.step}
-                    </span>
-                    {item.subtitle}
-                  </div>
-                  <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
-                    {item.title}
-                  </h3>
-                  <p className="text-lg text-gray-600 mb-6">
-                    {item.description}
-                  </p>
-                  <div className="flex flex-wrap gap-3 justify-center lg:justify-start">
-                    {item.features.map((feature, i) => (
-                      <span 
-                        key={i} 
-                        className="inline-flex items-center gap-1.5 bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full text-sm font-medium"
-                      >
-                        <CheckCircle className="h-4 w-4 text-teal-600" />
-                        {feature}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </article>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">{item.title}</h3>
+                <p className="text-gray-600 text-sm">{item.description}</p>
+              </div>
             ))}
           </div>
 
@@ -538,95 +446,16 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Video Testimonials */}
+      {/* Testimonials Section */}
       <section className="py-16 sm:py-24 bg-white" aria-labelledby="testimonials-heading">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <h2 id="testimonials-heading" className="text-3xl sm:text-4xl font-bold text-gray-900">
-              Success Stories from Insurance Agents
+              What Insurance Agents Say
             </h2>
             <p className="mt-4 text-lg text-gray-600">
-              See how Policy Tracker has transformed businesses across India
+              Trusted by thousands of insurance professionals across India
             </p>
-          </div>
-
-          {/* Video Case Studies */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-16">
-            <Card className="border-0 shadow-xl overflow-hidden bg-gradient-to-br from-teal-50 to-cyan-50">
-              <CardContent className="p-0">
-                <div className="aspect-video bg-gradient-to-br from-teal-600 to-cyan-600 relative flex items-center justify-center">
-                  <div className="text-center text-white p-6">
-                    <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Play className="h-8 w-8 text-white ml-1" />
-                    </div>
-                    <p className="font-semibold text-lg">Before & After Case Study</p>
-                    <p className="text-sm text-white/80 mt-2">How Rajesh went from 50 to 200+ policies</p>
-                  </div>
-                </div>
-                <div className="p-6">
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="w-12 h-12 rounded-full bg-teal-100 flex items-center justify-center">
-                      <span className="text-teal-600 font-bold text-lg">RK</span>
-                    </div>
-                    <div>
-                      <p className="font-semibold text-gray-900">Rajesh Kumar</p>
-                      <p className="text-sm text-gray-500">Insurance Agent, Delhi • 3 Years</p>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div className="bg-red-50 rounded-lg p-3 text-center">
-                      <p className="text-sm text-gray-500">Before</p>
-                      <p className="text-xl font-bold text-red-600">50 policies</p>
-                      <p className="text-xs text-gray-500">managed in diary</p>
-                    </div>
-                    <div className="bg-green-50 rounded-lg p-3 text-center">
-                      <p className="text-sm text-gray-500">After</p>
-                      <p className="text-xl font-bold text-green-600">227 policies</p>
-                      <p className="text-xs text-gray-500">managed digitally</p>
-                    </div>
-                  </div>
-                  <p className="text-gray-600 text-sm italic">"I was losing 10-15 renewals every month. Now my retention rate is 95%!"</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-xl overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-50">
-              <CardContent className="p-0">
-                <div className="aspect-video bg-gradient-to-br from-blue-600 to-indigo-600 relative flex items-center justify-center">
-                  <div className="text-center text-white p-6">
-                    <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Play className="h-8 w-8 text-white ml-1" />
-                    </div>
-                    <p className="font-semibold text-lg">Agency Growth Story</p>
-                    <p className="text-sm text-white/80 mt-2">How Priya built her team with Policy Tracker</p>
-                  </div>
-                </div>
-                <div className="p-6">
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                      <span className="text-blue-600 font-bold text-lg">PS</span>
-                    </div>
-                    <div>
-                      <p className="font-semibold text-gray-900">Priya Sharma</p>
-                      <p className="text-sm text-gray-500">Agency Owner, Mumbai • 5 Years</p>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div className="bg-red-50 rounded-lg p-3 text-center">
-                      <p className="text-sm text-gray-500">Before</p>
-                      <p className="text-xl font-bold text-red-600">₹2L/month</p>
-                      <p className="text-xs text-gray-500">premium collected</p>
-                    </div>
-                    <div className="bg-green-50 rounded-lg p-3 text-center">
-                      <p className="text-sm text-gray-500">After</p>
-                      <p className="text-xl font-bold text-green-600">₹8L/month</p>
-                      <p className="text-xs text-gray-500">premium collected</p>
-                    </div>
-                  </div>
-                  <p className="text-gray-600 text-sm italic">"The WhatsApp reminders alone have doubled my renewal rate!"</p>
-                </div>
-              </CardContent>
-            </Card>
           </div>
 
           {/* Written Testimonials */}
