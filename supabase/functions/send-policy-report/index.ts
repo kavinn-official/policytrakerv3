@@ -1,7 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import * as XLSX from "https://deno.land/x/sheetjs@v0.18.3/xlsx.mjs";
+import * as XLSX from "https://esm.sh/xlsx@0.18.5";
 
 // CORS headers for all origins
 const corsHeaders = {
