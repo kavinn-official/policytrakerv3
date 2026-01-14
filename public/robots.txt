@@ -1,8 +1,17 @@
+# Policy Tracker.in - Agent Policy Tracker
+# Best Insurance Policy Management Software for Indian Agents
+
 User-agent: Googlebot
 Allow: /
+Crawl-delay: 1
+
+User-agent: Googlebot-Image
+Allow: /logo.png
+Allow: /assets/
 
 User-agent: Bingbot
 Allow: /
+Crawl-delay: 1
 
 User-agent: Twitterbot
 Allow: /
@@ -10,7 +19,45 @@ Allow: /
 User-agent: facebookexternalhit
 Allow: /
 
-User-agent: *
+# AI Search Crawlers
+User-agent: GPTBot
 Allow: /
 
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: Anthropic-AI
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+# All other bots
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /dashboard
+Disallow: /policies
+Disallow: /due-policies
+Disallow: /add-policy
+Disallow: /edit-policy/
+Disallow: /reports
+Disallow: /profile
+Disallow: /settings
+Disallow: /add-client
+Disallow: /reset-password
+
+# Sitemap location
 Sitemap: https://policytracker.in/sitemap.xml
+
+# Host
+Host: https://policytracker.in
