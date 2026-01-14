@@ -21,7 +21,7 @@ import {
   Calendar,
   IndianRupee
 } from "lucide-react";
-import * as XLSX from 'xlsx';
+import * as XLSX from '@e965/xlsx';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 
 interface PolicyStats {
