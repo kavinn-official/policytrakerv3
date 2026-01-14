@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.send-expiry-notifications]
 verify_jwt = false
+
+[functions.send-enquiry-email]
+verify_jwt = false
