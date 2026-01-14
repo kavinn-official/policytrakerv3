@@ -25,6 +25,7 @@ import Privacy from "./pages/Privacy";
 import Contact from "./pages/Contact";
 import LandingPage from "./pages/LandingPage";
 import EnquiryPage from "./pages/EnquiryPage";
+import DemoPage from "./pages/DemoPage";
 
 const queryClient = new QueryClient();
 
@@ -114,6 +115,7 @@ const App = () => (
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/enquiry" element={<EnquiryPage />} />
+            <Route path="/demo" element={<DemoPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

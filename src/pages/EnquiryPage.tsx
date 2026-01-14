@@ -34,11 +34,29 @@ const EnquiryPage = () => {
     setIsSubmitting(true);
 
     try {
+      // Send enquiry email
       const { error } = await supabase.functions.invoke("send-enquiry-email", {
         body: formData,
       });
 
       if (error) throw error;
+
+      // Send WhatsApp notification for enquiry
+      try {
+        await supabase.functions.invoke("send-whatsapp-notification", {
+          body: {
+            type: "enquiry",
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            subject: formData.subject,
+            message: formData.message,
+          },
+        });
+      } catch (notifyError) {
+        // Don't fail enquiry if notification fails
+        console.error("WhatsApp notification failed:", notifyError);
+      }
 
       setIsSubmitted(true);
       toast.success("Your enquiry has been submitted successfully!");

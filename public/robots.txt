@@ -1,8 +1,27 @@
 # Policy Tracker.in - Agent Policy Tracker
 # Best Insurance Policy Management Software for Indian Agents
 
+# Google crawlers
 User-agent: Googlebot
 Allow: /
+Allow: /demo
+Allow: /auth
+Allow: /enquiry
+Allow: /contact
+Allow: /terms-conditions
+Allow: /privacy
+Allow: /cancellation-refunds
+Disallow: /dashboard
+Disallow: /policies
+Disallow: /due-policies
+Disallow: /add-policy
+Disallow: /edit-policy/
+Disallow: /reports
+Disallow: /profile
+Disallow: /settings
+Disallow: /add-client
+Disallow: /reset-password
+Disallow: /subscription
 Crawl-delay: 1
 
 User-agent: Googlebot-Image
@@ -11,6 +30,18 @@ Allow: /assets/
 
 User-agent: Bingbot
 Allow: /
+Allow: /demo
+Allow: /auth
+Allow: /enquiry
+Allow: /contact
+Disallow: /dashboard
+Disallow: /policies
+Disallow: /due-policies
+Disallow: /add-policy
+Disallow: /edit-policy/
+Disallow: /reports
+Disallow: /profile
+Disallow: /settings
 Crawl-delay: 1
 
 User-agent: Twitterbot
@@ -22,18 +53,29 @@ Allow: /
 # AI Search Crawlers
 User-agent: GPTBot
 Allow: /
+Allow: /demo
+Disallow: /dashboard
+Disallow: /policies
 
 User-agent: ChatGPT-User
 Allow: /
+Allow: /demo
+Disallow: /dashboard
+Disallow: /policies
 
 User-agent: Claude-Web
 Allow: /
+Allow: /demo
+Disallow: /dashboard
+Disallow: /policies
 
 User-agent: Anthropic-AI
 Allow: /
+Allow: /demo
 
 User-agent: PerplexityBot
 Allow: /
+Allow: /demo
 
 User-agent: Google-Extended
 Allow: /
@@ -44,6 +86,13 @@ Allow: /
 # All other bots
 User-agent: *
 Allow: /
+Allow: /demo
+Allow: /auth
+Allow: /enquiry
+Allow: /contact
+Allow: /terms-conditions
+Allow: /privacy
+Allow: /cancellation-refunds
 Disallow: /api/
 Disallow: /dashboard
 Disallow: /policies
@@ -55,6 +104,7 @@ Disallow: /profile
 Disallow: /settings
 Disallow: /add-client
 Disallow: /reset-password
+Disallow: /subscription
 
 # Sitemap location
 Sitemap: https://policytracker.in/sitemap.xml
