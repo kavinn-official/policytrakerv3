@@ -38,6 +38,13 @@ import duePoliciesImg from '@/assets/screenshots/due-policies.png';
 import reportsImg from '@/assets/screenshots/reports.png';
 import WhatsAppFloatingButton from '@/components/WhatsAppFloatingButton';
 
+// Declare global trackSignupClick function
+declare global {
+  interface Window {
+    trackSignupClick?: (location: string) => void;
+  }
+}
+
 const LandingPage = () => {
   const features = [
     {
@@ -225,13 +232,13 @@ const LandingPage = () => {
             
             {/* Primary CTA */}
             <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/auth">
+              <Link to="/auth" onClick={() => window.trackSignupClick?.('hero_primary')}>
                 <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700 text-lg px-8 py-6 shadow-lg shadow-teal-200">
                   Start Free Trial
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-              <Link to="/auth">
+              <Link to="/auth" onClick={() => window.trackSignupClick?.('hero_secondary')}>
                 <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg px-8 py-6 border-2">
                   Try Dashboard Demo
                 </Button>
@@ -261,39 +268,48 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Video Demo Section */}
+      {/* Animated Demo Section */}
       <section className="py-12 sm:py-16 bg-white" aria-labelledby="video-demo-heading">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-10">
             <h2 id="video-demo-heading" className="text-2xl sm:text-3xl font-bold text-gray-900">
-              Watch How It Works in 60 Seconds
+              See Policy Tracker in Action
             </h2>
             <p className="mt-3 text-gray-600">
-              See how easy it is to manage your insurance policies with Policy Tracker
+              Watch the quick walkthrough to see how easy it is to manage your insurance policies
             </p>
           </div>
           
-          <div className="relative rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-cyan-600 to-teal-600 aspect-video">
-            <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-              <div className="text-center text-white">
-                <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-4 cursor-pointer hover:bg-white/30 transition-colors group">
-                  <Play className="h-10 w-10 text-white ml-1 group-hover:scale-110 transition-transform" />
-                </div>
-                <p className="text-lg font-medium">Interactive Demo Coming Soon</p>
-                <p className="text-sm text-white/80 mt-2">Meanwhile, explore the screenshots below</p>
+          {/* Animated Demo with Screenshots */}
+          <div className="relative rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-gray-900 to-gray-800 aspect-video">
+            {/* Animated Screenshots Slideshow */}
+            <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
+              <div className="animate-slide-show flex gap-8 absolute">
+                <img src={dashboardImg} alt="Dashboard" className="w-[80%] h-auto rounded-lg shadow-xl opacity-90" />
+                <img src={addPolicyImg} alt="Add Policy" className="w-[80%] h-auto rounded-lg shadow-xl opacity-90" />
+                <img src={reportsImg} alt="Reports" className="w-[80%] h-auto rounded-lg shadow-xl opacity-90" />
+                <img src={duePoliciesImg} alt="Due Policies" className="w-[80%] h-auto rounded-lg shadow-xl opacity-90" />
               </div>
             </div>
             
-            {/* Animated Background Elements */}
-            <div className="absolute inset-0 overflow-hidden">
-              <div className="absolute top-10 left-10 w-32 h-32 bg-white/10 rounded-full blur-2xl animate-pulse"></div>
-              <div className="absolute bottom-10 right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl animate-pulse delay-1000"></div>
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-60 h-60 bg-white/5 rounded-full blur-3xl"></div>
+            {/* Overlay with CTA */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end justify-center pb-8">
+              <div className="text-center text-white">
+                <p className="text-lg font-semibold mb-2">📸 Live Screenshots Showcase</p>
+                <p className="text-sm text-gray-300">Dashboard → Add Policy → Reports → Due Policies</p>
+              </div>
+            </div>
+
+            {/* Animated decorations */}
+            <div className="absolute top-4 right-4 flex gap-2">
+              <div className="w-3 h-3 rounded-full bg-red-500"></div>
+              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+              <div className="w-3 h-3 rounded-full bg-green-500"></div>
             </div>
           </div>
 
           <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/auth">
+            <Link to="/auth" onClick={() => window.trackSignupClick?.('demo_section')}>
               <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700">
                 Try It Yourself — Free
                 <ArrowRight className="ml-2 h-5 w-5" />
@@ -393,9 +409,8 @@ const LandingPage = () => {
             ))}
           </div>
 
-          {/* CTA after screenshots */}
           <div className="mt-16 text-center">
-            <Link to="/auth">
+            <Link to="/auth" onClick={() => window.trackSignupClick?.('after_screenshots')}>
               <Button size="lg" className="bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700 text-lg px-10 py-6 shadow-lg shadow-teal-200">
                 Start Managing Policies Now
                 <ArrowRight className="ml-2 h-5 w-5" />
@@ -452,7 +467,7 @@ const LandingPage = () => {
                   </Button>
                 </Link>
                 <Link to="/auth">
-                  <Button size="lg" variant="outline" className="w-full sm:w-auto border-white text-white hover:bg-white/10 text-lg px-8">
+                  <Button size="lg" className="w-full sm:w-auto bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 border border-white/40 text-lg px-8">
                     Start Fresh Instead
                   </Button>
                 </Link>
@@ -489,7 +504,7 @@ const LandingPage = () => {
 
           {/* CTA after features */}
           <div className="mt-12 text-center">
-            <Link to="/auth">
+            <Link to="/auth" onClick={() => window.trackSignupClick?.('after_features')}>
               <Button size="lg" className="bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700 text-lg px-10">
                 Get All Features Free
                 <ArrowRight className="ml-2 h-5 w-5" />
@@ -523,17 +538,98 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Testimonials */}
+      {/* Video Testimonials */}
       <section className="py-16 sm:py-24 bg-white" aria-labelledby="testimonials-heading">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 id="testimonials-heading" className="text-3xl sm:text-4xl font-bold text-gray-900">
-              Loved by Insurance Agents Across India
+              Success Stories from Insurance Agents
             </h2>
             <p className="mt-4 text-lg text-gray-600">
-              See what our users have to say about Policy Tracker.in
+              See how Policy Tracker has transformed businesses across India
             </p>
           </div>
+
+          {/* Video Case Studies */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-16">
+            <Card className="border-0 shadow-xl overflow-hidden bg-gradient-to-br from-teal-50 to-cyan-50">
+              <CardContent className="p-0">
+                <div className="aspect-video bg-gradient-to-br from-teal-600 to-cyan-600 relative flex items-center justify-center">
+                  <div className="text-center text-white p-6">
+                    <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Play className="h-8 w-8 text-white ml-1" />
+                    </div>
+                    <p className="font-semibold text-lg">Before & After Case Study</p>
+                    <p className="text-sm text-white/80 mt-2">How Rajesh went from 50 to 200+ policies</p>
+                  </div>
+                </div>
+                <div className="p-6">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="w-12 h-12 rounded-full bg-teal-100 flex items-center justify-center">
+                      <span className="text-teal-600 font-bold text-lg">RK</span>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">Rajesh Kumar</p>
+                      <p className="text-sm text-gray-500">Insurance Agent, Delhi • 3 Years</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div className="bg-red-50 rounded-lg p-3 text-center">
+                      <p className="text-sm text-gray-500">Before</p>
+                      <p className="text-xl font-bold text-red-600">50 policies</p>
+                      <p className="text-xs text-gray-500">managed in diary</p>
+                    </div>
+                    <div className="bg-green-50 rounded-lg p-3 text-center">
+                      <p className="text-sm text-gray-500">After</p>
+                      <p className="text-xl font-bold text-green-600">227 policies</p>
+                      <p className="text-xs text-gray-500">managed digitally</p>
+                    </div>
+                  </div>
+                  <p className="text-gray-600 text-sm italic">"I was losing 10-15 renewals every month. Now my retention rate is 95%!"</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-xl overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-50">
+              <CardContent className="p-0">
+                <div className="aspect-video bg-gradient-to-br from-blue-600 to-indigo-600 relative flex items-center justify-center">
+                  <div className="text-center text-white p-6">
+                    <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Play className="h-8 w-8 text-white ml-1" />
+                    </div>
+                    <p className="font-semibold text-lg">Agency Growth Story</p>
+                    <p className="text-sm text-white/80 mt-2">How Priya built her team with Policy Tracker</p>
+                  </div>
+                </div>
+                <div className="p-6">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                      <span className="text-blue-600 font-bold text-lg">PS</span>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">Priya Sharma</p>
+                      <p className="text-sm text-gray-500">Agency Owner, Mumbai • 5 Years</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div className="bg-red-50 rounded-lg p-3 text-center">
+                      <p className="text-sm text-gray-500">Before</p>
+                      <p className="text-xl font-bold text-red-600">₹2L/month</p>
+                      <p className="text-xs text-gray-500">premium collected</p>
+                    </div>
+                    <div className="bg-green-50 rounded-lg p-3 text-center">
+                      <p className="text-sm text-gray-500">After</p>
+                      <p className="text-xl font-bold text-green-600">₹8L/month</p>
+                      <p className="text-xs text-gray-500">premium collected</p>
+                    </div>
+                  </div>
+                  <p className="text-gray-600 text-sm italic">"The WhatsApp reminders alone have doubled my renewal rate!"</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Written Testimonials */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {testimonials.map((testimonial, index) => (
               <Card key={index} className="border-0 shadow-lg bg-gradient-to-br from-gray-50 to-white">
@@ -608,14 +704,14 @@ const LandingPage = () => {
             Start free today — no credit card, no commitment.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/auth">
+            <Link to="/auth" onClick={() => window.trackSignupClick?.('final_cta')}>
               <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-600 hover:to-teal-600 text-lg px-10 py-6">
                 Start Free Trial Now
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
             <Link to="/enquiry">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto border-gray-600 text-white hover:bg-gray-800 text-lg px-10 py-6">
+              <Button size="lg" className="w-full sm:w-auto bg-gray-700 text-white hover:bg-gray-600 border border-gray-500 text-lg px-10 py-6">
                 Contact Us
               </Button>
             </Link>

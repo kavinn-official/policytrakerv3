@@ -31,6 +31,7 @@ interface PolicyStats {
   healthInsurance: { count: number; premium: number };
   lifeInsurance: { count: number; premium: number };
   otherInsurance: { count: number; premium: number };
+  byCompany: { [key: string]: { count: number; premium: number } };
   policies: any[];
 }
 
@@ -69,6 +70,7 @@ const ReportsPage = () => {
         healthInsurance: { count: 0, premium: 0 },
         lifeInsurance: { count: 0, premium: 0 },
         otherInsurance: { count: 0, premium: 0 },
+        byCompany: {},
         policies: policies || [],
       };
 
@@ -94,6 +96,14 @@ const ReportsPage = () => {
             stats.otherInsurance.count++;
             stats.otherInsurance.premium += premium;
         }
+
+        // Aggregate by company name
+        const companyName = policy.company_name || 'Unknown';
+        if (!stats.byCompany[companyName]) {
+          stats.byCompany[companyName] = { count: 0, premium: 0 };
+        }
+        stats.byCompany[companyName].count++;
+        stats.byCompany[companyName].premium += premium;
       });
 
       setStats(stats);
@@ -552,6 +562,58 @@ const ReportsPage = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* By Company Breakdown */}
+          {Object.keys(stats.byCompany).length > 0 && (
+            <Card className="shadow-lg border-0">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <TrendingUp className="h-5 w-5 text-primary" />
+                  By Insurance Company
+                </CardTitle>
+                <CardDescription>
+                  Policy count and premium breakdown by company name
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b bg-muted/50">
+                        <th className="text-left py-3 px-4 font-semibold">Company Name</th>
+                        <th className="text-center py-3 px-4 font-semibold">Policy Count</th>
+                        <th className="text-right py-3 px-4 font-semibold">Net Premium</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Object.entries(stats.byCompany)
+                        .sort((a, b) => b[1].premium - a[1].premium)
+                        .map(([company, data], index) => (
+                          <tr key={company} className={`border-b hover:bg-muted/50 ${index % 2 === 0 ? 'bg-white' : 'bg-muted/20'}`}>
+                            <td className="py-3 px-4 font-medium">{company}</td>
+                            <td className="py-3 px-4 text-center">
+                              <span className="inline-flex items-center justify-center min-w-[40px] px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                                {data.count}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 text-right font-semibold text-green-600">
+                              {formatCurrency(data.premium)}
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                    <tfoot>
+                      <tr className="bg-muted/50 font-bold">
+                        <td className="py-3 px-4">Total</td>
+                        <td className="py-3 px-4 text-center">{stats.totalPolicies}</td>
+                        <td className="py-3 px-4 text-right text-green-600">{formatCurrency(stats.totalNetPremium)}</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Policy List Preview */}
           {stats.policies.length > 0 && (

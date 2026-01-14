@@ -36,13 +36,30 @@
     <meta name="geo.placename" content="India" />
     <meta name="language" content="English" />
     
-    <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <!-- Google Analytics 4 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-32DPPHPLZ2"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      gtag('config', 'G-XXXXXXXXXX');
+      gtag('config', 'G-32DPPHPLZ2');
+      
+      // Track signup button clicks
+      function trackSignupClick(buttonLocation) {
+        gtag('event', 'signup_click', {
+          'event_category': 'engagement',
+          'event_label': buttonLocation,
+          'value': 1
+        });
+        gtag('event', 'conversion', {
+          'send_to': 'G-32DPPHPLZ2',
+          'event_category': 'conversion',
+          'event_label': 'signup_button_click'
+        });
+      }
+      
+      // Make function globally available
+      window.trackSignupClick = trackSignupClick;
     </script>
     
     <!-- Structured Data - Software Application -->
