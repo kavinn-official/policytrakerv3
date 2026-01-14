@@ -1,6 +1,12 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { 
   Shield, 
   Bell, 
@@ -18,7 +24,12 @@ import {
   BookOpen,
   Database,
   Zap,
-  TrendingUp
+  TrendingUp,
+  Lock,
+  Award,
+  Headphones,
+  Play,
+  ShieldCheck
 } from "lucide-react";
 import logo from '@/assets/logo.png';
 import dashboardImg from '@/assets/screenshots/dashboard.png';
@@ -124,6 +135,48 @@ const LandingPage = () => {
     }
   ];
 
+  const trustBadges = [
+    { icon: Lock, title: "SSL Secured", description: "256-bit encryption" },
+    { icon: ShieldCheck, title: "Data Protected", description: "Your data is safe" },
+    { icon: Award, title: "1000+ Users", description: "Trusted platform" },
+    { icon: Headphones, title: "24/7 Support", description: "Always here to help" }
+  ];
+
+  const faqs = [
+    {
+      question: "What is Policy Tracker.in?",
+      answer: "Policy Tracker.in is a comprehensive insurance policy management software designed specifically for Indian insurance agents. It helps you track motor, health, and life insurance policies, manage client relationships, send automated WhatsApp reminders for renewals, and generate Excel reports — all in one easy-to-use platform."
+    },
+    {
+      question: "Is Policy Tracker.in free to use?",
+      answer: "Yes! We offer a free forever plan that includes up to 50 policies, basic renewal alerts, and client management. For agents managing more policies, we have affordable premium plans starting at just ₹199/month with unlimited policies and advanced features like WhatsApp automation."
+    },
+    {
+      question: "Can I import my existing policy data?",
+      answer: "Absolutely! You can import policies from Excel files, CSV files, or any digital format. We also offer free data migration assistance where our team will personally help you digitize your existing records from diaries, notepads, or any other format."
+    },
+    {
+      question: "How do WhatsApp reminders work?",
+      answer: "With one click, you can send personalized renewal reminder messages to your clients via WhatsApp. The message includes policy details, expiry date, and your contact information. Premium plans include automated reminders that are sent automatically before policy expiry."
+    },
+    {
+      question: "Is my data secure on Policy Tracker?",
+      answer: "Yes, your data is completely secure. We use industry-standard 256-bit SSL encryption, secure cloud storage, and regular backups. Your policy and client data is private and never shared with third parties. Only you can access your account data."
+    },
+    {
+      question: "Can I access Policy Tracker on mobile?",
+      answer: "Yes! Policy Tracker.in is fully responsive and works perfectly on mobile phones, tablets, and desktops. You can also install it as a PWA (Progressive Web App) on your phone for quick access just like a native app."
+    },
+    {
+      question: "What types of insurance policies can I manage?",
+      answer: "You can manage all types of insurance policies including Motor Insurance (car, bike, commercial vehicles), Health Insurance, Life Insurance, Term Plans, and any other general insurance policies. The platform is flexible to handle all your policy types."
+    },
+    {
+      question: "How can I get support if I face any issues?",
+      answer: "We offer multiple support channels: WhatsApp support, email support at policytracker.in@gmail.com, and our enquiry form. Premium users get priority support with faster response times. We're committed to helping you succeed."
+    }
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-white to-teal-50">
       {/* Navigation */}
@@ -204,6 +257,67 @@ const LandingPage = () => {
                 <span className="font-medium">Mobile Friendly</span>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Video Demo Section */}
+      <section className="py-12 sm:py-16 bg-white" aria-labelledby="video-demo-heading">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-10">
+            <h2 id="video-demo-heading" className="text-2xl sm:text-3xl font-bold text-gray-900">
+              Watch How It Works in 60 Seconds
+            </h2>
+            <p className="mt-3 text-gray-600">
+              See how easy it is to manage your insurance policies with Policy Tracker
+            </p>
+          </div>
+          
+          <div className="relative rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-cyan-600 to-teal-600 aspect-video">
+            <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+              <div className="text-center text-white">
+                <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-4 cursor-pointer hover:bg-white/30 transition-colors group">
+                  <Play className="h-10 w-10 text-white ml-1 group-hover:scale-110 transition-transform" />
+                </div>
+                <p className="text-lg font-medium">Interactive Demo Coming Soon</p>
+                <p className="text-sm text-white/80 mt-2">Meanwhile, explore the screenshots below</p>
+              </div>
+            </div>
+            
+            {/* Animated Background Elements */}
+            <div className="absolute inset-0 overflow-hidden">
+              <div className="absolute top-10 left-10 w-32 h-32 bg-white/10 rounded-full blur-2xl animate-pulse"></div>
+              <div className="absolute bottom-10 right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl animate-pulse delay-1000"></div>
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-60 h-60 bg-white/5 rounded-full blur-3xl"></div>
+            </div>
+          </div>
+
+          <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+            <Link to="/auth">
+              <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700">
+                Try It Yourself — Free
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Trust Badges Section */}
+      <section className="py-8 bg-gray-50 border-y border-gray-200" aria-label="Trust indicators">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+            {trustBadges.map((badge, index) => (
+              <div key={index} className="flex items-center justify-center gap-3 py-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-cyan-100 to-teal-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <badge.icon className="h-6 w-6 text-teal-600" />
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-900 text-sm sm:text-base">{badge.title}</p>
+                  <p className="text-xs sm:text-sm text-gray-500">{badge.description}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -437,6 +551,47 @@ const LandingPage = () => {
                 </CardContent>
               </Card>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="py-16 sm:py-24 bg-gray-50" id="faq" aria-labelledby="faq-heading">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 id="faq-heading" className="text-3xl sm:text-4xl font-bold text-gray-900">
+              Frequently Asked Questions
+            </h2>
+            <p className="mt-4 text-lg text-gray-600">
+              Everything you need to know about Policy Tracker.in
+            </p>
+          </div>
+          
+          <Accordion type="single" collapsible className="space-y-4">
+            {faqs.map((faq, index) => (
+              <AccordionItem 
+                key={index} 
+                value={`faq-${index}`}
+                className="bg-white rounded-xl border border-gray-200 px-6 shadow-sm"
+              >
+                <AccordionTrigger className="text-left text-gray-900 font-semibold hover:text-teal-600 py-5">
+                  {faq.question}
+                </AccordionTrigger>
+                <AccordionContent className="text-gray-600 pb-5">
+                  {faq.answer}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+
+          <div className="mt-10 text-center">
+            <p className="text-gray-600 mb-4">Still have questions?</p>
+            <Link to="/enquiry">
+              <Button variant="outline" size="lg" className="border-teal-600 text-teal-600 hover:bg-teal-50">
+                <Headphones className="mr-2 h-5 w-5" />
+                Contact Support
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
