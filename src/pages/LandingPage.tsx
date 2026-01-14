@@ -233,7 +233,7 @@ const LandingPage = () => {
                   <ArrowRight className="ml-2 h-5 w-5" aria-hidden="true" />
                 </Button>
               </Link>
-              <Link to="/auth" onClick={() => window.trackSignupClick?.('hero_secondary')}>
+              <Link to="/demo">
                 <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg px-8 py-6 border-2">
                   Try Policy Tracker Demo
                 </Button>

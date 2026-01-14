@@ -122,6 +122,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) throw error;
 
+      // Send WhatsApp notification for new signup
+      try {
+        await supabase.functions.invoke("send-whatsapp-notification", {
+          body: {
+            type: "signup",
+            name: metadata?.full_name || "New User",
+            email: email,
+            phone: metadata?.mobile_number || "",
+          },
+        });
+      } catch (notifyError) {
+        // Don't fail signup if notification fails
+        console.error("WhatsApp notification failed:", notifyError);
+      }
+
       toast({
         title: "Success",
         description: "Check your email to confirm your account!",
