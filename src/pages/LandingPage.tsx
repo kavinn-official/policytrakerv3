@@ -42,36 +42,37 @@ declare global {
 }
 
 const LandingPage = () => {
+  // SEO-optimized features with high-intent keywords
   const features = [
     {
       icon: FileText,
-      title: "Policy Management",
-      description: "Store and manage all your motor, health, and life insurance policies in one centralized dashboard."
+      title: "Insurance Policy Management",
+      description: "Best-in-class policy tracking app for agents. Store and manage all motor, health, and life insurance policies in one centralized dashboard."
     },
     {
       icon: Bell,
-      title: "Smart Renewal Alerts",
-      description: "Never miss a policy renewal. Get automated notifications for expiring policies."
+      title: "Policy Renewal Reminder App",
+      description: "Never miss a policy renewal. Get automated renewal alerts and notifications for expiring policies - the smartest policy reminder system."
     },
     {
       icon: MessageCircle,
-      title: "WhatsApp Reminders",
-      description: "Send automated WhatsApp reminders to clients for policy renewals with one click."
+      title: "WhatsApp Reminders Integration",
+      description: "Send automated WhatsApp reminders to clients for policy renewals with one click. Keep clients engaged and boost retention."
     },
     {
       icon: Users,
-      title: "Client Management",
-      description: "Maintain detailed client records with contact information and policy history."
+      title: "Insurance Agent CRM",
+      description: "Complete client management system for insurance agents. Maintain detailed records with contact information and policy history."
     },
     {
       icon: BarChart3,
-      title: "Dashboard Analytics",
-      description: "Visual dashboard showing total policies, renewals due, and business insights."
+      title: "Dashboard & Reports Analytics",
+      description: "Visual dashboard showing total policies, renewals due, premium reports, and business insights. Export to Excel anytime."
     },
     {
       icon: Smartphone,
-      title: "Mobile Responsive",
-      description: "Access your policy tracker anywhere - desktop, tablet, or mobile phone."
+      title: "Mobile Policy Tracking App",
+      description: "Access your agent policy tracker anywhere - desktop, tablet, or mobile phone. Install as PWA for native app experience."
     }
   ];
 
@@ -133,38 +134,47 @@ const LandingPage = () => {
     { icon: Headphones, title: "24/7 Support", description: "Always here to help" }
   ];
 
+  // SEO-optimized FAQs with high-intent keywords for AEO
   const faqs = [
     {
-      question: "What is Policy Tracker.in?",
-      answer: "Policy Tracker.in is a comprehensive insurance policy management software designed specifically for Indian insurance agents. It helps you track motor, health, and life insurance policies, manage client relationships, send automated WhatsApp reminders for renewals, and generate Excel reports — all in one easy-to-use platform."
+      question: "What is the best agent policy tracker for insurance agents in India?",
+      answer: "Policy Tracker.in is the best agent policy tracker for insurance agents in India. It's a comprehensive insurance policy management software that helps you track motor, health, and life insurance policies, manage client relationships, send automated WhatsApp reminders for renewals, and generate Excel reports. Trusted by 1000+ insurance agents with a 4.8-star rating."
     },
     {
-      question: "Is Policy Tracker.in free to use?",
-      answer: "Yes! We offer a free forever plan that includes up to 50 policies, basic renewal alerts, and client management. For agents managing more policies, we have affordable premium plans starting at just ₹199/month with unlimited policies and advanced features like WhatsApp automation."
+      question: "What is Policy Tracker.in and how does it work?",
+      answer: "Policy Tracker.in is India's #1 policy tracking app for insurance agents. It works as an all-in-one insurance agent CRM where you can add policies (manually or via PDF upload), track renewal dates, send WhatsApp reminders to clients, manage client information, and generate premium reports. The platform is designed specifically for Indian insurance agents."
     },
     {
-      question: "Can I import my existing policy data?",
-      answer: "Absolutely! You can import policies from Excel files, CSV files, or any digital format. We also offer free data migration assistance where our team will personally help you digitize your existing records from diaries, notepads, or any other format."
+      question: "Is this insurance policy management software free to use?",
+      answer: "Yes! Policy Tracker.in offers a free forever plan that includes up to 50 policies, basic renewal alerts, and client management. For agents managing more policies, we have affordable premium plans starting at just ₹199/month with unlimited policies and advanced features like WhatsApp automation and priority support."
     },
     {
-      question: "How do WhatsApp reminders work?",
-      answer: "With one click, you can send personalized renewal reminder messages to your clients via WhatsApp. The message includes policy details, expiry date, and your contact information. Premium plans include automated reminders that are sent automatically before policy expiry."
+      question: "How does the policy renewal reminder app feature work?",
+      answer: "The policy renewal reminder feature automatically tracks all policy expiry dates. You get alerts on your dashboard for upcoming renewals. With one click, you can send personalized WhatsApp reminders to clients including policy details, expiry date, and your contact information. Premium plans include fully automated reminders sent before policy expiry."
     },
     {
-      question: "Is my data secure on Policy Tracker?",
-      answer: "Yes, your data is completely secure. We use industry-standard 256-bit SSL encryption, secure cloud storage, and regular backups. Your policy and client data is private and never shared with third parties. Only you can access your account data."
+      question: "Can I use Policy Tracker as an insurance agent CRM?",
+      answer: "Absolutely! Policy Tracker.in works as a complete insurance agent CRM. You can manage client contact information, view policy history for each client, track all communications, and maintain relationships with your insurance clients in one organized platform."
     },
     {
-      question: "Can I access Policy Tracker on mobile?",
-      answer: "Yes! Policy Tracker.in is fully responsive and works perfectly on mobile phones, tablets, and desktops. You can also install it as a PWA (Progressive Web App) on your phone for quick access just like a native app."
+      question: "What makes this the best policy tracking app for agents?",
+      answer: "Policy Tracker.in is built specifically for Indian insurance agents with features like WhatsApp integration, Hindi language support, INR pricing, and support for all Indian insurance types. It's the most affordable agent policy tracker with a generous free tier, premium plans from ₹199/month, and features like PDF auto-fill that no other policy tracker offers."
     },
     {
-      question: "What types of insurance policies can I manage?",
-      answer: "You can manage all types of insurance policies including Motor Insurance (car, bike, commercial vehicles), Health Insurance, Life Insurance, Term Plans, and any other general insurance policies. The platform is flexible to handle all your policy types."
+      question: "What types of insurance policies can I track?",
+      answer: "You can track all types of insurance policies including Motor Insurance (car, bike, two-wheeler, commercial vehicles), Health Insurance, Life Insurance, Term Plans, and general insurance policies. For motor insurance, the policy tracker supports vehicle details like make, model, and registration number."
     },
     {
-      question: "How can I get support if I face any issues?",
-      answer: "We offer multiple support channels: WhatsApp support, email support at policytracker.in@gmail.com, and our enquiry form. Premium users get priority support with faster response times. We're committed to helping you succeed."
+      question: "Is this policy tracker app available on mobile?",
+      answer: "Yes! Policy Tracker.in is a fully responsive policy tracking app that works perfectly on mobile phones, tablets, and desktops. You can also install it as a PWA (Progressive Web App) on your phone for quick access just like a native mobile app - no app store download needed."
+    },
+    {
+      question: "How do I import my existing policy data into the tracker?",
+      answer: "You can import policies from Excel files, CSV files, or any digital format. We also offer free data migration assistance where our team will personally help you digitize your existing records from diaries, notepads, or any other format into the policy tracker."
+    },
+    {
+      question: "Is my client and policy data secure?",
+      answer: "Yes, your data is completely secure. Policy Tracker.in uses industry-standard 256-bit SSL encryption, secure cloud storage, and regular backups. Your policy and client data is private and never shared with third parties. Only you can access your account data."
     }
   ];
 
@@ -175,17 +185,17 @@ const LandingPage = () => {
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Main navigation">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
-              <img src={logo} alt="Policy Tracker - Insurance Policy Management Software India" className="w-10 h-10" />
+              <img src={logo} alt="Agent Policy Tracker - Best Insurance Policy Management Software India" className="w-10 h-10" />
               <div>
                 <h1 className="text-xl font-bold text-gray-900">Policy Tracker.in</h1>
-                <p className="text-xs text-gray-600 hidden sm:block">Insurance Management</p>
+                <p className="text-xs text-gray-600 hidden sm:block">Agent Policy Tracker</p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <Link to="/auth" aria-label="Login to your account">
+              <Link to="/auth" aria-label="Login to your agent policy tracker account">
                 <Button variant="outline" size="sm">Login</Button>
               </Link>
-              <Link to="/auth" aria-label="Start free trial">
+              <Link to="/auth" aria-label="Start free trial of policy tracking app">
                 <Button size="sm" className="bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700">
                   Start Free
                 </Button>
@@ -195,57 +205,58 @@ const LandingPage = () => {
         </nav>
       </header>
 
-      {/* Hero Section - Optimized for instant value proposition */}
+      {/* Hero Section - Optimized for SEO, AEO & AI Search */}
       <section className="py-12 sm:py-20 px-4 sm:px-6 lg:px-8" aria-labelledby="hero-heading">
         <div className="max-w-7xl mx-auto">
           <div className="text-center max-w-4xl mx-auto">
             <div className="inline-flex items-center gap-2 bg-teal-50 text-teal-700 px-4 py-2 rounded-full text-sm font-medium mb-6">
-              <Zap className="h-4 w-4" />
-              Trusted by 1000+ Insurance Agents Across India
+              <Zap className="h-4 w-4" aria-hidden="true" />
+              <span>#1 Agent Policy Tracker - Trusted by 1000+ Insurance Agents in India</span>
             </div>
-            <h1 id="hero-heading" className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
-              Stop Losing Renewals.
+            <h2 id="hero-heading" className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
+              Best Insurance Policy
               <span className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-600 to-teal-600">
-                Start Tracking Policies.
+                Tracker for Agents
               </span>
-            </h1>
+            </h2>
             <p className="mt-6 text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto">
-              The simplest way for insurance agents to track motor policies, send WhatsApp reminders, 
-              and never miss a renewal again. <strong>Free to start. No credit card required.</strong>
+              India's #1 <strong>agent policy tracker</strong> and <strong>insurance policy management software</strong>. 
+              Track motor policies, send WhatsApp renewal reminders, manage clients with our 
+              <strong> policy tracking app for agents</strong>. <span className="text-teal-600 font-semibold">Free to start. No credit card required.</span>
             </p>
             
             {/* Primary CTA */}
             <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/auth" onClick={() => window.trackSignupClick?.('hero_primary')}>
                 <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700 text-lg px-8 py-6 shadow-lg shadow-teal-200">
-                  Start Free Trial
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                  Start Free Trial - No Credit Card
+                  <ArrowRight className="ml-2 h-5 w-5" aria-hidden="true" />
                 </Button>
               </Link>
               <Link to="/auth" onClick={() => window.trackSignupClick?.('hero_secondary')}>
                 <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg px-8 py-6 border-2">
-                  Try Dashboard Demo
+                  Try Policy Tracker Demo
                 </Button>
               </Link>
             </div>
 
-            {/* Trust Badges */}
+            {/* Trust Badges - Keyword Rich */}
             <div className="mt-10 flex flex-wrap justify-center gap-6 sm:gap-10 text-gray-600">
               <div className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-teal-600" />
-                <span className="font-medium">100% Free to Start</span>
+                <CheckCircle className="h-5 w-5 text-teal-600" aria-hidden="true" />
+                <span className="font-medium">Free Policy Tracker</span>
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-teal-600" />
-                <span className="font-medium">WhatsApp Reminders</span>
+                <CheckCircle className="h-5 w-5 text-teal-600" aria-hidden="true" />
+                <span className="font-medium">WhatsApp Renewal Reminders</span>
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-teal-600" />
-                <span className="font-medium">Excel Reports</span>
+                <CheckCircle className="h-5 w-5 text-teal-600" aria-hidden="true" />
+                <span className="font-medium">Insurance Agent CRM</span>
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-teal-600" />
-                <span className="font-medium">Mobile Friendly</span>
+                <CheckCircle className="h-5 w-5 text-teal-600" aria-hidden="true" />
+                <span className="font-medium">Mobile Policy Tracking</span>
               </div>
             </div>
           </div>
@@ -297,9 +308,12 @@ const LandingPage = () => {
               </div>
               <img 
                 src={howItWorksImg} 
-                alt="Policy Tracker - How it works: Dashboard, Add Policy, Manage Policies, Due Policies"
+                alt="Agent Policy Tracker Dashboard - How to track insurance policies, manage renewals, send WhatsApp reminders"
+                title="Best Agent Policy Tracker - Insurance Policy Management Software"
                 className="w-full h-auto"
                 loading="lazy"
+                width="1200"
+                height="675"
               />
             </div>
           </div>
@@ -390,10 +404,10 @@ const LandingPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 id="features-heading" className="text-3xl sm:text-4xl font-bold text-gray-900">
-              Everything You Need to Grow Your Insurance Business
+              Complete Insurance Policy Management Software
             </h2>
             <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-              Built specifically for insurance agents in India. Simple, powerful, and designed to save you time.
+              Everything you need in an <strong>agent policy tracker</strong>. Built specifically for insurance agents in India. Simple, powerful, and designed to save you time.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -557,12 +571,12 @@ const LandingPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="md:col-span-2">
               <div className="flex items-center space-x-3 mb-4">
-                <img src={logo} alt="Policy Tracker.in - Insurance Software" className="w-10 h-10" />
+                <img src={logo} alt="Policy Tracker.in - Best Agent Policy Tracker Software India" className="w-10 h-10" />
                 <span className="text-xl font-bold text-white">Policy Tracker.in</span>
               </div>
               <p className="text-sm mb-4">
-                India's leading insurance policy management software for agents. 
-                Track renewals, send WhatsApp reminders, manage clients, and grow your business.
+                India's #1 <strong>agent policy tracker</strong> and insurance policy management software. 
+                Track renewals, send WhatsApp reminders, manage clients with our policy tracking app for agents.
               </p>
               <p className="text-sm">
                 <strong className="text-white">Contact:</strong> policytracker.in@gmail.com
@@ -587,7 +601,7 @@ const LandingPage = () => {
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm">
-            <p>© 2025 policytracker.in. All rights reserved. | Best Insurance Policy Tracker for Indian Agents</p>
+            <p>© 2025 PolicyTracker.in - Best Agent Policy Tracker | Insurance Policy Management Software for Indian Agents | Policy Tracking App</p>
           </div>
         </div>
       </footer>
