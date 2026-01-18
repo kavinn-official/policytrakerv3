@@ -186,7 +186,7 @@ const DemoPage = () => {
     { name: 'Dashboard', id: 'dashboard', icon: Home },
     { name: 'Policies', id: 'policies', icon: FileText },
     { name: 'Due Policies', id: 'due', icon: AlertTriangle },
-    { name: 'Clients', id: 'clients', icon: Users },
+    { name: 'Add Policy', id: 'addpolicy', icon: Plus },
     { name: 'Reports', id: 'reports', icon: BarChart3 },
     { name: 'Subscription', id: 'subscription', icon: CreditCard },
   ];
@@ -574,48 +574,95 @@ const DemoPage = () => {
           </div>
         )}
 
-        {/* Clients Tab */}
-        {activeTab === "clients" && (
+        {/* Add Policy Tab */}
+        {activeTab === "addpolicy" && (
           <div className="space-y-4 sm:space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Your Clients</h2>
-              <Button className="bg-gradient-to-r from-cyan-600 to-teal-600">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Client
-              </Button>
+            <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+              <div>
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Add New Policy</h2>
+                <p className="text-gray-600">Enter policy details or upload a PDF for auto-fill</p>
+              </div>
             </div>
 
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {demoClients.map((client, index) => (
-                <Card key={index} className="bg-white border-0 shadow-sm hover:shadow-md transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-teal-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                        {client.name.charAt(0)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-gray-900 truncate">{client.name}</h3>
-                        <div className="flex items-center gap-1 text-sm text-gray-500 mt-1">
-                          <Phone className="h-3 w-3" />
-                          <span className="truncate">{client.phone}</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-sm text-gray-500">
-                          <Mail className="h-3 w-3" />
-                          <span className="truncate">{client.email}</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-sm text-gray-500">
-                          <MapPin className="h-3 w-3" />
-                          <span className="truncate">{client.address}</span>
-                        </div>
-                        <div className="flex items-center gap-2 mt-3">
-                          <Badge variant="outline">{client.policies} Policies</Badge>
-                        </div>
-                      </div>
+            <Card className="bg-white border-0 shadow-lg">
+              <CardContent className="p-6">
+                {/* PDF Upload Section */}
+                <div className="mb-8">
+                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-cyan-400 transition-colors cursor-pointer bg-gradient-to-br from-cyan-50/50 to-teal-50/50">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-cyan-100 to-teal-100 rounded-full flex items-center justify-center">
+                      <FileText className="h-8 w-8 text-cyan-600" />
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                    <h3 className="font-semibold text-gray-900 mb-2">Upload Policy PDF</h3>
+                    <p className="text-sm text-gray-500 mb-4">
+                      Drag & drop or click to upload. We'll auto-extract policy details using AI.
+                    </p>
+                    <Button className="bg-gradient-to-r from-cyan-600 to-teal-600">
+                      <FileText className="h-4 w-4 mr-2" />
+                      Select PDF or Image
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Form Fields */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Policy Number *</label>
+                    <Input placeholder="e.g., POL-2024-001234" className="h-11" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Client Name *</label>
+                    <Input placeholder="e.g., Rajesh Kumar" className="h-11" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Insurance Type</label>
+                    <select className="w-full h-11 px-3 border rounded-md">
+                      <option>Vehicle Insurance</option>
+                      <option>Health Insurance</option>
+                      <option>Life Insurance</option>
+                      <option>Other</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Company Name</label>
+                    <Input placeholder="e.g., ICICI Lombard" className="h-11" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Vehicle Number</label>
+                    <Input placeholder="e.g., MH-01-AB-1234" className="h-11" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Contact Number</label>
+                    <Input placeholder="e.g., 9876543210" className="h-11" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Policy Active Date *</label>
+                    <Input type="date" className="h-11" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Policy Expiry Date *</label>
+                    <Input type="date" className="h-11" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Net Premium (₹)</label>
+                    <Input placeholder="e.g., 12500" type="number" className="h-11" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Reference</label>
+                    <Input placeholder="Optional reference" className="h-11" />
+                  </div>
+                </div>
+
+                <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-end">
+                  <Button variant="outline" className="h-11">
+                    Cancel
+                  </Button>
+                  <Button className="h-11 bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Save Policy (Demo)
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         )}
 

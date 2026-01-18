@@ -191,7 +191,31 @@ const LandingPage = () => {
                 <p className="text-xs text-gray-600 hidden sm:block">Agent Policy Tracker</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
+            
+            {/* Desktop Navigation Links */}
+            <div className="hidden md:flex items-center space-x-6">
+              <Link to="/features" className="text-gray-600 hover:text-gray-900 font-medium text-sm transition-colors" aria-label="View all features of policy tracker">
+                Features
+              </Link>
+              <Link to="/pricing" className="text-gray-600 hover:text-gray-900 font-medium text-sm transition-colors" aria-label="View pricing plans">
+                Pricing
+              </Link>
+              <Link to="/demo" className="text-gray-600 hover:text-gray-900 font-medium text-sm transition-colors" aria-label="Try interactive demo">
+                Demo
+              </Link>
+            </div>
+
+            <div className="flex items-center space-x-3">
+              {/* Mobile Navigation Links */}
+              <div className="flex md:hidden items-center space-x-2">
+                <Link to="/features" className="text-gray-600 hover:text-gray-900 text-xs font-medium">
+                  Features
+                </Link>
+                <Link to="/pricing" className="text-gray-600 hover:text-gray-900 text-xs font-medium">
+                  Pricing
+                </Link>
+              </div>
+              
               <Link to="/auth" aria-label="Login to your agent policy tracker account">
                 <Button variant="outline" size="sm">Login</Button>
               </Link>
