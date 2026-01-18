@@ -23,23 +23,28 @@
     <link rel="manifest" href="/manifest.json" />
 
     <!-- Open Graph / Facebook -->
-    <meta property="og:title" content="Agent Policy Tracker - Best Insurance Policy Management Software India" />
-    <meta property="og:description" content="India's #1 policy tracking app for insurance agents. Manage renewals, send WhatsApp reminders, track motor & health policies. Trusted by 1000+ agents." />
+    <meta property="og:title" content="Policy Tracker.in - India's #1 Insurance Policy Management Software for Agents" />
+    <meta property="og:description" content="Track motor policies, send WhatsApp renewal reminders, manage clients. Best agent policy tracker trusted by 1000+ insurance agents in India. Free to start!" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://policytracker.in" />
-    <meta property="og:image" content="https://policytracker.in/logo.png" />
-    <meta property="og:image:width" content="512" />
-    <meta property="og:image:height" content="512" />
-    <meta property="og:image:alt" content="Policy Tracker Logo - Agent Policy Tracker Software" />
+    <meta property="og:image" content="https://policytracker.in/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Policy Tracker.in - Track Policies, WhatsApp Reminders, Excel Reports" />
+    <meta property="og:image:type" content="image/png" />
     <meta property="og:site_name" content="Policy Tracker.in - Agent Policy Tracker" />
     <meta property="og:locale" content="en_IN" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Agent Policy Tracker - #1 Insurance Policy Tracker for Agents" />
+    <meta name="twitter:title" content="Policy Tracker.in - #1 Insurance Policy Tracker for Agents" />
     <meta name="twitter:description" content="Free insurance policy management software. Track renewals, WhatsApp reminders, client management. Best policy tracker for Indian insurance agents." />
-    <meta name="twitter:image" content="https://policytracker.in/logo.png" />
-    <meta name="twitter:image:alt" content="Policy Tracker - Insurance Agent Software" />
+    <meta name="twitter:image" content="https://policytracker.in/og-image.png" />
+    <meta name="twitter:image:alt" content="Policy Tracker - Insurance Agent Software"
+    />
+    
+    <!-- Google Search Console Verification -->
+    <meta name="google-site-verification" content="YOUR_GOOGLE_VERIFICATION_CODE" />
     
     <!-- Additional SEO & AI Search Optimization -->
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
@@ -147,27 +152,34 @@
     }
     </script>
     
-    <!-- Structured Data - Organization -->
+    <!-- Structured Data - Organization (with logo for Google Search) -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "Organization",
       "name": "Policy Tracker.in",
-      "alternateName": "Agent Policy Tracker",
+      "alternateName": ["Agent Policy Tracker", "Policy Tracker India", "Insurance Policy Tracker"],
       "url": "https://policytracker.in",
       "logo": {
         "@type": "ImageObject",
         "url": "https://policytracker.in/logo.png",
         "width": 512,
         "height": 512,
-        "caption": "Policy Tracker - Agent Policy Tracker Logo"
+        "caption": "Policy Tracker.in - Agent Policy Tracker Logo"
       },
-      "image": "https://policytracker.in/logo.png",
+      "image": [
+        "https://policytracker.in/logo.png",
+        "https://policytracker.in/og-image.png"
+      ],
       "description": "India's leading agent policy tracker and insurance policy management software. Helping insurance agents track policies, manage renewals, and grow their business.",
       "email": "policytracker.in@gmail.com",
       "foundingDate": "2024",
       "foundingLocation": "India",
-      "areaServed": "India",
+      "areaServed": {
+        "@type": "Country",
+        "name": "India"
+      },
+      "knowsAbout": ["Insurance Policy Management", "Motor Insurance", "Health Insurance", "Life Insurance", "WhatsApp Reminders"],
       "contactPoint": {
         "@type": "ContactPoint",
         "contactType": "customer support",
