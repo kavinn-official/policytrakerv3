@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
 import { 
   ArrowRight, 
   FileText, 
@@ -21,12 +21,31 @@ import {
   MessageCircle,
   TrendingUp,
   AlertTriangle,
-  Calendar
+  Calendar,
+  Search,
+  Filter,
+  Download,
+  Phone,
+  Mail,
+  MapPin,
+  Menu,
+  LogOut,
+  User,
+  Settings,
+  CreditCard
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import logo from '@/assets/logo.png';
 import WhatsAppFloatingButton from '@/components/WhatsAppFloatingButton';
 
-// Mock demo data
+// Extended mock demo data
 const demoPolicies = [
   {
     id: "1",
@@ -34,12 +53,16 @@ const demoPolicies = [
     policyNumber: "POL-2024-001234",
     insuranceType: "Motor",
     vehicleNumber: "MH-01-AB-1234",
+    vehicleMake: "Maruti",
+    vehicleModel: "Swift",
     companyName: "ICICI Lombard",
     premium: 12500,
+    activeDate: "2024-01-20",
     expiryDate: "2025-01-20",
     status: "Due Soon",
     daysLeft: 6,
-    phone: "+91 98765 43210"
+    phone: "+91 98765 43210",
+    email: "rajesh.kumar@email.com"
   },
   {
     id: "2",
@@ -48,10 +71,12 @@ const demoPolicies = [
     insuranceType: "Health",
     companyName: "Star Health",
     premium: 25000,
+    activeDate: "2024-01-25",
     expiryDate: "2025-01-25",
     status: "Due Soon",
     daysLeft: 11,
-    phone: "+91 87654 32109"
+    phone: "+91 87654 32109",
+    email: "priya.sharma@email.com"
   },
   {
     id: "3",
@@ -59,12 +84,16 @@ const demoPolicies = [
     policyNumber: "POL-2024-009012",
     insuranceType: "Motor",
     vehicleNumber: "GJ-05-CD-5678",
+    vehicleMake: "Honda",
+    vehicleModel: "City",
     companyName: "New India Assurance",
     premium: 8500,
+    activeDate: "2024-02-15",
     expiryDate: "2025-02-15",
     status: "Active",
     daysLeft: 32,
-    phone: "+91 76543 21098"
+    phone: "+91 76543 21098",
+    email: "amit.patel@email.com"
   },
   {
     id: "4",
@@ -73,10 +102,12 @@ const demoPolicies = [
     insuranceType: "Life",
     companyName: "LIC",
     premium: 50000,
+    activeDate: "2024-03-10",
     expiryDate: "2025-03-10",
     status: "Active",
     daysLeft: 55,
-    phone: "+91 65432 10987"
+    phone: "+91 65432 10987",
+    email: "sunita.verma@email.com"
   },
   {
     id: "5",
@@ -84,12 +115,30 @@ const demoPolicies = [
     policyNumber: "POL-2024-007890",
     insuranceType: "Motor",
     vehicleNumber: "DL-08-EF-9012",
+    vehicleMake: "Hyundai",
+    vehicleModel: "Creta",
     companyName: "Bajaj Allianz",
     premium: 15000,
+    activeDate: "2024-01-18",
     expiryDate: "2025-01-18",
     status: "Due Soon",
     daysLeft: 4,
-    phone: "+91 54321 09876"
+    phone: "+91 54321 09876",
+    email: "vikram.singh@email.com"
+  },
+  {
+    id: "6",
+    clientName: "Meera Reddy",
+    policyNumber: "POL-2024-004567",
+    insuranceType: "Health",
+    companyName: "HDFC Ergo",
+    premium: 35000,
+    activeDate: "2024-04-01",
+    expiryDate: "2025-04-01",
+    status: "Active",
+    daysLeft: 78,
+    phone: "+91 43210 98765",
+    email: "meera.reddy@email.com"
   }
 ];
 
@@ -102,8 +151,18 @@ const demoStats = {
   activeClients: 89
 };
 
+const demoClients = [
+  { name: "Rajesh Kumar", phone: "+91 98765 43210", email: "rajesh.kumar@email.com", policies: 3, address: "Mumbai, Maharashtra" },
+  { name: "Priya Sharma", phone: "+91 87654 32109", email: "priya.sharma@email.com", policies: 2, address: "Delhi" },
+  { name: "Amit Patel", phone: "+91 76543 21098", email: "amit.patel@email.com", policies: 4, address: "Ahmedabad, Gujarat" },
+  { name: "Sunita Verma", phone: "+91 65432 10987", email: "sunita.verma@email.com", policies: 1, address: "Jaipur, Rajasthan" },
+  { name: "Vikram Singh", phone: "+91 54321 09876", email: "vikram.singh@email.com", policies: 2, address: "Delhi" },
+];
+
 const DemoPage = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const getInsuranceIcon = (type: string) => {
     switch (type.toLowerCase()) {
@@ -123,8 +182,22 @@ const DemoPage = () => {
     }
   };
 
+  const navigationItems = [
+    { name: 'Dashboard', id: 'dashboard', icon: Home },
+    { name: 'Policies', id: 'policies', icon: FileText },
+    { name: 'Due Policies', id: 'due', icon: AlertTriangle },
+    { name: 'Clients', id: 'clients', icon: Users },
+    { name: 'Reports', id: 'reports', icon: BarChart3 },
+    { name: 'Subscription', id: 'subscription', icon: CreditCard },
+  ];
+
+  const filteredPolicies = demoPolicies.filter(policy => 
+    policy.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    policy.policyNumber.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-white to-teal-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
       {/* Demo Banner */}
       <div className="bg-gradient-to-r from-cyan-600 to-teal-600 text-white py-3 px-4 text-center">
         <p className="text-sm sm:text-base font-medium flex items-center justify-center gap-2 flex-wrap">
@@ -139,72 +212,169 @@ const DemoPage = () => {
         </p>
       </div>
 
-      {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link to="/" className="flex items-center space-x-3">
-              <img src={logo} alt="Policy Tracker" className="w-10 h-10" />
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">Policy Tracker.in</h1>
-                <p className="text-xs text-gray-600">Demo Mode</p>
+      {/* Header - Matches Real App Layout Component */}
+      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+          <div className="flex justify-between items-center h-14 sm:h-16">
+            {/* Logo */}
+            <Link to="/" className="flex items-center space-x-2 sm:space-x-3 min-w-0">
+              <img src={logo} alt="Policy Tracker.in" className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0" />
+              <div className="hidden xs:block min-w-0">
+                <h1 className="text-sm sm:text-xl font-bold text-gray-900 truncate">Policy Tracker.in</h1>
+                <p className="text-xs text-gray-600 hidden sm:block">Demo Mode</p>
               </div>
             </Link>
-            <div className="flex items-center space-x-3">
-              <Link to="/">
-                <Button variant="outline" size="sm">
-                  <Home className="h-4 w-4 mr-2" />
-                  Home
-                </Button>
-              </Link>
-              <Link to="/auth">
-                <Button size="sm" className="bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700">
-                  Start Free
-                </Button>
-              </Link>
+
+            {/* Desktop Navigation */}
+            <div className="hidden lg:flex items-center space-x-1">
+              {navigationItems.slice(0, 5).map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === item.id
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  }`}
+                >
+                  <item.icon className="h-4 w-4 inline mr-2" />
+                  {item.name}
+                </button>
+              ))}
+            </div>
+
+            {/* Desktop User Menu */}
+            <div className="flex items-center space-x-2">
+              <div className="hidden md:flex items-center space-x-3">
+                <div className="text-right hidden lg:block">
+                  <p className="text-sm font-medium text-gray-900 truncate max-w-32">demo@policytracker.in</p>
+                  <p className="text-xs text-gray-600">Premium User (Demo)</p>
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-9 w-9 rounded-full p-0">
+                      <User className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48 z-50 bg-white">
+                    <DropdownMenuItem className="cursor-pointer">
+                      <User className="h-4 w-4 mr-2" />
+                      Profile
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer">
+                      <Settings className="h-4 w-4 mr-2" />
+                      Settings
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link to="/auth" className="flex items-center w-full cursor-pointer">
+                        <LogOut className="h-4 w-4 mr-2" />
+                        Sign Up Free
+                      </Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+
+              {/* Mobile Menu */}
+              <div className="lg:hidden">
+                <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-9 w-9 p-0">
+                      <Menu className="h-4 w-4" />
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="right" className="w-72 sm:w-80 z-50 bg-white">
+                    <div className="py-6">
+                      <div className="space-y-6">
+                        <div className="text-center border-b pb-6">
+                          <img src={logo} alt="Policy Tracker.in" className="w-16 h-16 mx-auto mb-4" />
+                          <p className="font-medium text-gray-900 text-sm">demo@policytracker.in</p>
+                          <p className="text-sm text-gray-600 mt-1">Premium User (Demo)</p>
+                        </div>
+                        
+                        <div className="space-y-2 px-2">
+                          {navigationItems.map((item) => (
+                            <button
+                              key={item.id}
+                              onClick={() => {
+                                setActiveTab(item.id);
+                                setIsMobileMenuOpen(false);
+                              }}
+                              className={`flex items-center w-full px-4 py-3 rounded-lg text-left transition-colors min-h-[48px] ${
+                                activeTab === item.id
+                                  ? 'bg-blue-100 text-blue-700'
+                                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                              }`}
+                            >
+                              <item.icon className="h-5 w-5 mr-4 flex-shrink-0" />
+                              <span className="font-medium">{item.name}</span>
+                            </button>
+                          ))}
+                        </div>
+                        
+                        <div className="border-t pt-6 px-2">
+                          <Link to="/auth">
+                            <Button className="w-full bg-gradient-to-r from-cyan-600 to-teal-600">
+                              Create Free Account
+                            </Button>
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  </SheetContent>
+                </Sheet>
+              </div>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Demo Navigation Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-flex">
-            <TabsTrigger value="dashboard" className="gap-2">
-              <BarChart3 className="h-4 w-4 hidden sm:block" />
-              Dashboard
-            </TabsTrigger>
-            <TabsTrigger value="policies" className="gap-2">
-              <FileText className="h-4 w-4 hidden sm:block" />
-              Policies
-            </TabsTrigger>
-            <TabsTrigger value="due" className="gap-2">
-              <Bell className="h-4 w-4 hidden sm:block" />
-              Due Soon
-            </TabsTrigger>
-            <TabsTrigger value="clients" className="gap-2">
-              <Users className="h-4 w-4 hidden sm:block" />
-              Clients
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Dashboard Tab */}
-          <TabsContent value="dashboard" className="space-y-6">
-            <div className="flex items-center justify-between">
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6">
+        {/* Dashboard Tab */}
+        {activeTab === "dashboard" && (
+          <div className="space-y-4 sm:space-y-6">
+            <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">Welcome to Your Dashboard</h2>
-                <p className="text-gray-600">Overview of your insurance business</p>
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
+                  Welcome back, Demo User!
+                </h1>
+                <p className="text-gray-600 text-sm sm:text-base lg:text-lg">
+                  Here's an overview of your insurance portfolio
+                </p>
               </div>
-              <Button className="hidden sm:flex bg-gradient-to-r from-cyan-600 to-teal-600">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Policy
-              </Button>
             </div>
+
+            {/* Quick Access */}
+            <Card className="shadow-lg">
+              <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 pb-3">
+                <CardTitle className="text-base sm:text-lg font-semibold text-gray-900">Quick Access</CardTitle>
+              </CardHeader>
+              <CardContent className="p-4">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {[
+                    { name: 'Add Policy', icon: Plus, color: 'from-green-500 to-green-600' },
+                    { name: 'Policies', icon: FileText, color: 'from-indigo-500 to-indigo-600' },
+                    { name: 'Due Policies', icon: AlertTriangle, color: 'from-orange-500 to-orange-600' },
+                    { name: 'Reports', icon: BarChart3, color: 'from-teal-500 to-teal-600' },
+                  ].map((button, index) => (
+                    <Button
+                      key={index}
+                      onClick={() => setActiveTab(button.name.toLowerCase().replace(' ', ''))}
+                      className={`h-24 flex flex-col items-center justify-center gap-2 bg-gradient-to-br ${button.color} hover:opacity-90 transition-opacity`}
+                    >
+                      <button.icon className="h-6 w-6 text-white" />
+                      <span className="text-sm font-medium text-white">{button.name}</span>
+                    </Button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Stats Grid */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card className="bg-white border-0 shadow-sm">
+              <Card className="bg-white border-0 shadow-lg">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
@@ -218,7 +388,7 @@ const DemoPage = () => {
                 </CardContent>
               </Card>
 
-              <Card className="bg-white border-0 shadow-sm">
+              <Card className="bg-white border-0 shadow-lg">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
@@ -232,7 +402,7 @@ const DemoPage = () => {
                 </CardContent>
               </Card>
 
-              <Card className="bg-white border-0 shadow-sm">
+              <Card className="bg-white border-0 shadow-lg">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
@@ -246,7 +416,7 @@ const DemoPage = () => {
                 </CardContent>
               </Card>
 
-              <Card className="bg-white border-0 shadow-sm">
+              <Card className="bg-white border-0 shadow-lg">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
@@ -261,8 +431,8 @@ const DemoPage = () => {
               </Card>
             </div>
 
-            {/* Recent Activity */}
-            <Card className="bg-white border-0 shadow-sm">
+            {/* Policies Due This Week */}
+            <Card className="bg-white border-0 shadow-lg">
               <CardHeader>
                 <CardTitle className="text-lg">Policies Due This Week</CardTitle>
                 <CardDescription>Send reminders to retain clients</CardDescription>
@@ -294,20 +464,36 @@ const DemoPage = () => {
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
+          </div>
+        )}
 
-          {/* Policies Tab */}
-          <TabsContent value="policies" className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-900">All Policies</h2>
-              <Button className="bg-gradient-to-r from-cyan-600 to-teal-600">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Policy
-              </Button>
+        {/* Policies Tab */}
+        {activeTab === "policies" && (
+          <div className="space-y-4 sm:space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">All Policies</h2>
+              <div className="flex items-center gap-3">
+                <div className="relative flex-1 sm:w-64">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input 
+                    placeholder="Search policies..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <Button variant="outline" size="icon">
+                  <Filter className="h-4 w-4" />
+                </Button>
+                <Button className="bg-gradient-to-r from-cyan-600 to-teal-600">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Policy
+                </Button>
+              </div>
             </div>
 
             <div className="grid gap-4">
-              {demoPolicies.map(policy => (
+              {filteredPolicies.map(policy => (
                 <Card key={policy.id} className="bg-white border-0 shadow-sm hover:shadow-md transition-shadow">
                   <CardContent className="p-6">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -322,7 +508,7 @@ const DemoPage = () => {
                           </div>
                           <p className="text-sm text-gray-500 mt-1">{policy.policyNumber}</p>
                           {policy.vehicleNumber && (
-                            <p className="text-sm text-gray-500">{policy.vehicleNumber}</p>
+                            <p className="text-sm text-gray-500">{policy.vehicleNumber} • {policy.vehicleMake} {policy.vehicleModel}</p>
                           )}
                           <p className="text-sm text-gray-500">{policy.companyName}</p>
                         </div>
@@ -342,13 +528,15 @@ const DemoPage = () => {
                 </Card>
               ))}
             </div>
-          </TabsContent>
+          </div>
+        )}
 
-          {/* Due Soon Tab */}
-          <TabsContent value="due" className="space-y-6">
+        {/* Due Policies Tab */}
+        {activeTab === "due" && (
+          <div className="space-y-4 sm:space-y-6">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">Policies Due Soon</h2>
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Policies Due Soon</h2>
                 <p className="text-gray-600">Send reminders before expiry</p>
               </div>
             </div>
@@ -383,12 +571,14 @@ const DemoPage = () => {
                 </Card>
               ))}
             </div>
-          </TabsContent>
+          </div>
+        )}
 
-          {/* Clients Tab */}
-          <TabsContent value="clients" className="space-y-6">
+        {/* Clients Tab */}
+        {activeTab === "clients" && (
+          <div className="space-y-4 sm:space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-900">Your Clients</h2>
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Your Clients</h2>
               <Button className="bg-gradient-to-r from-cyan-600 to-teal-600">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Client
@@ -396,61 +586,215 @@ const DemoPage = () => {
             </div>
 
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {Array.from(new Set(demoPolicies.map(p => p.clientName))).map((clientName, index) => {
-                const clientPolicies = demoPolicies.filter(p => p.clientName === clientName);
-                return (
-                  <Card key={index} className="bg-white border-0 shadow-sm hover:shadow-md transition-shadow">
-                    <CardContent className="p-6">
-                      <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-teal-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                          {clientName.charAt(0)}
+              {demoClients.map((client, index) => (
+                <Card key={index} className="bg-white border-0 shadow-sm hover:shadow-md transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-teal-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                        {client.name.charAt(0)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-gray-900 truncate">{client.name}</h3>
+                        <div className="flex items-center gap-1 text-sm text-gray-500 mt-1">
+                          <Phone className="h-3 w-3" />
+                          <span className="truncate">{client.phone}</span>
                         </div>
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-gray-900">{clientName}</h3>
-                          <p className="text-sm text-gray-500">{clientPolicies[0].phone}</p>
-                          <div className="flex items-center gap-2 mt-2">
-                            <Badge variant="outline">{clientPolicies.length} Policies</Badge>
-                          </div>
+                        <div className="flex items-center gap-1 text-sm text-gray-500">
+                          <Mail className="h-3 w-3" />
+                          <span className="truncate">{client.email}</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-sm text-gray-500">
+                          <MapPin className="h-3 w-3" />
+                          <span className="truncate">{client.address}</span>
+                        </div>
+                        <div className="flex items-center gap-2 mt-3">
+                          <Badge variant="outline">{client.policies} Policies</Badge>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
-          </TabsContent>
-        </Tabs>
+          </div>
+        )}
 
-        {/* CTA Section */}
-        <Card className="mt-12 bg-gradient-to-r from-cyan-600 to-teal-600 border-0 text-white">
-          <CardContent className="p-8 text-center">
-            <h3 className="text-2xl font-bold mb-3">Ready to Manage Your Policies?</h3>
-            <p className="text-cyan-100 mb-6 max-w-2xl mx-auto">
-              Start your free account today. No credit card required. Add up to 50 policies free forever.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/auth">
-                <Button size="lg" className="bg-white text-teal-700 hover:bg-gray-100">
-                  <CheckCircle className="h-5 w-5 mr-2" />
-                  Start Free Trial
-                </Button>
-              </Link>
-              <Link to="/enquiry">
-                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
-                  Contact Sales
-                </Button>
-              </Link>
+        {/* Reports Tab */}
+        {activeTab === "reports" && (
+          <div className="space-y-4 sm:space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Reports & Analytics</h2>
+                <p className="text-gray-600">View and export your business reports</p>
+              </div>
+              <Button variant="outline" className="gap-2">
+                <Download className="h-4 w-4" />
+                Export to Excel
+              </Button>
             </div>
-          </CardContent>
-        </Card>
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <Card className="bg-gradient-to-br from-cyan-500 to-teal-500 text-white border-0">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold">Monthly Premium</h3>
+                    <TrendingUp className="h-5 w-5" />
+                  </div>
+                  <p className="text-3xl font-bold">₹4,85,000</p>
+                  <p className="text-sm text-cyan-100 mt-1">+12% from last month</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-purple-500 to-indigo-500 text-white border-0">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold">Policies This Month</h3>
+                    <FileText className="h-5 w-5" />
+                  </div>
+                  <p className="text-3xl font-bold">24</p>
+                  <p className="text-sm text-purple-100 mt-1">8 new, 16 renewals</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-orange-500 to-red-500 text-white border-0">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold">Renewal Rate</h3>
+                    <CheckCircle className="h-5 w-5" />
+                  </div>
+                  <p className="text-3xl font-bold">94%</p>
+                  <p className="text-sm text-orange-100 mt-1">Excellent retention</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card className="bg-white border-0 shadow-lg">
+              <CardHeader>
+                <CardTitle>Policy Distribution by Type</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {[
+                    { type: "Motor", count: 89, percentage: 57, color: "bg-cyan-500" },
+                    { type: "Health", count: 34, percentage: 22, color: "bg-green-500" },
+                    { type: "Life", count: 23, percentage: 15, color: "bg-purple-500" },
+                    { type: "Others", count: 10, percentage: 6, color: "bg-gray-500" },
+                  ].map((item, index) => (
+                    <div key={index}>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="font-medium">{item.type}</span>
+                        <span className="text-gray-500">{item.count} policies ({item.percentage}%)</span>
+                      </div>
+                      <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div className={`h-full ${item.color} rounded-full`} style={{ width: `${item.percentage}%` }}></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Subscription Tab */}
+        {activeTab === "subscription" && (
+          <div className="space-y-6">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+                Choose Your Plan
+              </h2>
+              <p className="text-gray-600">
+                Select the perfect plan for your insurance management needs
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+              {/* Free Plan */}
+              <Card className="relative overflow-hidden">
+                <CardContent className="p-6 sm:p-8">
+                  <div className="mb-6">
+                    <h3 className="text-xl font-semibold text-gray-900 mb-1">Free</h3>
+                    <p className="text-sm text-gray-500">Perfect for getting started</p>
+                  </div>
+                  <div className="mb-6">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-4xl font-bold text-gray-900">₹0</span>
+                      <span className="text-gray-500">/forever</span>
+                    </div>
+                  </div>
+                  <div className="space-y-4 mb-8">
+                    {["Up to 50 Policies", "Basic Dashboard", "Secure Data Storage"].map((feature, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                          <CheckCircle className="w-3 h-3 text-gray-600" />
+                        </div>
+                        <span className="text-sm text-gray-600">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <Button variant="outline" className="w-full h-12" disabled>
+                    Current Plan (Demo)
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Premium Plan */}
+              <Card className="relative overflow-hidden ring-2 ring-cyan-600 shadow-xl">
+                <div className="absolute top-0 right-0">
+                  <div className="bg-gradient-to-r from-cyan-600 to-teal-600 text-white text-xs font-semibold px-4 py-1.5 rounded-bl-lg">
+                    RECOMMENDED
+                  </div>
+                </div>
+                <CardContent className="p-6 sm:p-8">
+                  <div className="mb-6">
+                    <h3 className="text-xl font-semibold text-gray-900 mb-1">Premium</h3>
+                    <p className="text-sm text-gray-500">For professional agents</p>
+                  </div>
+                  <div className="mb-6">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-4xl font-bold text-gray-900">₹199</span>
+                      <span className="text-gray-500">/month</span>
+                    </div>
+                  </div>
+                  <div className="space-y-4 mb-8">
+                    {["Unlimited Policies", "Advanced Analytics", "WhatsApp Reminders", "PDF Auto-Fill", "Priority Support"].map((feature, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <div className="w-5 h-5 rounded-full bg-gradient-to-r from-cyan-500 to-teal-500 flex items-center justify-center flex-shrink-0">
+                          <CheckCircle className="w-3 h-3 text-white" />
+                        </div>
+                        <span className="text-sm font-medium text-gray-900">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <Link to="/auth">
+                    <Button className="w-full h-12 bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700">
+                      Upgrade Now
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        )}
       </main>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-gray-400 py-8 mt-12">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <p className="text-sm">© 2025 policytracker.in. All rights reserved.</p>
+      {/* CTA Banner */}
+      <section className="bg-gradient-to-r from-cyan-600 to-teal-600 py-12 mt-8">
+        <div className="max-w-4xl mx-auto px-4 text-center">
+          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
+            Ready to Manage Your Policies Like a Pro?
+          </h2>
+          <p className="text-cyan-100 mb-6">
+            Join 1000+ insurance agents who trust Policy Tracker.in
+          </p>
+          <Link to="/auth">
+            <Button size="lg" className="bg-white text-teal-700 hover:bg-gray-100 text-lg px-10">
+              Create Your Free Account
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+          </Link>
         </div>
-      </footer>
+      </section>
 
       <WhatsAppFloatingButton />
     </div>

@@ -36,10 +36,26 @@
     <priority>0.9</priority>
   </url>
   
+  <!-- Features Page - SEO Important -->
+  <url>
+    <loc>https://policytracker.in/features</loc>
+    <lastmod>2025-01-18</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  
+  <!-- Pricing Page - Conversion Important -->
+  <url>
+    <loc>https://policytracker.in/pricing</loc>
+    <lastmod>2025-01-18</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  
   <!-- Enquiry / Contact Form - Lead Generation -->
   <url>
     <loc>https://policytracker.in/enquiry</loc>
-    <lastmod>2025-01-14</lastmod>
+    <lastmod>2025-01-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
