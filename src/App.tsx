@@ -26,6 +26,8 @@ import Contact from "./pages/Contact";
 import LandingPage from "./pages/LandingPage";
 import EnquiryPage from "./pages/EnquiryPage";
 import DemoPage from "./pages/DemoPage";
+import FeaturesPage from "./pages/FeaturesPage";
+import PricingPage from "./pages/PricingPage";
 
 const queryClient = new QueryClient();
 
@@ -116,6 +118,8 @@ const App = () => (
             <Route path="/contact" element={<Contact />} />
             <Route path="/enquiry" element={<EnquiryPage />} />
             <Route path="/demo" element={<DemoPage />} />
+            <Route path="/features" element={<FeaturesPage />} />
+            <Route path="/pricing" element={<PricingPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
