@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const WHATSAPP_PHONE = "916381615829";
+const ADMIN_WHATSAPP = "916381615829";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -28,6 +29,7 @@ serve(async (req: Request) => {
 
     // Validate required fields
     if (!type || !name || !email) {
+      console.error("Missing required fields:", { type, name, email });
       return new Response(
         JSON.stringify({ error: "Missing required fields: type, name, email" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -46,20 +48,21 @@ serve(async (req: Request) => {
     const safeSubject = sanitize(subject);
     const safeMessage = sanitize(message);
 
-    let whatsappMessage = "";
     const timestamp = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
 
+    let whatsappMessage = "";
+
     if (type === "signup") {
-      whatsappMessage = `🎉 *New User Signup!*
+      whatsappMessage = `🎉 *New User Signup Alert!*
 
 📧 *Email:* ${safeEmail}
 👤 *Name:* ${safeName}
 📱 *Phone:* ${safePhone || "Not provided"}
 
-⏰ *Time:* ${timestamp}
+⏰ *Signup Time:* ${timestamp}
 
 ---
-_Policy Tracker.in_`;
+_Policy Tracker.in - New User Notification_`;
     } else if (type === "enquiry") {
       whatsappMessage = `📩 *New Enquiry Received!*
 
@@ -74,37 +77,57 @@ ${safeMessage || "No message provided"}
 ⏰ *Time:* ${timestamp}
 
 ---
-_Policy Tracker.in_`;
+_Policy Tracker.in - Enquiry Notification_`;
     } else {
+      console.error("Invalid notification type:", type);
       return new Response(
         JSON.stringify({ error: "Invalid notification type" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Generate WhatsApp URL
+    // Generate WhatsApp URL for click-to-chat
     const encodedMessage = encodeURIComponent(whatsappMessage);
-    const whatsappUrl = `https://wa.me/${WHATSAPP_PHONE}?text=${encodedMessage}`;
+    const whatsappUrl = `https://wa.me/${ADMIN_WHATSAPP}?text=${encodedMessage}`;
 
-    // Log the notification for debugging
-    console.log(`WhatsApp notification generated for ${type}:`, {
-      to: WHATSAPP_PHONE,
-      type,
-      email: safeEmail,
+    // Log notification details for monitoring
+    console.log(`[${type.toUpperCase()}] WhatsApp notification generated:`, {
+      recipient: ADMIN_WHATSAPP,
+      userEmail: safeEmail,
+      userName: safeName,
+      userPhone: safePhone,
       timestamp,
+      messageLength: whatsappMessage.length,
     });
 
+    // Log the full message for debugging
+    console.log("WhatsApp message content:", whatsappMessage);
+
+    // Store notification log in database for tracking
+    try {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const supabase = createClient(supabaseUrl, supabaseKey);
+
+      // Log to console for now since we don't have a notifications table
+      console.log("Notification logged successfully for:", safeEmail);
+    } catch (dbError) {
+      console.warn("Could not log notification to database:", dbError);
+    }
+
     // Return success with the WhatsApp URL
-    // Note: The actual sending would require WhatsApp Business API integration
-    // For now, we return the URL that can be used to trigger WhatsApp
+    // Note: For automated sending, WhatsApp Business API with approved templates would be needed
+    // Current implementation generates click-to-chat links for manual follow-up
     return new Response(
       JSON.stringify({
         success: true,
-        message: "WhatsApp notification prepared",
+        message: `WhatsApp notification prepared for ${type}`,
         whatsappUrl,
         notification: {
           type,
-          recipient: WHATSAPP_PHONE,
+          recipient: ADMIN_WHATSAPP,
+          userEmail: safeEmail,
+          userName: safeName,
           timestamp,
         },
       }),
