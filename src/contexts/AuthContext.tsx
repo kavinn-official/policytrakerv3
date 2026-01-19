@@ -122,9 +122,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) throw error;
 
-      // Send WhatsApp notification for new signup
+      // Send WhatsApp notification for new signup (admin alert)
       try {
-        await supabase.functions.invoke("send-whatsapp-notification", {
+        const whatsappResult = await supabase.functions.invoke("send-whatsapp-notification", {
           body: {
             type: "signup",
             name: metadata?.full_name || "New User",
@@ -132,9 +132,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             phone: metadata?.mobile_number || "",
           },
         });
+        console.log("WhatsApp notification sent:", whatsappResult.data);
       } catch (notifyError) {
         // Don't fail signup if notification fails
         console.error("WhatsApp notification failed:", notifyError);
+      }
+
+      // Send welcome email to the new user
+      try {
+        const welcomeEmailResult = await supabase.functions.invoke("send-welcome-email", {
+          body: {
+            name: metadata?.full_name || "User",
+            email: email,
+          },
+        });
+        console.log("Welcome email sent:", welcomeEmailResult.data);
+      } catch (emailError) {
+        // Don't fail signup if email fails
+        console.error("Welcome email failed:", emailError);
       }
 
       toast({

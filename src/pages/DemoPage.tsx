@@ -372,59 +372,59 @@ const DemoPage = () => {
               </CardContent>
             </Card>
 
-            {/* Stats Grid */}
+            {/* Stats Grid - Matching Real App Layout */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <Card className="bg-white border-0 shadow-lg">
-                <CardContent className="p-6">
+                <CardContent className="p-4 sm:p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-600">Total Policies</p>
-                      <p className="text-3xl font-bold text-gray-900">{demoStats.totalPolicies}</p>
+                      <p className="text-xs sm:text-sm text-gray-600">Total Policies</p>
+                      <p className="text-2xl sm:text-3xl font-bold text-gray-900">{demoStats.totalPolicies}</p>
                     </div>
-                    <div className="w-12 h-12 bg-cyan-100 rounded-xl flex items-center justify-center">
-                      <FileText className="h-6 w-6 text-cyan-600" />
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-cyan-100 rounded-xl flex items-center justify-center">
+                      <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-cyan-600" />
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
               <Card className="bg-white border-0 shadow-lg">
-                <CardContent className="p-6">
+                <CardContent className="p-4 sm:p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-600">Due Soon</p>
-                      <p className="text-3xl font-bold text-yellow-600">{demoStats.dueSoon}</p>
+                      <p className="text-xs sm:text-sm text-gray-600">Due Soon</p>
+                      <p className="text-2xl sm:text-3xl font-bold text-yellow-600">{demoStats.dueSoon}</p>
                     </div>
-                    <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
-                      <AlertTriangle className="h-6 w-6 text-yellow-600" />
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
+                      <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-600" />
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
               <Card className="bg-white border-0 shadow-lg">
-                <CardContent className="p-6">
+                <CardContent className="p-4 sm:p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-600">Active Clients</p>
-                      <p className="text-3xl font-bold text-gray-900">{demoStats.activeClients}</p>
+                      <p className="text-xs sm:text-sm text-gray-600">Active Clients</p>
+                      <p className="text-2xl sm:text-3xl font-bold text-gray-900">{demoStats.activeClients}</p>
                     </div>
-                    <div className="w-12 h-12 bg-teal-100 rounded-xl flex items-center justify-center">
-                      <Users className="h-6 w-6 text-teal-600" />
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-teal-100 rounded-xl flex items-center justify-center">
+                      <Users className="h-5 w-5 sm:h-6 sm:w-6 text-teal-600" />
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
               <Card className="bg-white border-0 shadow-lg">
-                <CardContent className="p-6">
+                <CardContent className="p-4 sm:p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-600">Total Premium</p>
-                      <p className="text-2xl font-bold text-gray-900">₹24.5L</p>
+                      <p className="text-xs sm:text-sm text-gray-600">Total Premium</p>
+                      <p className="text-xl sm:text-2xl font-bold text-gray-900">₹24.5L</p>
                     </div>
-                    <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                      <TrendingUp className="h-6 w-6 text-green-600" />
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                      <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
                     </div>
                   </div>
                 </CardContent>
@@ -666,61 +666,130 @@ const DemoPage = () => {
           </div>
         )}
 
-        {/* Reports Tab */}
+        {/* Reports Tab - Matching real app UI */}
         {activeTab === "reports" && (
           <div className="space-y-4 sm:space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
               <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Reports & Analytics</h2>
-                <p className="text-gray-600">View and export your business reports</p>
+                <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Reports & Analytics</h2>
+                <p className="text-gray-600 text-sm sm:text-base">View and export your business reports</p>
               </div>
-              <Button variant="outline" className="gap-2">
+              <Button variant="outline" className="gap-2 self-start sm:self-auto">
                 <Download className="h-4 w-4" />
                 Export to Excel
               </Button>
             </div>
 
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <Card className="bg-gradient-to-br from-cyan-500 to-teal-500 text-white border-0">
+            {/* Overall Summary Cards - Matching ReportsPage */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Card className="shadow-lg border-0 bg-gradient-to-br from-blue-500 to-indigo-600 text-white">
                 <CardContent className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold">Monthly Premium</h3>
-                    <TrendingUp className="h-5 w-5" />
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-blue-100">Total Policies</p>
+                      <p className="text-4xl font-bold mt-2">156</p>
+                      <p className="text-blue-100 text-sm mt-1">
+                        01 Dec - 14 Jan 2026
+                      </p>
+                    </div>
+                    <div className="p-4 bg-white/20 rounded-xl">
+                      <FileText className="h-8 w-8" />
+                    </div>
                   </div>
-                  <p className="text-3xl font-bold">₹4,85,000</p>
-                  <p className="text-sm text-cyan-100 mt-1">+12% from last month</p>
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-purple-500 to-indigo-500 text-white border-0">
+              <Card className="shadow-lg border-0 bg-gradient-to-br from-green-500 to-emerald-600 text-white">
                 <CardContent className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold">Policies This Month</h3>
-                    <FileText className="h-5 w-5" />
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-green-100">Total Net Premium</p>
+                      <p className="text-4xl font-bold mt-2">₹24,50,000</p>
+                      <p className="text-green-100 text-sm mt-1">
+                        Collected in this period
+                      </p>
+                    </div>
+                    <div className="p-4 bg-white/20 rounded-xl">
+                      <TrendingUp className="h-8 w-8" />
+                    </div>
                   </div>
-                  <p className="text-3xl font-bold">24</p>
-                  <p className="text-sm text-purple-100 mt-1">8 new, 16 renewals</p>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gradient-to-br from-orange-500 to-red-500 text-white border-0">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold">Renewal Rate</h3>
-                    <CheckCircle className="h-5 w-5" />
-                  </div>
-                  <p className="text-3xl font-bold">94%</p>
-                  <p className="text-sm text-orange-100 mt-1">Excellent retention</p>
                 </CardContent>
               </Card>
             </div>
 
+            {/* Insurance Type Stats - Matching real app */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Card className="shadow-md border-0">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-sm text-gray-500">Vehicle Insurance</p>
+                      <p className="text-2xl font-bold mt-1">89</p>
+                      <p className="text-sm text-gray-500 mt-1">₹14,25,000</p>
+                    </div>
+                    <div className="p-3 rounded-lg bg-blue-500">
+                      <Car className="h-5 w-5 text-white" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-md border-0">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-sm text-gray-500">Health Insurance</p>
+                      <p className="text-2xl font-bold mt-1">34</p>
+                      <p className="text-sm text-gray-500 mt-1">₹5,40,000</p>
+                    </div>
+                    <div className="p-3 rounded-lg bg-red-500">
+                      <Heart className="h-5 w-5 text-white" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-md border-0">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-sm text-gray-500">Life Insurance</p>
+                      <p className="text-2xl font-bold mt-1">23</p>
+                      <p className="text-sm text-gray-500 mt-1">₹3,65,000</p>
+                    </div>
+                    <div className="p-3 rounded-lg bg-green-500">
+                      <Shield className="h-5 w-5 text-white" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-md border-0">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-sm text-gray-500">Other Insurance</p>
+                      <p className="text-2xl font-bold mt-1">10</p>
+                      <p className="text-sm text-gray-500 mt-1">₹1,20,000</p>
+                    </div>
+                    <div className="p-3 rounded-lg bg-purple-500">
+                      <FileText className="h-5 w-5 text-white" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Policy Distribution by Type - Matching reference image */}
             <Card className="bg-white border-0 shadow-lg">
               <CardHeader>
-                <CardTitle>Policy Distribution by Type</CardTitle>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <TrendingUp className="h-5 w-5 text-primary" />
+                  Policy Distribution by Type
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                <div className="space-y-6">
                   {[
                     { type: "Motor", count: 89, percentage: 57, color: "bg-cyan-500" },
                     { type: "Health", count: 34, percentage: 22, color: "bg-green-500" },
@@ -728,12 +797,12 @@ const DemoPage = () => {
                     { type: "Others", count: 10, percentage: 6, color: "bg-gray-500" },
                   ].map((item, index) => (
                     <div key={index}>
-                      <div className="flex justify-between text-sm mb-1">
-                        <span className="font-medium">{item.type}</span>
+                      <div className="flex justify-between text-sm mb-2">
+                        <span className="font-medium text-gray-900">{item.type}</span>
                         <span className="text-gray-500">{item.count} policies ({item.percentage}%)</span>
                       </div>
-                      <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div className={`h-full ${item.color} rounded-full`} style={{ width: `${item.percentage}%` }}></div>
+                      <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                        <div className={`h-full ${item.color} rounded-full transition-all duration-500`} style={{ width: `${item.percentage}%` }}></div>
                       </div>
                     </div>
                   ))}
