@@ -531,45 +531,166 @@ const DemoPage = () => {
           </div>
         )}
 
-        {/* Due Policies Tab */}
+        {/* Due Policies Tab - Matching real app UI */}
         {activeTab === "due" && (
           <div className="space-y-4 sm:space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
               <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Policies Due Soon</h2>
-                <p className="text-gray-600">Send reminders before expiry</p>
+                <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Due Policies</h2>
+                <p className="text-gray-600 text-sm sm:text-base">Policies expiring in the next 30 days</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Download className="h-4 w-4" />
+                  Export
+                </Button>
               </div>
             </div>
 
-            <div className="grid gap-4">
-              {demoPolicies.filter(p => p.status === "Due Soon").map(policy => (
-                <Card key={policy.id} className="bg-white border-0 shadow-sm border-l-4 border-l-yellow-400">
-                  <CardContent className="p-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                          <Clock className="h-6 w-6 text-yellow-600" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-900">{policy.clientName}</h3>
-                          <p className="text-sm text-gray-500">{policy.policyNumber}</p>
-                          <p className="text-sm text-gray-500">{policy.phone}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="text-right">
-                          <p className="text-lg font-bold text-yellow-600">{policy.daysLeft} days left</p>
-                          <p className="text-sm text-gray-500">₹{policy.premium.toLocaleString()}</p>
-                        </div>
-                        <Button className="gap-2 bg-green-600 hover:bg-green-700">
-                          <MessageCircle className="h-4 w-4" />
-                          WhatsApp
-                        </Button>
-                      </div>
+            {/* Search and Filters - Matching real app */}
+            <Card className="shadow-sm border-0">
+              <CardContent className="p-4">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      placeholder="Search by client name, policy number..."
+                      className="pl-10 h-10"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" className="gap-2 h-10">
+                      <Filter className="h-4 w-4" />
+                      This Week
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Quick Stats for Due Policies */}
+            <div className="grid grid-cols-3 gap-3 sm:gap-4">
+              <Card className="bg-gradient-to-br from-red-50 to-red-100 border-0 shadow-sm">
+                <CardContent className="p-3 sm:p-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-red-500 rounded-lg flex items-center justify-center">
+                      <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    <div>
+                      <p className="text-xs text-red-600 font-medium">Critical</p>
+                      <p className="text-lg sm:text-xl font-bold text-red-700">2</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-0 shadow-sm">
+                <CardContent className="p-3 sm:p-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-yellow-500 rounded-lg flex items-center justify-center">
+                      <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-yellow-600 font-medium">Due Soon</p>
+                      <p className="text-lg sm:text-xl font-bold text-yellow-700">3</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="bg-gradient-to-br from-green-50 to-green-100 border-0 shadow-sm">
+                <CardContent className="p-3 sm:p-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-500 rounded-lg flex items-center justify-center">
+                      <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-green-600 font-medium">Upcoming</p>
+                      <p className="text-lg sm:text-xl font-bold text-green-700">7</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Due Policies List - Matching real app layout */}
+            <div className="space-y-3">
+              {demoPolicies.filter(p => p.status === "Due Soon").map((policy, index) => {
+                const urgency = policy.daysLeft <= 3 ? 'critical' : policy.daysLeft <= 7 ? 'warning' : 'normal';
+                const urgencyStyles = {
+                  critical: { bg: 'bg-red-50', border: 'border-l-red-500', badge: 'bg-red-100 text-red-700', icon: 'text-red-500' },
+                  warning: { bg: 'bg-yellow-50', border: 'border-l-yellow-500', badge: 'bg-yellow-100 text-yellow-700', icon: 'text-yellow-500' },
+                  normal: { bg: 'bg-green-50', border: 'border-l-green-500', badge: 'bg-green-100 text-green-700', icon: 'text-green-500' }
+                };
+                const styles = urgencyStyles[urgency];
+
+                return (
+                  <Card key={policy.id} className={`${styles.bg} border-0 shadow-sm border-l-4 ${styles.border}`}>
+                    <CardContent className="p-4 sm:p-5">
+                      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                        {/* Policy Info */}
+                        <div className="flex items-start gap-3 sm:gap-4 flex-1">
+                          <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${urgency === 'critical' ? 'bg-red-100' : urgency === 'warning' ? 'bg-yellow-100' : 'bg-green-100'}`}>
+                            {urgency === 'critical' ? (
+                              <AlertTriangle className={`h-5 w-5 sm:h-6 sm:w-6 ${styles.icon}`} />
+                            ) : (
+                              <Clock className={`h-5 w-5 sm:h-6 sm:w-6 ${styles.icon}`} />
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2 mb-1">
+                              <h3 className="font-semibold text-gray-900 text-sm sm:text-base">{policy.clientName}</h3>
+                              <Badge variant="outline" className="text-xs">{policy.insuranceType}</Badge>
+                              <Badge className={`text-xs ${styles.badge}`}>
+                                {policy.daysLeft} days left
+                              </Badge>
+                            </div>
+                            <p className="text-xs sm:text-sm text-gray-500">{policy.policyNumber}</p>
+                            <div className="flex flex-wrap gap-2 sm:gap-4 mt-1 text-xs sm:text-sm text-gray-500">
+                              <span className="flex items-center gap-1">
+                                <Phone className="h-3 w-3" />
+                                {policy.phone}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Calendar className="h-3 w-3" />
+                                Expires: {new Date(policy.expiryDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                              </span>
+                            </div>
+                            {policy.vehicleNumber && (
+                              <p className="text-xs sm:text-sm text-gray-500 mt-1">
+                                {policy.vehicleNumber} • {policy.vehicleMake} {policy.vehicleModel}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Premium & Actions */}
+                        <div className="flex flex-row lg:flex-col items-center lg:items-end justify-between lg:justify-center gap-3 border-t lg:border-t-0 pt-3 lg:pt-0">
+                          <div className="text-left lg:text-right">
+                            <p className="text-lg sm:text-xl font-bold text-gray-900">₹{policy.premium.toLocaleString()}</p>
+                            <p className="text-xs text-gray-500">{policy.companyName}</p>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="outline" className="gap-1 h-8 sm:h-9 text-xs sm:text-sm">
+                              <Phone className="h-3 w-3 sm:h-4 sm:w-4" />
+                              Call
+                            </Button>
+                            <Button size="sm" className="gap-1 h-8 sm:h-9 bg-green-600 hover:bg-green-700 text-xs sm:text-sm">
+                              <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+                              WhatsApp
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+
+            {/* Pagination hint */}
+            <div className="text-center text-sm text-gray-500 py-4">
+              Showing 3 of 12 due policies • <span className="text-teal-600 cursor-pointer hover:underline">View all policies</span>
             </div>
           </div>
         )}
