@@ -248,57 +248,57 @@ const LandingPage = () => {
       </header>
 
       {/* Hero Section - Optimized for SEO, AEO & AI Search */}
-      <section className="py-12 sm:py-20 px-4 sm:px-6 lg:px-8" aria-labelledby="hero-heading">
+      <section className="py-8 sm:py-12 lg:py-20 px-4 sm:px-6 lg:px-8" aria-labelledby="hero-heading">
         <div className="max-w-7xl mx-auto">
           <div className="text-center max-w-4xl mx-auto">
-            <div className="inline-flex items-center gap-2 bg-teal-50 text-teal-700 px-4 py-2 rounded-full text-sm font-medium mb-6">
-              <Zap className="h-4 w-4" aria-hidden="true" />
-              <span>#1 Agent Policy Tracker - Trusted by 1000+ Insurance Agents in India</span>
+            <div className="inline-flex items-center gap-2 bg-teal-50 text-teal-700 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium mb-4 sm:mb-6">
+              <Zap className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" aria-hidden="true" />
+              <span className="leading-tight">#1 Agent Policy Tracker - Trusted by 1000+ Insurance Agents in India</span>
             </div>
-            <h2 id="hero-heading" className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
+            <h2 id="hero-heading" className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-gray-900 leading-tight">
               Best Insurance Policy
               <span className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-600 to-teal-600">
                 Tracker for Agents
               </span>
             </h2>
-            <p className="mt-6 text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="mt-4 sm:mt-6 text-base sm:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed px-2">
               India's #1 <strong>agent policy tracker</strong> and <strong>insurance policy management software</strong>. 
               Track motor policies, send WhatsApp renewal reminders, manage clients with our 
               <strong> policy tracking app for agents</strong>. <span className="text-teal-600 font-semibold">Free to start. No credit card required.</span>
             </p>
             
             {/* Primary CTA */}
-            <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/auth" onClick={() => window.trackSignupClick?.('hero_primary')}>
-                <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700 text-lg px-8 py-6 shadow-lg shadow-teal-200">
+            <div className="mt-6 sm:mt-10 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-2">
+              <Link to="/auth" onClick={() => window.trackSignupClick?.('hero_primary')} className="w-full sm:w-auto">
+                <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700 text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 shadow-lg shadow-teal-200">
                   Start Free Trial - No Credit Card
-                  <ArrowRight className="ml-2 h-5 w-5" aria-hidden="true" />
+                  <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" aria-hidden="true" />
                 </Button>
               </Link>
-              <Link to="/demo">
-                <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg px-8 py-6 border-2">
+              <Link to="/demo" className="w-full sm:w-auto">
+                <Button size="lg" variant="outline" className="w-full sm:w-auto text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 border-2">
                   Try Policy Tracker Demo
                 </Button>
               </Link>
             </div>
 
             {/* Trust Badges - Keyword Rich */}
-            <div className="mt-10 flex flex-wrap justify-center gap-6 sm:gap-10 text-gray-600">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-teal-600" aria-hidden="true" />
-                <span className="font-medium">Free Policy Tracker</span>
+            <div className="mt-6 sm:mt-10 flex flex-wrap justify-center gap-3 sm:gap-6 lg:gap-10 text-gray-600 px-2">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-teal-600 flex-shrink-0" aria-hidden="true" />
+                <span className="text-sm sm:text-base font-medium">Free Policy Tracker</span>
               </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-teal-600" aria-hidden="true" />
-                <span className="font-medium">WhatsApp Renewal Reminders</span>
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-teal-600 flex-shrink-0" aria-hidden="true" />
+                <span className="text-sm sm:text-base font-medium">WhatsApp Reminders</span>
               </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-teal-600" aria-hidden="true" />
-                <span className="font-medium">Insurance Agent CRM</span>
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-teal-600 flex-shrink-0" aria-hidden="true" />
+                <span className="text-sm sm:text-base font-medium">Insurance Agent CRM</span>
               </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-teal-600" aria-hidden="true" />
-                <span className="font-medium">Mobile Policy Tracking</span>
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-teal-600 flex-shrink-0" aria-hidden="true" />
+                <span className="text-sm sm:text-base font-medium">Mobile Policy Tracking</span>
               </div>
             </div>
           </div>
@@ -306,17 +306,17 @@ const LandingPage = () => {
       </section>
 
       {/* Trust Badges Section */}
-      <section className="py-8 bg-gray-50 border-y border-gray-200" aria-label="Trust indicators">
+      <section className="py-6 sm:py-8 bg-gray-50 border-y border-gray-200" aria-label="Trust indicators">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {trustBadges.map((badge, index) => (
-              <div key={index} className="flex items-center justify-center gap-3 py-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-cyan-100 to-teal-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <badge.icon className="h-6 w-6 text-teal-600" />
+              <div key={index} className="flex items-center justify-center gap-2 sm:gap-3 py-3 sm:py-4">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-cyan-100 to-teal-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <badge.icon className="h-5 w-5 sm:h-6 sm:w-6 text-teal-600" />
                 </div>
-                <div>
-                  <p className="font-semibold text-gray-900 text-sm sm:text-base">{badge.title}</p>
-                  <p className="text-xs sm:text-sm text-gray-500">{badge.description}</p>
+                <div className="min-w-0">
+                  <p className="font-semibold text-gray-900 text-xs sm:text-sm lg:text-base truncate">{badge.title}</p>
+                  <p className="text-xs sm:text-sm text-gray-500 truncate">{badge.description}</p>
                 </div>
               </div>
             ))}
@@ -442,36 +442,36 @@ const LandingPage = () => {
       </section>
 
       {/* Features Grid Section */}
-      <section id="features" className="py-16 sm:py-24 bg-white" aria-labelledby="features-heading">
+      <section id="features" className="py-12 sm:py-16 lg:py-24 bg-white" aria-labelledby="features-heading">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 id="features-heading" className="text-3xl sm:text-4xl font-bold text-gray-900">
+          <div className="text-center mb-10 sm:mb-16">
+            <h2 id="features-heading" className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 leading-tight">
               Complete Insurance Policy Management Software
             </h2>
-            <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
+            <p className="mt-3 sm:mt-4 text-base sm:text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
               Everything you need in an <strong>agent policy tracker</strong>. Built specifically for insurance agents in India. Simple, powerful, and designed to save you time.
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
             {features.map((feature, index) => (
               <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 bg-white group">
-                <CardContent className="p-6">
-                  <div className="w-12 h-12 bg-gradient-to-br from-cyan-100 to-teal-100 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                    <feature.icon className="h-6 w-6 text-teal-600" />
+                <CardContent className="p-4 sm:p-6">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-cyan-100 to-teal-100 rounded-lg flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform">
+                    <feature.icon className="h-5 w-5 sm:h-6 sm:w-6 text-teal-600" />
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">{feature.title}</h3>
-                  <p className="text-gray-600">{feature.description}</p>
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 leading-tight">{feature.title}</h3>
+                  <p className="text-sm sm:text-base text-gray-600 leading-relaxed">{feature.description}</p>
                 </CardContent>
               </Card>
             ))}
           </div>
 
           {/* CTA after features */}
-          <div className="mt-12 text-center">
+          <div className="mt-8 sm:mt-12 text-center">
             <Link to="/auth" onClick={() => window.trackSignupClick?.('after_features')}>
-              <Button size="lg" className="bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700 text-lg px-10">
+              <Button size="lg" className="bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700 text-base sm:text-lg px-6 sm:px-10">
                 Get All Features Free
-                <ArrowRight className="ml-2 h-5 w-5" />
+                <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
             </Link>
           </div>
@@ -503,44 +503,44 @@ const LandingPage = () => {
       </section>
 
       {/* Testimonials Section */}
-      <section className="py-16 sm:py-24 bg-white" aria-labelledby="testimonials-heading">
+      <section className="py-12 sm:py-16 lg:py-24 bg-white" aria-labelledby="testimonials-heading">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 id="testimonials-heading" className="text-3xl sm:text-4xl font-bold text-gray-900">
+          <div className="text-center mb-8 sm:mb-12">
+            <h2 id="testimonials-heading" className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 leading-tight">
               What Insurance Agents Say
             </h2>
-            <p className="mt-4 text-lg text-gray-600">
+            <p className="mt-3 sm:mt-4 text-base sm:text-lg text-gray-600">
               Trusted by thousands of insurance professionals across India
             </p>
-            <div className="flex items-center justify-center gap-2 mt-4">
+            <div className="flex flex-wrap items-center justify-center gap-2 mt-3 sm:mt-4">
               <div className="flex">
                 {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="h-6 w-6 text-yellow-400 fill-current" />
+                  <Star key={i} className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-400 fill-current" />
                 ))}
               </div>
-              <span className="text-lg font-semibold text-gray-900">4.8/5</span>
-              <span className="text-gray-500">(Based on 500+ reviews)</span>
+              <span className="text-base sm:text-lg font-semibold text-gray-900">4.8/5</span>
+              <span className="text-sm sm:text-base text-gray-500">(Based on 500+ reviews)</span>
             </div>
           </div>
 
-          {/* Written Testimonials - 2 rows of 3 */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Written Testimonials - Responsive grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {testimonials.map((testimonial, index) => (
               <Card key={index} className="border-0 shadow-lg bg-gradient-to-br from-gray-50 to-white hover:shadow-xl transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex mb-4">
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex mb-3 sm:mb-4">
                     {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
+                      <Star key={i} className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-400 fill-current" />
                     ))}
                   </div>
-                  <p className="text-gray-600 mb-4 italic">"{testimonial.content}"</p>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-teal-500 rounded-full flex items-center justify-center text-white font-bold">
+                  <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4 italic leading-relaxed">"{testimonial.content}"</p>
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-cyan-500 to-teal-500 rounded-full flex items-center justify-center text-white font-bold text-sm sm:text-base flex-shrink-0">
                       {testimonial.name.charAt(0)}
                     </div>
-                    <div>
-                      <p className="font-semibold text-gray-900">{testimonial.name}</p>
-                      <p className="text-sm text-gray-500">{testimonial.role}</p>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-gray-900 text-sm sm:text-base truncate">{testimonial.name}</p>
+                      <p className="text-xs sm:text-sm text-gray-500 truncate">{testimonial.role}</p>
                     </div>
                   </div>
                 </CardContent>

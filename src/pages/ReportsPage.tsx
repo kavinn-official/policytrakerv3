@@ -19,7 +19,8 @@ import {
   FileText,
   TrendingUp,
   Calendar,
-  IndianRupee
+  IndianRupee,
+  BarChart3
 } from "lucide-react";
 import * as XLSX from '@e965/xlsx';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
@@ -244,11 +245,11 @@ const ReportsPage = () => {
   const getPieChartData = () => {
     if (!stats) return [];
     const data = [
-      { name: 'Vehicle', value: stats.vehicleInsurance.premium, count: stats.vehicleInsurance.count },
-      { name: 'Health', value: stats.healthInsurance.premium, count: stats.healthInsurance.count },
-      { name: 'Life', value: stats.lifeInsurance.premium, count: stats.lifeInsurance.count },
-      { name: 'Other', value: stats.otherInsurance.premium, count: stats.otherInsurance.count },
-    ].filter(item => item.count > 0 && item.value > 0);
+      { name: 'Vehicle', value: stats.vehicleInsurance.premium, count: stats.vehicleInsurance.count, color: COLORS[0] },
+      { name: 'Health', value: stats.healthInsurance.premium, count: stats.healthInsurance.count, color: COLORS[1] },
+      { name: 'Life', value: stats.lifeInsurance.premium, count: stats.lifeInsurance.count, color: COLORS[2] },
+      { name: 'Other', value: stats.otherInsurance.premium, count: stats.otherInsurance.count, color: COLORS[3] },
+    ].filter(item => item.count > 0);
     return data;
   };
 
@@ -256,10 +257,10 @@ const ReportsPage = () => {
     if (!stats) return [];
     // Only include types that have at least 1 policy
     return [
-      { name: 'Vehicle', premium: stats.vehicleInsurance.premium, count: stats.vehicleInsurance.count },
-      { name: 'Health', premium: stats.healthInsurance.premium, count: stats.healthInsurance.count },
-      { name: 'Life', premium: stats.lifeInsurance.premium, count: stats.lifeInsurance.count },
-      { name: 'Other', premium: stats.otherInsurance.premium, count: stats.otherInsurance.count },
+      { name: 'Vehicle', premium: stats.vehicleInsurance.premium, count: stats.vehicleInsurance.count, fill: COLORS[0] },
+      { name: 'Health', premium: stats.healthInsurance.premium, count: stats.healthInsurance.count, fill: COLORS[1] },
+      { name: 'Life', premium: stats.lifeInsurance.premium, count: stats.lifeInsurance.count, fill: COLORS[2] },
+      { name: 'Other', premium: stats.otherInsurance.premium, count: stats.otherInsurance.count, fill: COLORS[3] },
     ].filter(item => item.count > 0);
   };
 
@@ -431,7 +432,7 @@ const ReportsPage = () => {
           </div>
 
           {/* Charts Section */}
-          {stats.totalPolicies > 0 && (
+          {stats.totalPolicies > 0 && getPieChartData().length > 0 && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {/* Pie Chart */}
               <Card className="shadow-lg border-0">
@@ -445,29 +446,38 @@ const ReportsPage = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="px-2 sm:px-6">
-                  <div className="h-[280px] sm:h-[300px]">
+                  <div className="h-[320px] sm:h-[350px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                      <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
+                      <PieChart>
                         <Pie
                           data={getPieChartData()}
                           cx="50%"
-                          cy="45%"
-                          labelLine={false}
-                          outerRadius="70%"
-                          innerRadius="30%"
+                          cy="40%"
+                          labelLine={true}
+                          outerRadius={80}
+                          innerRadius={40}
                           fill="#8884d8"
                           dataKey="value"
-                          label={({ name, percent }) => window.innerWidth > 640 ? `${name} ${(percent * 100).toFixed(0)}%` : `${(percent * 100).toFixed(0)}%`}
+                          nameKey="name"
+                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          paddingAngle={2}
                         >
                           {getPieChartData().map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            <Cell key={`cell-${index}`} fill={entry.color} strokeWidth={2} />
                           ))}
                         </Pie>
-                        <Tooltip content={<CustomTooltip />} />
+                        <Tooltip 
+                          content={<CustomTooltip />}
+                          wrapperStyle={{ zIndex: 100 }}
+                        />
                         <Legend 
-                          wrapperStyle={{ fontSize: '12px' }}
+                          wrapperStyle={{ fontSize: '12px', paddingTop: '20px' }}
                           layout="horizontal"
                           verticalAlign="bottom"
+                          align="center"
+                          formatter={(value, entry: any) => (
+                            <span className="text-foreground font-medium">{value}</span>
+                          )}
                         />
                       </PieChart>
                     </ResponsiveContainer>
@@ -487,41 +497,71 @@ const ReportsPage = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="px-2 sm:px-6">
-                  <div className="h-[280px] sm:h-[300px]">
+                  <div className="h-[320px] sm:h-[350px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart 
                         data={getBarChartData()} 
-                        margin={{ 
-                          top: 20, 
-                          right: window.innerWidth > 640 ? 30 : 10, 
-                          left: window.innerWidth > 640 ? 20 : 0, 
-                          bottom: 5 
-                        }}
+                        margin={{ top: 20, right: 20, left: 10, bottom: 20 }}
                       >
-                        <CartesianGrid strokeDasharray="3 3" />
+                        <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                         <XAxis 
                           dataKey="name" 
-                          tick={{ fontSize: 12 }}
+                          tick={{ fontSize: 12, fill: 'hsl(var(--foreground))' }}
                           interval={0}
+                          axisLine={{ stroke: 'hsl(var(--border))' }}
+                          tickLine={{ stroke: 'hsl(var(--border))' }}
                         />
                         <YAxis 
-                          tick={{ fontSize: 12 }}
-                          width={40}
+                          tick={{ fontSize: 12, fill: 'hsl(var(--foreground))' }}
+                          width={45}
+                          axisLine={{ stroke: 'hsl(var(--border))' }}
+                          tickLine={{ stroke: 'hsl(var(--border))' }}
+                          allowDecimals={false}
                         />
                         <Tooltip
+                          cursor={{ fill: 'hsl(var(--muted))' }}
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--background))',
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px',
+                            fontSize: '12px',
+                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                          }}
                           formatter={(value: number, name: string) => {
                             if (name === 'count') return [value, 'Policies'];
                             return [formatCurrency(value), 'Premium'];
                           }}
-                          contentStyle={{ fontSize: '12px' }}
+                          labelStyle={{ fontWeight: 600 }}
                         />
-                        <Bar dataKey="count" fill="#3B82F6" name="count" radius={[4, 4, 0, 0]} />
+                        <Bar 
+                          dataKey="count" 
+                          name="count" 
+                          radius={[6, 6, 0, 0]}
+                          maxBarSize={60}
+                        >
+                          {getBarChartData().map((entry, index) => (
+                            <Cell key={`bar-${index}`} fill={entry.fill} />
+                          ))}
+                        </Bar>
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
                 </CardContent>
               </Card>
             </div>
+          )}
+
+          {/* No Chart Data Message */}
+          {stats.totalPolicies > 0 && getPieChartData().length === 0 && (
+            <Card className="shadow-lg border-0">
+              <CardContent className="py-12 text-center">
+                <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium">No Premium Data Available</h3>
+                <p className="text-muted-foreground mt-1">
+                  Policies were found but they don't have premium values recorded
+                </p>
+              </CardContent>
+            </Card>
           )}
 
           {/* Insurance Type Breakdown */}
