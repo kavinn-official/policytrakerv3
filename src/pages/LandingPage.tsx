@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,6 +8,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { 
   Shield, 
   Bell, 
@@ -28,7 +30,8 @@ import {
   Lock,
   Award,
   Headphones,
-  ShieldCheck
+  ShieldCheck,
+  Menu
 } from "lucide-react";
 import logo from '@/assets/logo.png';
 import howItWorksImg from '@/assets/screenshots/how-it-works.png';
@@ -196,52 +199,109 @@ const LandingPage = () => {
     }
   ];
 
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-white to-teal-50">
       {/* Navigation */}
       <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50">
-        <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Main navigation">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-3">
-              <img src={logo} alt="Agent Policy Tracker - Best Insurance Policy Management Software India" className="w-10 h-10" />
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">Policy Tracker.in</h1>
+        <nav className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8" aria-label="Main navigation">
+          <div className="flex justify-between items-center h-14 sm:h-16">
+            {/* Logo */}
+            <Link to="/" className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-shrink-0">
+              <img src={logo} alt="Agent Policy Tracker" className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0" />
+              <div className="min-w-0">
+                <h1 className="text-base sm:text-xl font-bold text-gray-900 truncate">Policy Tracker.in</h1>
                 <p className="text-xs text-gray-600 hidden sm:block">Agent Policy Tracker</p>
               </div>
-            </div>
+            </Link>
             
             {/* Desktop Navigation Links */}
             <div className="hidden md:flex items-center space-x-6">
-              <Link to="/features" className="text-gray-600 hover:text-gray-900 font-medium text-sm transition-colors" aria-label="View all features of policy tracker">
+              <Link to="/features" className="text-gray-600 hover:text-gray-900 font-medium text-sm transition-colors">
                 Features
               </Link>
-              <Link to="/pricing" className="text-gray-600 hover:text-gray-900 font-medium text-sm transition-colors" aria-label="View pricing plans">
+              <Link to="/pricing" className="text-gray-600 hover:text-gray-900 font-medium text-sm transition-colors">
                 Pricing
               </Link>
-              <Link to="/demo" className="text-gray-600 hover:text-gray-900 font-medium text-sm transition-colors" aria-label="Try interactive demo">
+              <Link to="/demo" className="text-gray-600 hover:text-gray-900 font-medium text-sm transition-colors">
                 Demo
               </Link>
             </div>
 
-            <div className="flex items-center space-x-3">
-              {/* Mobile Navigation Links */}
-              <div className="flex md:hidden items-center space-x-2">
-                <Link to="/features" className="text-gray-600 hover:text-gray-900 text-xs font-medium">
-                  Features
-                </Link>
-                <Link to="/pricing" className="text-gray-600 hover:text-gray-900 text-xs font-medium">
-                  Pricing
-                </Link>
-              </div>
-              
-              <Link to="/auth" aria-label="Login to your agent policy tracker account">
+            {/* Right side - Buttons */}
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              {/* Desktop Auth Buttons */}
+              <Link to="/auth" className="hidden sm:block">
                 <Button variant="outline" size="sm">Login</Button>
               </Link>
-              <Link to="/auth" aria-label="Start free trial of policy tracking app">
-                <Button size="sm" className="bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700">
+              <Link to="/auth" className="hidden xs:block">
+                <Button size="sm" className="bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700 text-xs sm:text-sm px-2 sm:px-4">
                   Start Free
                 </Button>
               </Link>
+
+              {/* Mobile Menu Button */}
+              <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+                <SheetTrigger asChild className="md:hidden">
+                  <Button variant="outline" size="sm" className="h-9 w-9 p-0">
+                    <Menu className="h-4 w-4" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-72 z-50 bg-white p-0">
+                  <div className="flex flex-col h-full">
+                    {/* Mobile Menu Header */}
+                    <div className="p-4 border-b">
+                      <div className="flex items-center space-x-3">
+                        <img src={logo} alt="Policy Tracker" className="w-10 h-10" />
+                        <div>
+                          <h2 className="font-bold text-gray-900">Policy Tracker.in</h2>
+                          <p className="text-xs text-gray-500">Agent Policy Tracker</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Mobile Navigation Links */}
+                    <div className="flex-1 py-4">
+                      <div className="space-y-1 px-3">
+                        <Link 
+                          to="/features" 
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="flex items-center px-3 py-3 rounded-lg text-gray-700 hover:bg-gray-100 font-medium"
+                        >
+                          Features
+                        </Link>
+                        <Link 
+                          to="/pricing" 
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="flex items-center px-3 py-3 rounded-lg text-gray-700 hover:bg-gray-100 font-medium"
+                        >
+                          Pricing
+                        </Link>
+                        <Link 
+                          to="/demo" 
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="flex items-center px-3 py-3 rounded-lg text-gray-700 hover:bg-gray-100 font-medium"
+                        >
+                          Demo
+                        </Link>
+                      </div>
+                    </div>
+
+                    {/* Mobile Auth Buttons */}
+                    <div className="p-4 border-t space-y-3">
+                      <Link to="/auth" onClick={() => setIsMobileMenuOpen(false)} className="block">
+                        <Button variant="outline" className="w-full">Login</Button>
+                      </Link>
+                      <Link to="/auth" onClick={() => setIsMobileMenuOpen(false)} className="block">
+                        <Button className="w-full bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700">
+                          Start Free Trial
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
             </div>
           </div>
         </nav>
