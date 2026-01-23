@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { format, startOfMonth, endOfMonth, getYear, getMonth, setMonth, setYear } from "date-fns";
+import { format, startOfMonth, endOfMonth, getYear, getMonth, setMonth, setYear, subMonths } from "date-fns";
 import { 
   ArrowLeft, 
   Download, 
@@ -17,12 +17,15 @@ import {
   Shield, 
   FileText,
   TrendingUp,
+  TrendingDown,
   Calendar,
   IndianRupee,
-  BarChart3
+  BarChart3,
+  FileSpreadsheet,
+  Printer
 } from "lucide-react";
 import * as XLSX from '@e965/xlsx';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line } from 'recharts';
 import {
   Select,
   SelectContent,
@@ -30,8 +33,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { aggregateByNormalizedCompany } from "@/utils/companyNormalization";
 import { formatDateDDMMYYYY } from "@/utils/policyUtils";
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface PolicyStats {
   totalPolicies: number;
@@ -42,6 +53,12 @@ interface PolicyStats {
   otherInsurance: { count: number; premium: number };
   byCompany: { [key: string]: { count: number; premium: number } };
   policies: any[];
+}
+
+interface MonthlyTrend {
+  month: string;
+  policies: number;
+  premium: number;
 }
 
 const COLORS = ['#3B82F6', '#EF4444', '#22C55E', '#A855F7'];
@@ -63,7 +80,7 @@ const MONTHS = [
 
 // Generate years from 2020 to current year + 1
 const currentYear = getYear(new Date());
-const YEARS = Array.from({ length: currentYear - 2019 }, (_, i) => ({
+const YEARS = Array.from({ length: currentYear - 2019 + 1 }, (_, i) => ({
   value: String(2020 + i),
   label: String(2020 + i),
 }));
@@ -79,11 +96,11 @@ const ReportsPage = () => {
   const [loading, setLoading] = useState(false);
   const [emailing, setEmailing] = useState(false);
   const [stats, setStats] = useState<PolicyStats | null>(null);
+  const [previousStats, setPreviousStats] = useState<PolicyStats | null>(null);
+  const [monthlyTrends, setMonthlyTrends] = useState<MonthlyTrend[]>([]);
 
   // Compute start and end dates based on selected month/year
-  const getDateRange = () => {
-    const year = parseInt(selectedYear);
-    const month = parseInt(selectedMonth);
+  const getDateRange = (month: number, year: number) => {
     const baseDate = setYear(setMonth(new Date(), month), year);
     return {
       startDate: startOfMonth(baseDate),
@@ -91,12 +108,9 @@ const ReportsPage = () => {
     };
   };
 
-  const fetchStats = async () => {
-    if (!user?.id) return;
+  const fetchStatsForPeriod = async (startDate: Date, endDate: Date): Promise<PolicyStats | null> => {
+    if (!user?.id) return null;
     
-    const { startDate, endDate } = getDateRange();
-    
-    setLoading(true);
     try {
       const { data: policies, error } = await supabase
         .from('policies')
@@ -143,10 +157,47 @@ const ReportsPage = () => {
         }
       });
 
-      // Use normalized company aggregation
       stats.byCompany = aggregateByNormalizedCompany(policies || []);
+      return stats;
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+      return null;
+    }
+  };
 
-      setStats(stats);
+  const fetchStats = async () => {
+    if (!user?.id) return;
+    
+    setLoading(true);
+    try {
+      const year = parseInt(selectedYear);
+      const month = parseInt(selectedMonth);
+      const { startDate, endDate } = getDateRange(month, year);
+      
+      // Fetch current month stats
+      const currentStats = await fetchStatsForPeriod(startDate, endDate);
+      setStats(currentStats);
+
+      // Fetch previous month stats for comparison
+      const prevMonth = subMonths(startDate, 1);
+      const prevRange = getDateRange(getMonth(prevMonth), getYear(prevMonth));
+      const prevStats = await fetchStatsForPeriod(prevRange.startDate, prevRange.endDate);
+      setPreviousStats(prevStats);
+
+      // Fetch last 6 months trend data
+      const trends: MonthlyTrend[] = [];
+      for (let i = 5; i >= 0; i--) {
+        const trendMonth = subMonths(startDate, i);
+        const trendRange = getDateRange(getMonth(trendMonth), getYear(trendMonth));
+        const trendStats = await fetchStatsForPeriod(trendRange.startDate, trendRange.endDate);
+        trends.push({
+          month: format(trendMonth, 'MMM yy'),
+          policies: trendStats?.totalPolicies || 0,
+          premium: trendStats?.totalNetPremium || 0,
+        });
+      }
+      setMonthlyTrends(trends);
+
     } catch (error: any) {
       console.error('Error fetching stats:', error);
       toast({
@@ -171,10 +222,17 @@ const ReportsPage = () => {
     }).format(amount);
   };
 
-  const { startDate, endDate } = getDateRange();
+  const { startDate } = getDateRange(parseInt(selectedMonth), parseInt(selectedYear));
   const monthYearLabel = format(startDate, 'MMMM yyyy');
 
-  const downloadReport = () => {
+  // Calculate comparison percentages
+  const getComparison = (current: number, previous: number): { value: number; isPositive: boolean } => {
+    if (previous === 0) return { value: current > 0 ? 100 : 0, isPositive: current >= 0 };
+    const change = ((current - previous) / previous) * 100;
+    return { value: Math.abs(change), isPositive: change >= 0 };
+  };
+
+  const downloadExcel = () => {
     if (!stats || stats.policies.length === 0) {
       toast({
         title: "No Data",
@@ -212,7 +270,7 @@ const ReportsPage = () => {
     const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
     XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary');
 
-    // Policies sheet with all details
+    // Policies sheet
     const policyData = stats.policies.map((p, index) => ({
       'S.No': index + 1,
       'Policy Number': p.policy_number,
@@ -220,32 +278,189 @@ const ReportsPage = () => {
       'Insurance Type': p.insurance_type || 'Vehicle Insurance',
       'Company': p.company_name || '',
       'Vehicle Number': p.vehicle_number || '',
-      'Vehicle Make': p.vehicle_make || '',
-      'Vehicle Model': p.vehicle_model || '',
       'Active Date': formatDateDDMMYYYY(p.policy_active_date),
       'Expiry Date': formatDateDDMMYYYY(p.policy_expiry_date),
       'Net Premium': p.net_premium || 0,
       'Status': p.status,
       'Contact': p.contact_number || '',
-      'Agent Code': p.agent_code || '',
-      'Reference': p.reference || '',
     }));
     const policiesSheet = XLSX.utils.json_to_sheet(policyData);
-    
-    // Set column widths
-    policiesSheet['!cols'] = [
-      { wch: 6 }, { wch: 22 }, { wch: 20 }, { wch: 18 }, { wch: 25 },
-      { wch: 14 }, { wch: 14 }, { wch: 18 }, { wch: 12 }, { wch: 12 },
-      { wch: 12 }, { wch: 10 }, { wch: 12 }, { wch: 15 }, { wch: 20 },
-    ];
     XLSX.utils.book_append_sheet(workbook, policiesSheet, 'Policies');
 
     const fileName = `Policy_Report_${monthYearLabel.replace(' ', '_')}.xlsx`;
     XLSX.writeFile(workbook, fileName);
 
     toast({
-      title: "Report Downloaded",
-      description: `${fileName} has been downloaded with ${stats.policies.length} policies`,
+      title: "Excel Downloaded",
+      description: `${fileName} has been downloaded`,
+    });
+  };
+
+  const downloadCSV = () => {
+    if (!stats || stats.policies.length === 0) {
+      toast({
+        title: "No Data",
+        description: "No policies found for the selected month",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const headers = ['S.No', 'Policy Number', 'Client Name', 'Insurance Type', 'Company', 'Vehicle Number', 'Active Date', 'Expiry Date', 'Net Premium', 'Status', 'Contact'];
+    const rows = stats.policies.map((p, index) => [
+      index + 1,
+      p.policy_number,
+      p.client_name,
+      p.insurance_type || 'Vehicle Insurance',
+      p.company_name || '',
+      p.vehicle_number || '',
+      formatDateDDMMYYYY(p.policy_active_date),
+      formatDateDDMMYYYY(p.policy_expiry_date),
+      p.net_premium || 0,
+      p.status,
+      p.contact_number || '',
+    ]);
+
+    const csvContent = [headers, ...rows]
+      .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Policy_Report_${monthYearLabel.replace(' ', '_')}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "CSV Downloaded",
+      description: "CSV file has been downloaded",
+    });
+  };
+
+  const downloadPDF = () => {
+    if (!stats || stats.policies.length === 0) {
+      toast({
+        title: "No Data",
+        description: "No policies found for the selected month",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    
+    // Header with branding
+    doc.setFillColor(59, 130, 246);
+    doc.rect(0, 0, pageWidth, 35, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Policy Tracker.in', 14, 18);
+    
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Monthly Policy Report - ${monthYearLabel}`, 14, 28);
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(9);
+    doc.text(`Generated: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, pageWidth - 14, 28, { align: 'right' });
+
+    // Summary section
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Summary', 14, 50);
+
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Total Policies: ${stats.totalPolicies}`, 14, 60);
+    doc.text(`Total Net Premium: ${formatCurrency(stats.totalNetPremium)}`, 14, 68);
+
+    // Insurance type breakdown
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('By Insurance Type', 14, 85);
+
+    autoTable(doc, {
+      startY: 92,
+      head: [['Type', 'Count', 'Premium']],
+      body: [
+        ['Vehicle Insurance', String(stats.vehicleInsurance.count), formatCurrency(stats.vehicleInsurance.premium)],
+        ['Health Insurance', String(stats.healthInsurance.count), formatCurrency(stats.healthInsurance.premium)],
+        ['Life Insurance', String(stats.lifeInsurance.count), formatCurrency(stats.lifeInsurance.premium)],
+        ['Other Insurance', String(stats.otherInsurance.count), formatCurrency(stats.otherInsurance.premium)],
+      ],
+      theme: 'striped',
+      headStyles: { fillColor: [59, 130, 246] },
+      margin: { left: 14, right: 14 },
+    });
+
+    // Company breakdown
+    const yAfterTypeTable = (doc as any).lastAutoTable.finalY + 15;
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('By Insurance Company', 14, yAfterTypeTable);
+
+    const companyData = Object.entries(stats.byCompany)
+      .sort((a, b) => b[1].premium - a[1].premium)
+      .map(([company, data]) => [company, String(data.count), formatCurrency(data.premium)]);
+
+    autoTable(doc, {
+      startY: yAfterTypeTable + 7,
+      head: [['Company', 'Count', 'Premium']],
+      body: companyData,
+      theme: 'striped',
+      headStyles: { fillColor: [59, 130, 246] },
+      margin: { left: 14, right: 14 },
+    });
+
+    // Policy details on new page
+    doc.addPage();
+    
+    doc.setFillColor(59, 130, 246);
+    doc.rect(0, 0, pageWidth, 25, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Policy Details', 14, 16);
+
+    const policyTableData = stats.policies.map((p, index) => [
+      String(index + 1),
+      p.policy_number,
+      p.client_name,
+      p.insurance_type || 'Vehicle',
+      formatCurrency(Number(p.net_premium) || 0),
+    ]);
+
+    autoTable(doc, {
+      startY: 35,
+      head: [['#', 'Policy Number', 'Client Name', 'Type', 'Premium']],
+      body: policyTableData,
+      theme: 'striped',
+      headStyles: { fillColor: [59, 130, 246] },
+      margin: { left: 14, right: 14 },
+      styles: { fontSize: 9 },
+    });
+
+    // Footer
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(128, 128, 128);
+      doc.text(`Page ${i} of ${pageCount}`, pageWidth / 2, doc.internal.pageSize.getHeight() - 10, { align: 'center' });
+      doc.text('Generated by Policy Tracker.in', 14, doc.internal.pageSize.getHeight() - 10);
+    }
+
+    doc.save(`Policy_Report_${monthYearLabel.replace(' ', '_')}.pdf`);
+
+    toast({
+      title: "PDF Downloaded",
+      description: "PDF report has been downloaded",
     });
   };
 
@@ -261,7 +476,7 @@ const ReportsPage = () => {
 
     setEmailing(true);
     try {
-      const { data, error } = await supabase.functions.invoke('send-policy-report', {
+      const { error } = await supabase.functions.invoke('send-policy-report', {
         body: {
           manual_trigger: true,
           user_id: user?.id,
@@ -286,26 +501,25 @@ const ReportsPage = () => {
     }
   };
 
-  // Prepare chart data - filter out zero values to prevent blank charts
+  // Prepare chart data - use count as fallback if premium is 0
   const getPieChartData = () => {
     if (!stats) return [];
     const data = [
-      { name: 'Vehicle', value: stats.vehicleInsurance.premium, count: stats.vehicleInsurance.count, color: COLORS[0] },
-      { name: 'Health', value: stats.healthInsurance.premium, count: stats.healthInsurance.count, color: COLORS[1] },
-      { name: 'Life', value: stats.lifeInsurance.premium, count: stats.lifeInsurance.count, color: COLORS[2] },
-      { name: 'Other', value: stats.otherInsurance.premium, count: stats.otherInsurance.count, color: COLORS[3] },
-    ].filter(item => item.count > 0);
+      { name: 'Vehicle', value: stats.vehicleInsurance.count, premium: stats.vehicleInsurance.premium, color: COLORS[0] },
+      { name: 'Health', value: stats.healthInsurance.count, premium: stats.healthInsurance.premium, color: COLORS[1] },
+      { name: 'Life', value: stats.lifeInsurance.count, premium: stats.lifeInsurance.premium, color: COLORS[2] },
+      { name: 'Other', value: stats.otherInsurance.count, premium: stats.otherInsurance.premium, color: COLORS[3] },
+    ].filter(item => item.value > 0);
     return data;
   };
 
   const getBarChartData = () => {
     if (!stats) return [];
-    // Only include types that have at least 1 policy
     return [
-      { name: 'Vehicle', premium: stats.vehicleInsurance.premium, count: stats.vehicleInsurance.count, fill: COLORS[0] },
-      { name: 'Health', premium: stats.healthInsurance.premium, count: stats.healthInsurance.count, fill: COLORS[1] },
-      { name: 'Life', premium: stats.lifeInsurance.premium, count: stats.lifeInsurance.count, fill: COLORS[2] },
-      { name: 'Other', premium: stats.otherInsurance.premium, count: stats.otherInsurance.count, fill: COLORS[3] },
+      { name: 'Vehicle', count: stats.vehicleInsurance.count, premium: stats.vehicleInsurance.premium, fill: COLORS[0] },
+      { name: 'Health', count: stats.healthInsurance.count, premium: stats.healthInsurance.premium, fill: COLORS[1] },
+      { name: 'Life', count: stats.lifeInsurance.count, premium: stats.lifeInsurance.premium, fill: COLORS[2] },
+      { name: 'Other', count: stats.otherInsurance.count, premium: stats.otherInsurance.premium, fill: COLORS[3] },
     ].filter(item => item.count > 0);
   };
 
@@ -342,20 +556,26 @@ const ReportsPage = () => {
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
+      const data = payload[0].payload;
       return (
         <div className="bg-background border rounded-lg p-3 shadow-lg">
-          <p className="font-medium">{payload[0].name}</p>
+          <p className="font-medium">{data.name || payload[0].name}</p>
           <p className="text-sm text-muted-foreground">
-            Premium: {formatCurrency(payload[0].value)}
+            Policies: {data.value || data.count || payload[0].value}
           </p>
-          <p className="text-sm text-muted-foreground">
-            Policies: {payload[0].payload.count}
-          </p>
+          {data.premium !== undefined && (
+            <p className="text-sm text-muted-foreground">
+              Premium: {formatCurrency(data.premium)}
+            </p>
+          )}
         </div>
       );
     }
     return null;
   };
+
+  const policyComparison = previousStats ? getComparison(stats?.totalPolicies || 0, previousStats.totalPolicies) : null;
+  const premiumComparison = previousStats ? getComparison(stats?.totalNetPremium || 0, previousStats.totalNetPremium) : null;
 
   return (
     <div className="space-y-4 sm:space-y-6 px-2 sm:px-4 lg:px-6 pb-4 sm:pb-6">
@@ -389,7 +609,7 @@ const ReportsPage = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col sm:flex-row gap-4 items-end">
+          <div className="flex flex-col sm:flex-row gap-4 items-end flex-wrap">
             <div className="w-full sm:w-48 space-y-2">
               <Label>Month</Label>
               <Select value={selectedMonth} onValueChange={setSelectedMonth}>
@@ -420,20 +640,33 @@ const ReportsPage = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex gap-2 w-full sm:w-auto">
-              <Button 
-                onClick={downloadReport}
-                disabled={loading || !stats || stats.policies.length === 0}
-                className="flex-1 sm:flex-none"
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Download
-              </Button>
+            <div className="flex gap-2 w-full sm:w-auto flex-wrap">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button disabled={loading || !stats || stats.policies.length === 0}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Download
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onClick={downloadExcel}>
+                    <FileSpreadsheet className="h-4 w-4 mr-2" />
+                    Excel (.xlsx)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={downloadCSV}>
+                    <FileText className="h-4 w-4 mr-2" />
+                    CSV (.csv)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={downloadPDF}>
+                    <Printer className="h-4 w-4 mr-2" />
+                    PDF Report
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <Button 
                 onClick={emailReport}
                 disabled={emailing || loading || !stats || stats.policies.length === 0}
                 variant="outline"
-                className="flex-1 sm:flex-none"
               >
                 {emailing ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -453,7 +686,7 @@ const ReportsPage = () => {
         </div>
       ) : stats ? (
         <>
-          {/* Overall Summary */}
+          {/* Overall Summary with Comparison */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Card className="shadow-lg border-0 bg-gradient-to-br from-blue-500 to-indigo-600 text-white">
               <CardContent className="p-6">
@@ -461,9 +694,15 @@ const ReportsPage = () => {
                   <div>
                     <p className="text-blue-100">Total Policies</p>
                     <p className="text-4xl font-bold mt-2">{stats.totalPolicies}</p>
-                    <p className="text-blue-100 text-sm mt-1">
-                      {monthYearLabel}
-                    </p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <p className="text-blue-100 text-sm">{monthYearLabel}</p>
+                      {policyComparison && (
+                        <span className={`flex items-center text-xs px-2 py-0.5 rounded-full ${policyComparison.isPositive ? 'bg-green-400/30 text-green-100' : 'bg-red-400/30 text-red-100'}`}>
+                          {policyComparison.isPositive ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
+                          {policyComparison.value.toFixed(1)}%
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="p-4 bg-white/20 rounded-xl">
                     <FileText className="h-8 w-8" />
@@ -478,9 +717,15 @@ const ReportsPage = () => {
                   <div>
                     <p className="text-green-100">Total Net Premium</p>
                     <p className="text-4xl font-bold mt-2">{formatCurrency(stats.totalNetPremium)}</p>
-                    <p className="text-green-100 text-sm mt-1">
-                      Collected in {monthYearLabel}
-                    </p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <p className="text-green-100 text-sm">Collected in {monthYearLabel}</p>
+                      {premiumComparison && stats.totalNetPremium > 0 && (
+                        <span className={`flex items-center text-xs px-2 py-0.5 rounded-full ${premiumComparison.isPositive ? 'bg-green-400/30 text-green-100' : 'bg-red-400/30 text-red-100'}`}>
+                          {premiumComparison.isPositive ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
+                          {premiumComparison.value.toFixed(1)}%
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="p-4 bg-white/20 rounded-xl">
                     <IndianRupee className="h-8 w-8" />
@@ -490,18 +735,110 @@ const ReportsPage = () => {
             </Card>
           </div>
 
-          {/* Charts Section */}
+          {/* Month-over-Month Trend Charts */}
+          {monthlyTrends.length > 0 && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <Card className="shadow-lg border-0">
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <TrendingUp className="h-5 w-5 text-primary" />
+                    Policy Count Trend
+                  </CardTitle>
+                  <CardDescription>
+                    Last 6 months policy count comparison
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="px-2 sm:px-6">
+                  <div className="h-[250px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={monthlyTrends} margin={{ top: 20, right: 20, left: 10, bottom: 20 }}>
+                        <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                        <XAxis 
+                          dataKey="month" 
+                          tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }}
+                          axisLine={{ stroke: 'hsl(var(--border))' }}
+                        />
+                        <YAxis 
+                          tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }}
+                          axisLine={{ stroke: 'hsl(var(--border))' }}
+                          allowDecimals={false}
+                        />
+                        <Tooltip
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--background))',
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px',
+                          }}
+                          formatter={(value: number) => [value, 'Policies']}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="policies" 
+                          stroke="#3B82F6" 
+                          strokeWidth={3}
+                          dot={{ fill: '#3B82F6', strokeWidth: 2, r: 5 }}
+                          activeDot={{ r: 7 }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-lg border-0">
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <IndianRupee className="h-5 w-5 text-primary" />
+                    Premium Trend
+                  </CardTitle>
+                  <CardDescription>
+                    Last 6 months premium collection comparison
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="px-2 sm:px-6">
+                  <div className="h-[250px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={monthlyTrends} margin={{ top: 20, right: 20, left: 10, bottom: 20 }}>
+                        <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                        <XAxis 
+                          dataKey="month" 
+                          tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }}
+                          axisLine={{ stroke: 'hsl(var(--border))' }}
+                        />
+                        <YAxis 
+                          tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }}
+                          axisLine={{ stroke: 'hsl(var(--border))' }}
+                          tickFormatter={(value) => `₹${(value / 1000).toFixed(0)}k`}
+                        />
+                        <Tooltip
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--background))',
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px',
+                          }}
+                          formatter={(value: number) => [formatCurrency(value), 'Premium']}
+                        />
+                        <Bar dataKey="premium" fill="#22C55E" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Charts Section - Policy Distribution */}
           {stats.totalPolicies > 0 && getPieChartData().length > 0 && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {/* Pie Chart */}
               <Card className="shadow-lg border-0">
                 <CardHeader className="pb-2">
                   <CardTitle className="flex items-center gap-2 text-lg">
-                    <TrendingUp className="h-5 w-5 text-primary" />
-                    Premium Distribution
+                    <BarChart3 className="h-5 w-5 text-primary" />
+                    Policy Distribution
                   </CardTitle>
                   <CardDescription>
-                    Premium breakdown by insurance type
+                    Policy count by insurance type
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="px-2 sm:px-6">
@@ -525,18 +862,12 @@ const ReportsPage = () => {
                             <Cell key={`cell-${index}`} fill={entry.color} strokeWidth={2} />
                           ))}
                         </Pie>
-                        <Tooltip 
-                          content={<CustomTooltip />}
-                          wrapperStyle={{ zIndex: 100 }}
-                        />
+                        <Tooltip content={<CustomTooltip />} />
                         <Legend 
                           wrapperStyle={{ fontSize: '12px', paddingTop: '20px' }}
                           layout="horizontal"
                           verticalAlign="bottom"
                           align="center"
-                          formatter={(value, entry: any) => (
-                            <span className="text-foreground font-medium">{value}</span>
-                          )}
                         />
                       </PieChart>
                     </ResponsiveContainer>
@@ -577,21 +908,7 @@ const ReportsPage = () => {
                           tickLine={{ stroke: 'hsl(var(--border))' }}
                           allowDecimals={false}
                         />
-                        <Tooltip
-                          cursor={{ fill: 'hsl(var(--muted))' }}
-                          contentStyle={{ 
-                            backgroundColor: 'hsl(var(--background))',
-                            border: '1px solid hsl(var(--border))',
-                            borderRadius: '8px',
-                            fontSize: '12px',
-                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                          }}
-                          formatter={(value: number, name: string) => {
-                            if (name === 'count') return [value, 'Policies'];
-                            return [formatCurrency(value), 'Premium'];
-                          }}
-                          labelStyle={{ fontWeight: 600 }}
-                        />
+                        <Tooltip content={<CustomTooltip />} />
                         <Bar 
                           dataKey="count" 
                           name="count" 
@@ -610,60 +927,62 @@ const ReportsPage = () => {
             </div>
           )}
 
-          {/* No Chart Data Message */}
-          {stats.totalPolicies > 0 && getPieChartData().length === 0 && (
+          {/* No Data Message */}
+          {stats.totalPolicies === 0 && (
             <Card className="shadow-lg border-0">
               <CardContent className="py-12 text-center">
-                <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium">No Premium Data Available</h3>
+                <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium">No Policies Found</h3>
                 <p className="text-muted-foreground mt-1">
-                  Policies were found but they don't have premium values recorded
+                  No policies were added in {monthYearLabel}
                 </p>
               </CardContent>
             </Card>
           )}
 
           {/* Insurance Type Breakdown */}
-          <Card className="shadow-lg border-0">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <TrendingUp className="h-5 w-5 text-primary" />
-                By Insurance Type
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard
-                  title="Vehicle Insurance"
-                  count={stats.vehicleInsurance.count}
-                  premium={stats.vehicleInsurance.premium}
-                  icon={Car}
-                  colorClass="bg-blue-500"
-                />
-                <StatCard
-                  title="Health Insurance"
-                  count={stats.healthInsurance.count}
-                  premium={stats.healthInsurance.premium}
-                  icon={Heart}
-                  colorClass="bg-red-500"
-                />
-                <StatCard
-                  title="Life Insurance"
-                  count={stats.lifeInsurance.count}
-                  premium={stats.lifeInsurance.premium}
-                  icon={Shield}
-                  colorClass="bg-green-500"
-                />
-                <StatCard
-                  title="Other Insurance"
-                  count={stats.otherInsurance.count}
-                  premium={stats.otherInsurance.premium}
-                  icon={FileText}
-                  colorClass="bg-purple-500"
-                />
-              </div>
-            </CardContent>
-          </Card>
+          {stats.totalPolicies > 0 && (
+            <Card className="shadow-lg border-0">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <TrendingUp className="h-5 w-5 text-primary" />
+                  By Insurance Type
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <StatCard
+                    title="Vehicle Insurance"
+                    count={stats.vehicleInsurance.count}
+                    premium={stats.vehicleInsurance.premium}
+                    icon={Car}
+                    colorClass="bg-blue-500"
+                  />
+                  <StatCard
+                    title="Health Insurance"
+                    count={stats.healthInsurance.count}
+                    premium={stats.healthInsurance.premium}
+                    icon={Heart}
+                    colorClass="bg-red-500"
+                  />
+                  <StatCard
+                    title="Life Insurance"
+                    count={stats.lifeInsurance.count}
+                    premium={stats.lifeInsurance.premium}
+                    icon={Shield}
+                    colorClass="bg-green-500"
+                  />
+                  <StatCard
+                    title="Other Insurance"
+                    count={stats.otherInsurance.count}
+                    premium={stats.otherInsurance.premium}
+                    icon={FileText}
+                    colorClass="bg-purple-500"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* By Company Breakdown */}
           {Object.keys(stats.byCompany).length > 0 && (
@@ -762,18 +1081,6 @@ const ReportsPage = () => {
                     </p>
                   )}
                 </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {stats.policies.length === 0 && (
-            <Card className="shadow-lg border-0">
-              <CardContent className="py-12 text-center">
-                <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium">No Policies Found</h3>
-                <p className="text-muted-foreground mt-1">
-                  No policies were added in {monthYearLabel}
-                </p>
               </CardContent>
             </Card>
           )}
