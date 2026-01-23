@@ -2,12 +2,11 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MaterialDatePicker } from "@/components/ui/material-date-picker";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
+import { format, startOfMonth, endOfMonth, getYear, getMonth, setMonth, setYear } from "date-fns";
 import { 
   ArrowLeft, 
   Download, 
@@ -24,6 +23,15 @@ import {
 } from "lucide-react";
 import * as XLSX from '@e965/xlsx';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { aggregateByNormalizedCompany } from "@/utils/companyNormalization";
+import { formatDateDDMMYYYY } from "@/utils/policyUtils";
 
 interface PolicyStats {
   totalPolicies: number;
@@ -38,19 +46,55 @@ interface PolicyStats {
 
 const COLORS = ['#3B82F6', '#EF4444', '#22C55E', '#A855F7'];
 
+const MONTHS = [
+  { value: '0', label: 'January' },
+  { value: '1', label: 'February' },
+  { value: '2', label: 'March' },
+  { value: '3', label: 'April' },
+  { value: '4', label: 'May' },
+  { value: '5', label: 'June' },
+  { value: '6', label: 'July' },
+  { value: '7', label: 'August' },
+  { value: '8', label: 'September' },
+  { value: '9', label: 'October' },
+  { value: '10', label: 'November' },
+  { value: '11', label: 'December' },
+];
+
+// Generate years from 2020 to current year + 1
+const currentYear = getYear(new Date());
+const YEARS = Array.from({ length: currentYear - 2019 }, (_, i) => ({
+  value: String(2020 + i),
+  label: String(2020 + i),
+}));
+
 const ReportsPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
   
-  const [startDate, setStartDate] = useState<Date | undefined>(startOfMonth(subMonths(new Date(), 1)));
-  const [endDate, setEndDate] = useState<Date | undefined>(endOfMonth(new Date()));
+  const now = new Date();
+  const [selectedMonth, setSelectedMonth] = useState<string>(String(getMonth(now)));
+  const [selectedYear, setSelectedYear] = useState<string>(String(getYear(now)));
   const [loading, setLoading] = useState(false);
   const [emailing, setEmailing] = useState(false);
   const [stats, setStats] = useState<PolicyStats | null>(null);
 
+  // Compute start and end dates based on selected month/year
+  const getDateRange = () => {
+    const year = parseInt(selectedYear);
+    const month = parseInt(selectedMonth);
+    const baseDate = setYear(setMonth(new Date(), month), year);
+    return {
+      startDate: startOfMonth(baseDate),
+      endDate: endOfMonth(baseDate),
+    };
+  };
+
   const fetchStats = async () => {
-    if (!user?.id || !startDate || !endDate) return;
+    if (!user?.id) return;
+    
+    const { startDate, endDate } = getDateRange();
     
     setLoading(true);
     try {
@@ -97,16 +141,10 @@ const ReportsPage = () => {
             stats.otherInsurance.count++;
             stats.otherInsurance.premium += premium;
         }
-
-        // Aggregate by company name - normalize company names to merge duplicates
-        const rawCompanyName = policy.company_name || 'Unknown';
-        const normalizedCompanyName = rawCompanyName.trim().toUpperCase().replace(/\s+/g, ' ');
-        if (!stats.byCompany[normalizedCompanyName]) {
-          stats.byCompany[normalizedCompanyName] = { count: 0, premium: 0 };
-        }
-        stats.byCompany[normalizedCompanyName].count++;
-        stats.byCompany[normalizedCompanyName].premium += premium;
       });
+
+      // Use normalized company aggregation
+      stats.byCompany = aggregateByNormalizedCompany(policies || []);
 
       setStats(stats);
     } catch (error: any) {
@@ -122,10 +160,8 @@ const ReportsPage = () => {
   };
 
   useEffect(() => {
-    if (startDate && endDate) {
-      fetchStats();
-    }
-  }, [startDate, endDate, user?.id]);
+    fetchStats();
+  }, [selectedMonth, selectedYear, user?.id]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -135,11 +171,14 @@ const ReportsPage = () => {
     }).format(amount);
   };
 
+  const { startDate, endDate } = getDateRange();
+  const monthYearLabel = format(startDate, 'MMMM yyyy');
+
   const downloadReport = () => {
     if (!stats || stats.policies.length === 0) {
       toast({
         title: "No Data",
-        description: "No policies found in the selected date range",
+        description: "No policies found for the selected month",
         variant: "destructive",
       });
       return;
@@ -149,8 +188,8 @@ const ReportsPage = () => {
     
     // Summary sheet
     const summaryData = [
-      ['Policy Report'],
-      ['Date Range', `${format(startDate!, 'dd/MM/yyyy')} - ${format(endDate!, 'dd/MM/yyyy')}`],
+      ['Monthly Policy Report'],
+      ['Month', monthYearLabel],
       ['Generated On', format(new Date(), 'dd/MM/yyyy HH:mm')],
       [],
       ['Summary'],
@@ -163,6 +202,12 @@ const ReportsPage = () => {
       ['Health Insurance', stats.healthInsurance.count, stats.healthInsurance.premium],
       ['Life Insurance', stats.lifeInsurance.count, stats.lifeInsurance.premium],
       ['Other Insurance', stats.otherInsurance.count, stats.otherInsurance.premium],
+      [],
+      ['By Insurance Company'],
+      ['Company', 'Policy Count', 'Net Premium'],
+      ...Object.entries(stats.byCompany)
+        .sort((a, b) => b[1].premium - a[1].premium)
+        .map(([company, data]) => [company, data.count, data.premium]),
     ];
     const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
     XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary');
@@ -177,8 +222,8 @@ const ReportsPage = () => {
       'Vehicle Number': p.vehicle_number || '',
       'Vehicle Make': p.vehicle_make || '',
       'Vehicle Model': p.vehicle_model || '',
-      'Active Date': p.policy_active_date,
-      'Expiry Date': p.policy_expiry_date,
+      'Active Date': formatDateDDMMYYYY(p.policy_active_date),
+      'Expiry Date': formatDateDDMMYYYY(p.policy_expiry_date),
       'Net Premium': p.net_premium || 0,
       'Status': p.status,
       'Contact': p.contact_number || '',
@@ -195,7 +240,7 @@ const ReportsPage = () => {
     ];
     XLSX.utils.book_append_sheet(workbook, policiesSheet, 'Policies');
 
-    const fileName = `Policy_Report_${format(startDate!, 'yyyyMMdd')}_${format(endDate!, 'yyyyMMdd')}.xlsx`;
+    const fileName = `Policy_Report_${monthYearLabel.replace(' ', '_')}.xlsx`;
     XLSX.writeFile(workbook, fileName);
 
     toast({
@@ -208,7 +253,7 @@ const ReportsPage = () => {
     if (!stats || stats.policies.length === 0) {
       toast({
         title: "No Data",
-        description: "No policies found in the selected date range",
+        description: "No policies found for the selected month",
         variant: "destructive",
       });
       return;
@@ -326,40 +371,54 @@ const ReportsPage = () => {
             Back
           </Button>
           <div>
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Reports</h1>
-            <p className="text-gray-600 text-sm sm:text-base">Generate and analyze policy reports</p>
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">Reports</h1>
+            <p className="text-muted-foreground text-sm sm:text-base">Generate and analyze policy reports</p>
           </div>
         </div>
       </div>
 
-      {/* Date Range Selection */}
+      {/* Month & Year Selection */}
       <Card className="shadow-lg border-0">
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center gap-2 text-lg">
             <Calendar className="h-5 w-5 text-primary" />
-            Select Date Range
+            Select Month & Year
           </CardTitle>
           <CardDescription>
-            Choose the period for your report based on policy active dates
+            Choose a month and year to view policies added during that period
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col sm:flex-row gap-4 items-end">
-            <div className="w-full sm:w-auto space-y-2">
-              <Label>Start Date</Label>
-              <MaterialDatePicker
-                date={startDate}
-                onDateChange={setStartDate}
-                placeholder="Select start date"
-              />
+            <div className="w-full sm:w-48 space-y-2">
+              <Label>Month</Label>
+              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select month" />
+                </SelectTrigger>
+                <SelectContent>
+                  {MONTHS.map((month) => (
+                    <SelectItem key={month.value} value={month.value}>
+                      {month.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            <div className="w-full sm:w-auto space-y-2">
-              <Label>End Date</Label>
-              <MaterialDatePicker
-                date={endDate}
-                onDateChange={setEndDate}
-                placeholder="Select end date"
-              />
+            <div className="w-full sm:w-32 space-y-2">
+              <Label>Year</Label>
+              <Select value={selectedYear} onValueChange={setSelectedYear}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select year" />
+                </SelectTrigger>
+                <SelectContent>
+                  {YEARS.map((year) => (
+                    <SelectItem key={year.value} value={year.value}>
+                      {year.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex gap-2 w-full sm:w-auto">
               <Button 
@@ -403,7 +462,7 @@ const ReportsPage = () => {
                     <p className="text-blue-100">Total Policies</p>
                     <p className="text-4xl font-bold mt-2">{stats.totalPolicies}</p>
                     <p className="text-blue-100 text-sm mt-1">
-                      {format(startDate!, 'dd MMM')} - {format(endDate!, 'dd MMM yyyy')}
+                      {monthYearLabel}
                     </p>
                   </div>
                   <div className="p-4 bg-white/20 rounded-xl">
@@ -420,7 +479,7 @@ const ReportsPage = () => {
                     <p className="text-green-100">Total Net Premium</p>
                     <p className="text-4xl font-bold mt-2">{formatCurrency(stats.totalNetPremium)}</p>
                     <p className="text-green-100 text-sm mt-1">
-                      Collected in this period
+                      Collected in {monthYearLabel}
                     </p>
                   </div>
                   <div className="p-4 bg-white/20 rounded-xl">
@@ -615,7 +674,7 @@ const ReportsPage = () => {
                   By Insurance Company
                 </CardTitle>
                 <CardDescription>
-                  Policy count and premium breakdown by company name
+                  Policy count and premium breakdown by company name (similar names merged)
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -632,7 +691,7 @@ const ReportsPage = () => {
                       {Object.entries(stats.byCompany)
                         .sort((a, b) => b[1].premium - a[1].premium)
                         .map(([company, data], index) => (
-                          <tr key={company} className={`border-b hover:bg-muted/50 ${index % 2 === 0 ? 'bg-white' : 'bg-muted/20'}`}>
+                          <tr key={company} className={`border-b hover:bg-muted/50 ${index % 2 === 0 ? 'bg-background' : 'bg-muted/20'}`}>
                             <td className="py-3 px-4 font-medium">{company}</td>
                             <td className="py-3 px-4 text-center">
                               <span className="inline-flex items-center justify-center min-w-[40px] px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
@@ -713,7 +772,7 @@ const ReportsPage = () => {
                 <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-medium">No Policies Found</h3>
                 <p className="text-muted-foreground mt-1">
-                  No policies were added in the selected date range
+                  No policies were added in {monthYearLabel}
                 </p>
               </CardContent>
             </Card>

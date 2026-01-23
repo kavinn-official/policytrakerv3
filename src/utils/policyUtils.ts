@@ -47,6 +47,21 @@ export const filterPolicies = (policies: Policy[], searchTerm: string) => {
   );
 };
 
+/**
+ * Formats a date string to DD/MM/YYYY format consistently across all devices
+ */
+export const formatDateDDMMYYYY = (dateString: string): string => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return '';
+  
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  
+  return `${day}/${month}/${year}`;
+};
+
 export const downloadPoliciesAsExcel = (policies: Policy[], filename: string) => {
   if (!policies || policies.length === 0) {
     return null;
@@ -60,12 +75,12 @@ export const downloadPoliciesAsExcel = (policies: Policy[], filename: string) =>
     'Vehicle Number': policy.vehicle_number,
     'Vehicle Make': policy.vehicle_make,
     'Vehicle Model': policy.vehicle_model,
-    'Active Date': new Date(policy.policy_active_date).toLocaleDateString(),
-    'Expiry Date': new Date(policy.policy_expiry_date).toLocaleDateString(),
+    'Active Date': formatDateDDMMYYYY(policy.policy_active_date),
+    'Expiry Date': formatDateDDMMYYYY(policy.policy_expiry_date),
     'Status': policy.status,
     'Reference': policy.reference,
     'Contact Number': policy.contact_number || '',
-    'Created At': new Date(policy.created_at).toLocaleDateString()
+    'Created At': formatDateDDMMYYYY(policy.created_at)
   })));
 
   const workbook = XLSX.utils.book_new();
