@@ -65,6 +65,46 @@ const ChartContainer = React.forwardRef<
 })
 ChartContainer.displayName = "Chart"
 
+// Validate and sanitize color values to prevent CSS injection attacks
+const sanitizeColor = (color: string | undefined): string | null => {
+  if (!color) return null;
+  
+  // Allow valid hex colors (3, 4, 6, or 8 characters)
+  const hexPattern = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{4}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/;
+  if (hexPattern.test(color)) return color;
+  
+  // Allow valid HSL/HSLA colors
+  const hslPattern = /^hsla?\(\s*\d{1,3}\s*,\s*\d{1,3}%\s*,\s*\d{1,3}%\s*(,\s*(0|1|0?\.\d+))?\s*\)$/;
+  if (hslPattern.test(color)) return color;
+  
+  // Allow CSS variable references (e.g., var(--primary))
+  const cssVarPattern = /^var\(--[a-zA-Z0-9-]+\)$/;
+  if (cssVarPattern.test(color)) return color;
+  
+  // Allow valid RGB/RGBA colors
+  const rgbPattern = /^rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*(,\s*(0|1|0?\.\d+))?\s*\)$/;
+  if (rgbPattern.test(color)) return color;
+  
+  // Allow named CSS colors (strict whitelist of common safe colors)
+  const namedColors = [
+    'transparent', 'currentColor', 'inherit',
+    'black', 'white', 'red', 'green', 'blue', 'yellow', 'orange', 'purple', 
+    'pink', 'gray', 'grey', 'cyan', 'magenta', 'lime', 'maroon', 'navy',
+    'olive', 'teal', 'aqua', 'fuchsia', 'silver'
+  ];
+  if (namedColors.includes(color.toLowerCase())) return color;
+  
+  // Reject any other values to prevent injection
+  console.warn(`Invalid color value rejected: ${color}`);
+  return null;
+};
+
+// Sanitize CSS key names to prevent injection
+const sanitizeKey = (key: string): string => {
+  // Only allow alphanumeric characters, hyphens, and underscores
+  return key.replace(/[^a-zA-Z0-9_-]/g, '');
+};
+
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
   const colorConfig = Object.entries(config).filter(
     ([_, config]) => config.theme || config.color
@@ -83,11 +123,14 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
 ${prefix} [data-chart=${id}] {
 ${colorConfig
   .map(([key, itemConfig]) => {
-    const color =
+    const rawColor =
       itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ||
       itemConfig.color
-    return color ? `  --color-${key}: ${color};` : null
+    const color = sanitizeColor(rawColor)
+    const safeKey = sanitizeKey(key)
+    return color && safeKey ? `  --color-${safeKey}: ${color};` : null
   })
+  .filter(Boolean)
   .join("\n")}
 }
 `
