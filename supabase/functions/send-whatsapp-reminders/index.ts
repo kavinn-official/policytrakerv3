@@ -1,11 +1,9 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
-// Standard CORS headers for all origins
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+// Minimal headers for cron-only function (no CORS needed - not browser-invoked)
+const responseHeaders = {
+  'Content-Type': 'application/json',
 };
 
 interface Policy {
@@ -27,9 +25,9 @@ interface UserSettings {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
+  // No CORS handling needed - this function is only called by cron scheduler
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { status: 204 });
   }
 
   const startTime = Date.now();
@@ -48,7 +46,7 @@ serve(async (req) => {
       error: "Service not configured",
       details: "CRON_SECRET environment variable is not set"
     }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: responseHeaders,
       status: 503,
     });
   }
@@ -59,7 +57,7 @@ serve(async (req) => {
       error: "Unauthorized",
       details: "Invalid authorization header"
     }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: responseHeaders,
       status: 401,
     });
   }
@@ -104,7 +102,7 @@ serve(async (req) => {
         timestamp: new Date().toISOString(),
         executionTimeMs: Date.now() - startTime
       }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: responseHeaders,
         status: 200,
       });
     }
@@ -253,7 +251,7 @@ Please contact us for renewal.`;
       timestamp: new Date().toISOString(),
       executionTimeMs
     }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: responseHeaders,
       status: 200,
     });
 
@@ -270,7 +268,7 @@ Please contact us for renewal.`;
       timestamp: new Date().toISOString(),
       executionTimeMs
     }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: responseHeaders,
       status: 500,
     });
   }
