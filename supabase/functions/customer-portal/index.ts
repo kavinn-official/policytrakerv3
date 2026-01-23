@@ -73,9 +73,8 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
-    console.error("Error in customer-portal function");
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    return new Response(JSON.stringify({ error: errorMessage }), {
+    console.error("Error in customer-portal function:", error instanceof Error ? error.message : "Unknown error");
+    return new Response(JSON.stringify({ error: "An error occurred while accessing the customer portal. Please try again." }), {
       headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       status: 500,
     });
