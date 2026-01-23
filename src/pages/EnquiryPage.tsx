@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import SEOHead from "@/components/SEOHead";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -107,6 +108,13 @@ const EnquiryPage = () => {
   }
 
   return (
+    <>
+      <SEOHead
+        title="Contact Us - Agent Policy Tracker | Get Support & Enquiries"
+        description="Have questions about Policy Tracker.in? Contact our support team via email, phone, or WhatsApp. We respond within 24 hours. Best support for insurance agents in India."
+        canonicalPath="/enquiry"
+        keywords="policy tracker contact, insurance software support, agent policy tracker enquiry, customer support India"
+      />
     <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-white to-teal-50">
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-40">
@@ -338,6 +346,7 @@ const EnquiryPage = () => {
 
       <WhatsAppFloatingButton />
     </div>
+    </>
   );
 };
 

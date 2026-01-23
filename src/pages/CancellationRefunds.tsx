@@ -1,11 +1,18 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import SEOHead from "@/components/SEOHead";
 
 const CancellationRefunds = () => {
   return (
+    <>
+      <SEOHead
+        title="Cancellation & Refunds - Policy Tracker.in"
+        description="Cancellation and refund policy for Policy Tracker.in subscription plans. 7-day money back guarantee. Learn about our refund process."
+        canonicalPath="/cancellation-refunds"
+        keywords="policy tracker refund, subscription cancellation, money back guarantee"
+      />
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-4">
       <div className="max-w-4xl mx-auto">
         <div className="mb-6">
@@ -64,6 +71,7 @@ const CancellationRefunds = () => {
         </Card>
       </div>
     </div>
+    </>
   );
 };
 

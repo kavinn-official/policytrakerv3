@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import SEOHead from "@/components/SEOHead";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -197,6 +198,13 @@ const DemoPage = () => {
   );
 
   return (
+    <>
+      <SEOHead
+        title="Free Demo - Agent Policy Tracker | Try Insurance Management Software"
+        description="Try Policy Tracker.in demo with sample data. Experience policy management, renewal alerts, WhatsApp reminders, and client CRM. No signup required - explore all features free."
+        canonicalPath="/demo"
+        keywords="agent policy tracker demo, free insurance software demo, policy management demo, try policy tracker"
+      />
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
       {/* Demo Banner */}
       <div className="bg-gradient-to-r from-cyan-600 to-teal-600 text-white py-3 px-4 text-center">
@@ -1035,6 +1043,7 @@ const DemoPage = () => {
 
       <WhatsAppFloatingButton />
     </div>
+    </>
   );
 };
 

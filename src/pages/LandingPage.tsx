@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import SEOHead from "@/components/SEOHead";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Accordion,
@@ -202,6 +203,13 @@ const LandingPage = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
+    <>
+      <SEOHead
+        title="Agent Policy Tracker | #1 Insurance Policy Management Software India"
+        description="Best agent policy tracker for insurance agents in India. Track motor policies, send WhatsApp renewal reminders, manage clients with our policy tracking app. Free trial - no credit card required."
+        canonicalPath="/"
+        keywords="agent policy tracker, insurance policy tracker, policy tracking app for agents, insurance agent CRM, policy renewal reminder app, insurance policy management software"
+      />
     <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-white to-teal-50">
       {/* Navigation */}
       <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50">
@@ -732,6 +740,7 @@ const LandingPage = () => {
 
       <WhatsAppFloatingButton />
     </div>
+    </>
   );
 };
 

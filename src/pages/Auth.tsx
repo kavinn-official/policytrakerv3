@@ -1,6 +1,6 @@
-
 import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
+import SEOHead from "@/components/SEOHead";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -142,6 +142,13 @@ const Auth = () => {
   };
 
   return (
+    <>
+      <SEOHead
+        title="Login & Sign Up - Agent Policy Tracker | Start Free Today"
+        description="Sign in or create your free Policy Tracker.in account. Start managing insurance policies, sending WhatsApp reminders, and tracking renewals. Free forever plan available."
+        canonicalPath="/auth"
+        keywords="policy tracker login, insurance software signup, agent policy tracker register, create account free"
+      />
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex flex-col">
       {/* Back Button */}
       <div className="p-4">
@@ -409,6 +416,7 @@ const Auth = () => {
         </DialogContent>
       </Dialog>
     </div>
+    </>
   );
 };
 

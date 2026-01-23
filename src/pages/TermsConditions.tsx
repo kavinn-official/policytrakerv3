@@ -1,11 +1,18 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import SEOHead from "@/components/SEOHead";
 
 const TermsConditions = () => {
   return (
+    <>
+      <SEOHead
+        title="Terms & Conditions - Policy Tracker.in"
+        description="Terms and conditions for using Policy Tracker.in insurance policy management software. Read our service agreement and user terms."
+        canonicalPath="/terms-conditions"
+        keywords="policy tracker terms, insurance software terms and conditions"
+      />
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-4">
       <div className="max-w-4xl mx-auto">
         <div className="mb-6">
@@ -78,6 +85,7 @@ const TermsConditions = () => {
         </Card>
       </div>
     </div>
+    </>
   );
 };
 

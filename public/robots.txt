@@ -4,6 +4,8 @@
 # Google crawlers
 User-agent: Googlebot
 Allow: /
+Allow: /features
+Allow: /pricing
 Allow: /demo
 Allow: /auth
 Allow: /enquiry
@@ -30,6 +32,8 @@ Allow: /assets/
 
 User-agent: Bingbot
 Allow: /
+Allow: /features
+Allow: /pricing
 Allow: /demo
 Allow: /auth
 Allow: /enquiry
@@ -86,6 +90,8 @@ Allow: /
 # All other bots
 User-agent: *
 Allow: /
+Allow: /features
+Allow: /pricing
 Allow: /demo
 Allow: /auth
 Allow: /enquiry
