@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import SEOHead from "@/components/SEOHead";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -138,6 +139,13 @@ const PricingPage = () => {
   ];
 
   return (
+    <>
+      <SEOHead
+        title="Pricing - Agent Policy Tracker | Affordable Plans for Insurance Agents"
+        description="Simple, transparent pricing for Policy Tracker.in. Free plan with 50 policies, Premium at ₹199/month with unlimited policies, WhatsApp reminders & PDF auto-fill. Best value for insurance agents."
+        canonicalPath="/pricing"
+        keywords="agent policy tracker pricing, insurance software pricing, policy tracker cost, affordable insurance agent software, premium plan India"
+      />
     <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-white to-teal-50">
       {/* Structured Data for Pricing */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{
@@ -489,6 +497,7 @@ const PricingPage = () => {
 
       <WhatsAppFloatingButton />
     </div>
+    </>
   );
 };
 

@@ -1,11 +1,18 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Mail, Phone, MapPin, Clock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import SEOHead from "@/components/SEOHead";
 
 const Contact = () => {
   return (
+    <>
+      <SEOHead
+        title="Contact Us - Policy Tracker.in | Support & Help"
+        description="Contact Policy Tracker.in support team. Get help with insurance policy management software. Email, phone, and WhatsApp support available for Indian insurance agents."
+        canonicalPath="/contact"
+        keywords="policy tracker contact, insurance software support, help center India"
+      />
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-4">
       <div className="max-w-4xl mx-auto">
         <div className="mb-6">
@@ -103,6 +110,7 @@ const Contact = () => {
         </Card>
       </div>
     </div>
+    </>
   );
 };
 

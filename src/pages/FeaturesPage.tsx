@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import SEOHead from "@/components/SEOHead";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   FileText,
@@ -168,6 +169,13 @@ const FeaturesPage = () => {
   ];
 
   return (
+    <>
+      <SEOHead
+        title="Features - Agent Policy Tracker | Insurance Management Software India"
+        description="Discover all features of Policy Tracker.in - policy management, WhatsApp reminders, renewal alerts, PDF auto-fill, client CRM, Excel reports. Best agent policy tracker for Indian insurance agents."
+        canonicalPath="/features"
+        keywords="agent policy tracker features, insurance policy management, WhatsApp reminders, policy renewal alerts, insurance agent CRM, PDF auto-fill, Excel reports"
+      />
     <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-white to-teal-50">
       {/* Navigation */}
       <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50">
@@ -411,6 +419,7 @@ const FeaturesPage = () => {
 
       <WhatsAppFloatingButton />
     </div>
+    </>
   );
 };
 

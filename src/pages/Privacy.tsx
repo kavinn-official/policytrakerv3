@@ -1,11 +1,18 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import SEOHead from "@/components/SEOHead";
 
 const Privacy = () => {
   return (
+    <>
+      <SEOHead
+        title="Privacy Policy - Policy Tracker.in"
+        description="Privacy policy for Policy Tracker.in. Learn how we protect your insurance policy data and personal information. GDPR compliant."
+        canonicalPath="/privacy"
+        keywords="policy tracker privacy, insurance data privacy, data protection"
+      />
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-4">
       <div className="max-w-4xl mx-auto">
         <div className="mb-6">
@@ -75,6 +82,7 @@ const Privacy = () => {
         </Card>
       </div>
     </div>
+    </>
   );
 };
 
