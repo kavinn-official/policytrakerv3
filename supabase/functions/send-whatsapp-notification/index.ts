@@ -3,10 +3,21 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const ADMIN_WHATSAPP = "916381615829";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+// Allowed origins for CORS - restrict to production domains
+const ALLOWED_ORIGINS = [
+  'https://policytracker.in',
+  'https://www.policytracker.in',
+  'http://localhost:5173',
+  'http://localhost:8080',
+];
+
+function getCorsHeaders(origin: string | null): Record<string, string> {
+  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  };
+}
 
 interface NotificationPayload {
   type: "signup" | "enquiry";
@@ -18,6 +29,9 @@ interface NotificationPayload {
 }
 
 serve(async (req: Request) => {
+  const origin = req.headers.get('origin');
+  const corsHeaders = getCorsHeaders(origin);
+
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
