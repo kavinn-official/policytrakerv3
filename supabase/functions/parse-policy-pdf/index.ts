@@ -137,19 +137,53 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    // Detect the MIME type from base64 signature
+    // Validate base64 format before processing
+    const base64Pattern = /^[A-Za-z0-9+/=]+$/;
+    // Clean potential whitespace and check format (check first 1000 chars for performance)
+    const base64Sample = pdfBase64.substring(0, 1000).replace(/\s/g, '');
+    if (!base64Pattern.test(base64Sample)) {
+      console.log("Invalid base64 format detected");
+      return new Response(
+        JSON.stringify({ error: "Invalid file format. Please upload a valid document." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Detect the MIME type from base64 magic bytes (file signature)
+    // These are well-known file signatures encoded in base64
     let mimeType = "application/pdf"; // default
+    let detectedType = "unknown";
+    
     if (pdfBase64.startsWith('JVBERi0')) {
+      // PDF magic bytes: %PDF-
       mimeType = "application/pdf";
+      detectedType = "PDF";
     } else if (pdfBase64.startsWith('/9j/')) {
+      // JPEG magic bytes: FFD8FF
       mimeType = "image/jpeg";
+      detectedType = "JPEG";
     } else if (pdfBase64.startsWith('iVBORw0KGgo')) {
+      // PNG magic bytes: 89504E47
       mimeType = "image/png";
+      detectedType = "PNG";
     } else if (pdfBase64.startsWith('UklGR')) {
+      // WebP magic bytes: RIFF....WEBP
       mimeType = "image/webp";
+      detectedType = "WebP";
+    } else if (pdfBase64.startsWith('R0lGODlh') || pdfBase64.startsWith('R0lGODdh')) {
+      // GIF magic bytes: GIF89a or GIF87a
+      mimeType = "image/gif";
+      detectedType = "GIF";
+    } else if (pdfBase64.startsWith('Qk')) {
+      // BMP magic bytes: BM
+      mimeType = "image/bmp";
+      detectedType = "BMP";
+    } else {
+      // If we can't detect the type, log a warning but continue with PDF default
+      console.log("Unknown file signature, defaulting to PDF. First 20 chars:", pdfBase64.substring(0, 20));
     }
     
-    console.log("Document type detection - mimeType:", mimeType, "Base64 length:", pdfBase64.length);
+    console.log(`Document type detection - detected: ${detectedType}, mimeType: ${mimeType}, Base64 length: ${pdfBase64.length}`);
 
     // Build the content structure using image_url format (works for PDFs and images)
     const userContent: any[] = [
