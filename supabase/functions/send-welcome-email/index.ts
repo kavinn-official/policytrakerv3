@@ -5,6 +5,17 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// HTML escape function to prevent XSS
+function escapeHtml(unsafe: string | null | undefined): string {
+  if (!unsafe) return '';
+  return unsafe
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 interface WelcomeEmailRequest {
   name: string;
   email: string;
@@ -36,8 +47,8 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const userName = name || "Valued User";
-    console.log(`Sending welcome email to: ${email} (${userName})`);
+    const userName = escapeHtml(name) || "Valued User";
+    console.log(`Sending welcome email to user`);
 
     const emailResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -204,7 +215,7 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error("Error sending welcome email:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: "An error occurred while sending the welcome email. Please try again." }),
       { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   }
