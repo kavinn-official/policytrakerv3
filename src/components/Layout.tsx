@@ -3,7 +3,7 @@ import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Button } from '@/components/ui/button';
-import { User, LogOut, Menu, Home, FileText, AlertTriangle, CreditCard, Plus, UserCircle, Settings } from 'lucide-react';
+import { User, LogOut, Menu, Home, FileText, AlertTriangle, CreditCard, Plus, UserCircle, Settings, BarChart3 } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -36,6 +36,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { name: 'Dashboard', path: '/dashboard', icon: Home },
     { name: 'Policies', path: '/policies', icon: FileText },
     { name: 'Due Policies', path: '/due-policies', icon: AlertTriangle },
+    { name: 'Reports', path: '/reports', icon: BarChart3 },
     { name: 'Subscription', path: '/subscription', icon: CreditCard },
   ];
 
