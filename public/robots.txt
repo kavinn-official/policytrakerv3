@@ -4,15 +4,6 @@
 # Google crawlers
 User-agent: Googlebot
 Allow: /
-Allow: /features
-Allow: /pricing
-Allow: /demo
-Allow: /auth
-Allow: /enquiry
-Allow: /contact
-Allow: /terms-conditions
-Allow: /privacy
-Allow: /cancellation-refunds
 Disallow: /dashboard
 Disallow: /policies
 Disallow: /due-policies
@@ -28,16 +19,11 @@ Crawl-delay: 1
 
 User-agent: Googlebot-Image
 Allow: /logo.png
+Allow: /og-image.png
 Allow: /assets/
 
 User-agent: Bingbot
 Allow: /
-Allow: /features
-Allow: /pricing
-Allow: /demo
-Allow: /auth
-Allow: /enquiry
-Allow: /contact
 Disallow: /dashboard
 Disallow: /policies
 Disallow: /due-policies
@@ -57,29 +43,24 @@ Allow: /
 # AI Search Crawlers
 User-agent: GPTBot
 Allow: /
-Allow: /demo
 Disallow: /dashboard
 Disallow: /policies
 
 User-agent: ChatGPT-User
 Allow: /
-Allow: /demo
 Disallow: /dashboard
 Disallow: /policies
 
 User-agent: Claude-Web
 Allow: /
-Allow: /demo
 Disallow: /dashboard
 Disallow: /policies
 
 User-agent: Anthropic-AI
 Allow: /
-Allow: /demo
 
 User-agent: PerplexityBot
 Allow: /
-Allow: /demo
 
 User-agent: Google-Extended
 Allow: /

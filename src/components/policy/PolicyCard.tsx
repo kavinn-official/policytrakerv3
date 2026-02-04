@@ -21,8 +21,8 @@ const getMissingFields = (policy: Policy): string[] => {
   if (!policy.policy_number?.trim()) missing.push("Policy Number");
   if (!policy.client_name?.trim()) missing.push("Client Name");
   if (!policy.vehicle_number?.trim()) missing.push("Vehicle Number");
-  if (!policy.policy_active_date) missing.push("Active Date");
-  if (!policy.policy_expiry_date) missing.push("Expiry Date");
+  if (!policy.policy_active_date) missing.push("Risk Start Date");
+  if (!policy.policy_expiry_date) missing.push("Risk End Date");
   return missing;
 };
 

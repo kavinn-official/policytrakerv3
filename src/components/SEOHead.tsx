@@ -28,8 +28,9 @@ const SEOHead = ({
 }: SEOHeadProps) => {
   const location = useLocation();
   const baseUrl = 'https://policytracker.in';
-  const currentPath = canonicalPath || location.pathname;
-  const canonicalUrl = `${baseUrl}${currentPath === '/' ? '' : currentPath}`;
+  // Clean the path to remove trailing slashes and query params for canonical
+  const cleanPath = (canonicalPath || location.pathname).replace(/\/$/, '').split('?')[0].split('#')[0];
+  const canonicalUrl = cleanPath === '' || cleanPath === '/' ? baseUrl : `${baseUrl}${cleanPath}`;
 
   useEffect(() => {
     // Update document title

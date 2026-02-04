@@ -106,15 +106,15 @@ const PolicyList = () => {
     }
   };
 
-  // Filter policies based on search term, date range, and insurance type
+  // Filter policies based on search term, date range (by policy start date), and insurance type
   const filteredPolicies = filterPolicies(policies, searchTerm).filter((policy) => {
-    // Date filter
-    const createdAt = new Date(policy.created_at);
-    if (dateFromFilter && createdAt < dateFromFilter) return false;
+    // Date filter - now based on policy_active_date (Risk Start Date) instead of created_at
+    const policyStartDate = new Date(policy.policy_active_date);
+    if (dateFromFilter && policyStartDate < dateFromFilter) return false;
     if (dateToFilter) {
       const endOfDay = new Date(dateToFilter);
       endOfDay.setHours(23, 59, 59, 999);
-      if (createdAt > endOfDay) return false;
+      if (policyStartDate > endOfDay) return false;
     }
     // Insurance type filter
     if (insuranceTypeFilter !== 'All') {
@@ -462,8 +462,8 @@ const PolicyList = () => {
                         <th className="text-left p-4 font-semibold text-gray-900">Policy Number</th>
                         <th className="text-left p-4 font-semibold text-gray-900">Client Name</th>
                         <th className="text-left p-4 font-semibold text-gray-900">Vehicle</th>
-                        <th className="text-left p-4 font-semibold text-gray-900">Active Date</th>
-                        <th className="text-left p-4 font-semibold text-gray-900">Expiry Date</th>
+                        <th className="text-left p-4 font-semibold text-gray-900">Risk Start Date</th>
+                        <th className="text-left p-4 font-semibold text-gray-900">Risk End Date</th>
                         <th className="text-left p-4 font-semibold text-gray-900">Status</th>
                         <th className="text-left p-4 font-semibold text-gray-900">Actions</th>
                       </tr>

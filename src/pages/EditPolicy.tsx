@@ -941,7 +941,7 @@ const EditPolicy = () => {
 
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">
-                    Policy Active Date <span className="text-red-500">*</span>
+                    Risk Start Date (PSD) <span className="text-red-500">*</span>
                   </Label>
                   <MaterialDatePicker
                     date={policyActiveDate}
@@ -951,7 +951,7 @@ const EditPolicy = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium">Policy Expiry Date</Label>
+                  <Label className="text-sm font-medium">Risk End Date (PED)</Label>
                   <Input
                     value={policyExpiryDate ? format(policyExpiryDate, "PPP") : "Auto-calculated (1 year)"}
                     disabled
