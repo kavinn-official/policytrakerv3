@@ -132,7 +132,7 @@ const PolicyViewDialog = ({ policy, open, onOpenChange }: PolicyViewDialogProps)
                     <td className="border-r border-gray-300 bg-gray-50 px-3 py-3 sm:px-4 sm:py-4 font-semibold text-gray-700 w-1/3 sm:w-1/4">
                       <div className="flex items-center gap-2">
                         <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
-                        <span className="text-xs sm:text-sm">Active Date</span>
+                        <span className="text-xs sm:text-sm">Risk Start Date (PSD)</span>
                       </div>
                     </td>
                     <td className="px-3 py-3 sm:px-4 sm:py-4">
@@ -146,7 +146,7 @@ const PolicyViewDialog = ({ policy, open, onOpenChange }: PolicyViewDialogProps)
                     <td className="border-r border-gray-300 bg-gray-50 px-3 py-3 sm:px-4 sm:py-4 font-semibold text-gray-700">
                       <div className="flex items-center gap-2">
                         <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-red-600" />
-                        <span className="text-xs sm:text-sm">Expiry Date</span>
+                        <span className="text-xs sm:text-sm">Risk End Date (PED)</span>
                       </div>
                     </td>
                     <td className="px-3 py-3 sm:px-4 sm:py-4">

@@ -1,27 +1,50 @@
 import * as XLSX from "@e965/xlsx";
 import { Policy } from "./policyUtils";
+import { normalizeCompanyName } from "./companyNormalization";
 
 export const generateSampleExcelTemplate = () => {
+  // Template matches Add New Policy page fields exactly
   const sampleData = [
     {
       'Policy Number': 'POL001',
       'Client Name': 'John Doe',
-      'Agent Name': 'AG001',
-      'Company Name': 'ABC Insurance',
-      'Vehicle Number': 'ABC123',
-      'Vehicle Make': 'Toyota',
-      'Vehicle Model': 'Camry',
-      'Active Date': '2025-01-01',
-      'Expiry Date': '2026-01-01',
-      'Status': 'Active',
+      'Contact Number': '9876543210',
+      'Insurance Type': 'Vehicle Insurance',
+      'Company Name': 'Cholamandalam',
+      'Vehicle Number': 'MH01AB1234',
+      'Vehicle Make': 'Maruti',
+      'Vehicle Model': 'Swift',
+      'Risk Start Date (PSD)': '2025-01-01',
+      'Risk End Date (PED)': '2025-12-31',
+      'Net Premium': '5000',
+      'Agent Name': 'Agent Name',
       'Reference': 'REF001',
-      'Contact Number': '1234567890'
+      'Status': 'Active'
     }
   ];
 
   const worksheet = XLSX.utils.json_to_sheet(sampleData);
+  
+  // Set column widths for better readability
+  worksheet['!cols'] = [
+    { wch: 15 }, // Policy Number
+    { wch: 20 }, // Client Name
+    { wch: 12 }, // Contact Number
+    { wch: 18 }, // Insurance Type
+    { wch: 20 }, // Company Name
+    { wch: 15 }, // Vehicle Number
+    { wch: 12 }, // Vehicle Make
+    { wch: 12 }, // Vehicle Model
+    { wch: 18 }, // Risk Start Date (PSD)
+    { wch: 18 }, // Risk End Date (PED)
+    { wch: 12 }, // Net Premium
+    { wch: 15 }, // Agent Name
+    { wch: 15 }, // Reference
+    { wch: 10 }, // Status
+  ];
+  
   const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'Sample Policies');
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Policy Template');
   
   const fileName = `policy_template_${new Date().toISOString().split('T')[0]}.xlsx`;
   XLSX.writeFile(workbook, fileName);
@@ -56,15 +79,28 @@ export const validatePolicyData = (data: any): { valid: boolean; errors: string[
   
   if (!data['Policy Number']) errors.push('Policy Number is required');
   if (!data['Client Name']) errors.push('Client Name is required');
-  if (!data['Active Date']) errors.push('Active Date is required');
-  if (!data['Expiry Date']) errors.push('Expiry Date is required');
+  
+  // Support both old and new field names for backward compatibility
+  const activeDate = data['Risk Start Date (PSD)'] || data['Active Date'] || data['Policy Active Date'];
+  const expiryDate = data['Risk End Date (PED)'] || data['Expiry Date'] || data['Policy Expiry Date'];
+  
+  if (!activeDate) errors.push('Risk Start Date (PSD) is required');
+  if (!expiryDate) errors.push('Risk End Date (PED) is required');
   
   // Validate date formats
-  if (data['Active Date'] && isNaN(Date.parse(data['Active Date']))) {
-    errors.push('Active Date must be a valid date');
+  if (activeDate && isNaN(Date.parse(activeDate))) {
+    errors.push('Risk Start Date (PSD) must be a valid date');
   }
-  if (data['Expiry Date'] && isNaN(Date.parse(data['Expiry Date']))) {
-    errors.push('Expiry Date must be a valid date');
+  if (expiryDate && isNaN(Date.parse(expiryDate))) {
+    errors.push('Risk End Date (PED) must be a valid date');
+  }
+  
+  // Validate company name (optional but normalize if present)
+  if (data['Company Name']) {
+    const companyName = String(data['Company Name']).trim();
+    if (companyName.length > 100) {
+      errors.push('Company Name is too long (max 100 characters)');
+    }
   }
   
   return {
@@ -116,19 +152,31 @@ const parseExcelDate = (value: any): string => {
 };
 
 export const convertExcelRowToPolicy = (row: any, userId: string): any => {
+  // Support both old and new field names for backward compatibility
+  const activeDate = row['Risk Start Date (PSD)'] || row['Active Date'] || row['Policy Active Date'];
+  const expiryDate = row['Risk End Date (PED)'] || row['Expiry Date'] || row['Policy Expiry Date'];
+  
+  // Normalize company name - specifically handle Cholamandalam variations
+  let companyName = row['Company Name'] || '';
+  if (companyName) {
+    companyName = normalizeCompanyName(companyName);
+  }
+  
   return {
     policy_number: row['Policy Number'] || '',
     client_name: row['Client Name'] || '',
     agent_code: row['Agent Name'] || '',
-    company_name: row['Company Name'] || '',
+    company_name: companyName,
     vehicle_number: row['Vehicle Number'] || '',
     vehicle_make: row['Vehicle Make'] || '',
     vehicle_model: row['Vehicle Model'] || '',
-    policy_active_date: parseExcelDate(row['Active Date']),
-    policy_expiry_date: parseExcelDate(row['Expiry Date']),
+    policy_active_date: parseExcelDate(activeDate),
+    policy_expiry_date: parseExcelDate(expiryDate),
     status: row['Status'] || 'Active',
     reference: row['Reference'] || '',
     contact_number: row['Contact Number'] || '',
+    net_premium: row['Net Premium'] ? parseFloat(String(row['Net Premium']).replace(/[^\d.]/g, '')) || 0 : 0,
+    insurance_type: row['Insurance Type'] || 'Vehicle Insurance',
     user_id: userId
   };
 };
