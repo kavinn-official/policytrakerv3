@@ -82,18 +82,29 @@ const MonthlyPremiumReport = () => {
     ];
 
     // Create policies sheet
-    const policiesData = policies.map((policy, index) => ({
-      "S.No": index + 1,
-      "Policy Number": policy.policy_number,
-      "Client Name": policy.client_name,
-      "Vehicle Number": policy.vehicle_number,
-      "Company": policy.company_name || "-",
-      "Agent": policy.agent_code || "-",
-      "Net Premium (₹)": policy.net_premium || 0,
-      "Active Date": format(new Date(policy.policy_active_date), "dd/MM/yyyy"),
-      "Expiry Date": format(new Date(policy.policy_expiry_date), "dd/MM/yyyy"),
-      "Added On": format(new Date(policy.created_at), "dd/MM/yyyy"),
-    }));
+    const policiesData = policies.map((policy, index) => {
+      const formatMonthDate = (dateStr: string) => {
+        const date = new Date(dateStr);
+        const day = String(date.getDate()).padStart(2, '0');
+        const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+        const month = months[date.getMonth()];
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+      };
+      
+      return {
+        "S.No": index + 1,
+        "Policy Number": policy.policy_number,
+        "Client Name": policy.client_name,
+        "Vehicle Number": policy.vehicle_number,
+        "Company": policy.company_name || "-",
+        "Agent": policy.agent_code || "-",
+        "Net Premium (₹)": policy.net_premium || 0,
+        "Risk Start Date (RSD)": formatMonthDate(policy.policy_active_date),
+        "Risk End Date (RED)": formatMonthDate(policy.policy_expiry_date),
+        "Added On": formatMonthDate(policy.created_at),
+      };
+    });
 
     // Add total row
     policiesData.push({
@@ -104,8 +115,8 @@ const MonthlyPremiumReport = () => {
       "Company": "",
       "Agent": "TOTAL",
       "Net Premium (₹)": totalPremium,
-      "Active Date": "",
-      "Expiry Date": "",
+      "Risk Start Date (RSD)": "",
+      "Risk End Date (RED)": "",
       "Added On": "",
     });
 

@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Eye, Edit, Trash2, FileText } from "lucide-react";
-import { Policy } from "@/utils/policyUtils";
+import { Policy, formatDateDDMMYYYY } from "@/utils/policyUtils";
 
 interface PolicyTableRowProps {
   policy: Policy;
@@ -36,10 +36,10 @@ const PolicyTableRow = ({ policy, daysToExpiry, statusColor, onViewPolicy, onEdi
         <div className="text-xs sm:text-sm text-gray-500">{policy.vehicle_make} {policy.vehicle_model}</div>
       </td>
       <td className="p-3 sm:p-4">
-        <div className="text-xs sm:text-sm">{new Date(policy.policy_active_date).toLocaleDateString()}</div>
+        <div className="text-xs sm:text-sm">{formatDateDDMMYYYY(policy.policy_active_date)}</div>
       </td>
       <td className="p-3 sm:p-4">
-        <div className="text-xs sm:text-sm">{new Date(policy.policy_expiry_date).toLocaleDateString()}</div>
+        <div className="text-xs sm:text-sm">{formatDateDDMMYYYY(policy.policy_expiry_date)}</div>
         {daysToExpiry <= 30 && (
           <div className="text-xs text-red-600 font-medium mt-1">
             {daysToExpiry > 0 ? `${daysToExpiry} days left` : 'Expired'}

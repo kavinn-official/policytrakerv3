@@ -12,13 +12,12 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  LineChart,
-  Line,
-  Area,
   AreaChart,
+  Area,
 } from 'recharts';
+import { useIsMobile } from "@/hooks/use-mobile";
 
-// Enhanced color palette with semantic colors
+// Modern color palette
 const COLORS = ['#3B82F6', '#EF4444', '#22C55E', '#A855F7', '#F59E0B', '#06B6D4'];
 
 interface MonthlyTrend {
@@ -41,27 +40,42 @@ interface BarChartData {
   fill: string;
 }
 
-interface ReportChartsProps {
-  monthlyTrends: MonthlyTrend[];
-  pieChartData: ChartData[];
-  barChartData: BarChartData[];
-  formatCurrency: (amount: number) => string;
-}
+// Simple stat card for displaying numbers
+const StatCard = ({ title, value, icon: Icon, color, subtitle }: { 
+  title: string; 
+  value: string | number; 
+  icon: React.ElementType; 
+  color: string;
+  subtitle?: string;
+}) => (
+  <div className={`rounded-xl p-4 ${color}`}>
+    <div className="flex items-center gap-3">
+      <div className="p-2 rounded-lg bg-white/20">
+        <Icon className="h-5 w-5 text-white" />
+      </div>
+      <div>
+        <p className="text-white/80 text-sm">{title}</p>
+        <p className="text-white text-xl font-bold">{value}</p>
+        {subtitle && <p className="text-white/60 text-xs">{subtitle}</p>}
+      </div>
+    </div>
+  </div>
+);
 
 const CustomTooltip = ({ active, payload, formatCurrency }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className="bg-background border rounded-lg p-3 shadow-lg">
-        <p className="font-semibold text-foreground">{data.name || data.month || payload[0].name}</p>
+      <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
+        <p className="font-semibold text-foreground text-sm">{data.name || data.month || payload[0].name}</p>
         {(data.value !== undefined || data.count !== undefined || data.policies !== undefined) && (
-          <p className="text-sm text-muted-foreground flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: payload[0].color || '#3B82F6' }}></span>
+          <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: payload[0].color || data.fill || '#3B82F6' }}></span>
             Policies: {data.value || data.count || data.policies || payload[0].value}
           </p>
         )}
         {data.premium !== undefined && data.premium > 0 && (
-          <p className="text-sm text-muted-foreground flex items-center gap-1">
+          <p className="text-xs text-muted-foreground flex items-center gap-1">
             <IndianRupee className="h-3 w-3" />
             Premium: {formatCurrency(data.premium)}
           </p>
@@ -72,68 +86,48 @@ const CustomTooltip = ({ active, payload, formatCurrency }: any) => {
   return null;
 };
 
-const PremiumTooltip = ({ active, payload, formatCurrency }: any) => {
-  if (active && payload && payload.length) {
-    const data = payload[0].payload;
-    return (
-      <div className="bg-background border rounded-lg p-3 shadow-lg">
-        <p className="font-semibold text-foreground">{data.month}</p>
-        <p className="text-sm text-muted-foreground flex items-center gap-1">
-          <IndianRupee className="h-3 w-3" />
-          Premium: {formatCurrency(data.premium)}
-        </p>
-        <p className="text-sm text-muted-foreground">
-          Policies: {data.policies}
-        </p>
-      </div>
-    );
-  }
-  return null;
-};
-
 export const TrendCharts = ({ monthlyTrends, formatCurrency }: { monthlyTrends: MonthlyTrend[]; formatCurrency: (amount: number) => string }) => {
-  // Check if there's any actual data to display
+  const isMobile = useIsMobile();
   const hasData = monthlyTrends.some(t => t.policies > 0 || t.premium > 0);
-  const maxPolicies = Math.max(...monthlyTrends.map(t => t.policies), 1);
-  const maxPremium = Math.max(...monthlyTrends.map(t => t.premium), 1);
+  
+  const totalPolicies = monthlyTrends.reduce((sum, t) => sum + t.policies, 0);
+  const totalPremium = monthlyTrends.reduce((sum, t) => sum + t.premium, 0);
   
   if (!hasData) {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card className="shadow-lg border-0 bg-gradient-to-br from-background to-muted/20">
+        <Card className="shadow-sm border">
           <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <TrendingUp className="h-5 w-5 text-primary" />
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <TrendingUp className="h-5 w-5 text-blue-500" />
               Policy Count Trend
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-xs sm:text-sm">
               Policy count over the selected period
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex items-center justify-center h-[280px]">
+          <CardContent className="flex items-center justify-center h-[200px] sm:h-[280px]">
             <div className="text-center">
-              <BarChart3 className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
-              <p className="text-muted-foreground">No data available for the selected period</p>
-              <p className="text-xs text-muted-foreground mt-1">Add policies to see trends</p>
+              <BarChart3 className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground/30 mx-auto mb-3" />
+              <p className="text-muted-foreground text-sm">No data available</p>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="shadow-lg border-0 bg-gradient-to-br from-background to-muted/20">
+        <Card className="shadow-sm border">
           <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <IndianRupee className="h-5 w-5 text-primary" />
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <IndianRupee className="h-5 w-5 text-green-500" />
               Premium Trend
             </CardTitle>
-            <CardDescription>
-              Premium collection over the selected period
+            <CardDescription className="text-xs sm:text-sm">
+              Premium collection over time
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex items-center justify-center h-[280px]">
+          <CardContent className="flex items-center justify-center h-[200px] sm:h-[280px]">
             <div className="text-center">
-              <IndianRupee className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
-              <p className="text-muted-foreground">No premium data available</p>
-              <p className="text-xs text-muted-foreground mt-1">Add policies with premium to see trends</p>
+              <IndianRupee className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground/30 mx-auto mb-3" />
+              <p className="text-muted-foreground text-sm">No premium data</p>
             </div>
           </CardContent>
         </Card>
@@ -142,111 +136,112 @@ export const TrendCharts = ({ monthlyTrends, formatCurrency }: { monthlyTrends: 
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      {/* Policy Count Trend - Line Chart with Area */}
-      <Card className="shadow-lg border-0 bg-gradient-to-br from-background to-blue-50/30 dark:to-blue-950/20">
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <TrendingUp className="h-5 w-5 text-blue-500" />
-            Policy Count Trend
-          </CardTitle>
-          <CardDescription>
-            Policy count comparison over time
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="px-2 sm:px-6">
-          <div className="h-[280px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={monthlyTrends} margin={{ top: 20, right: 20, left: 0, bottom: 20 }}>
-                <defs>
-                  <linearGradient id="policyGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" className="opacity-30" vertical={false} />
-                <XAxis 
-                  dataKey="month" 
-                  tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }}
-                  axisLine={{ stroke: 'hsl(var(--border))' }}
-                  tickLine={false}
-                />
-                <YAxis 
-                  tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }}
-                  axisLine={false}
-                  tickLine={false}
-                  allowDecimals={false}
-                  domain={[0, maxPolicies + Math.ceil(maxPolicies * 0.1)]}
-                />
-                <Tooltip content={<CustomTooltip formatCurrency={formatCurrency} />} />
-                <Area 
-                  type="monotone" 
-                  dataKey="policies" 
-                  stroke="#3B82F6" 
-                  strokeWidth={2.5}
-                  fill="url(#policyGradient)"
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="policies" 
-                  stroke="#3B82F6" 
-                  strokeWidth={2.5}
-                  dot={{ fill: '#3B82F6', strokeWidth: 2, r: 4, stroke: '#fff' }}
-                  activeDot={{ r: 6, strokeWidth: 2, stroke: '#fff' }}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="space-y-4">
+      {/* Summary Stats Row */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4">
+        <StatCard 
+          title="Total Policies" 
+          value={totalPolicies} 
+          icon={BarChart3} 
+          color="bg-gradient-to-br from-blue-500 to-blue-600"
+          subtitle="This period"
+        />
+        <StatCard 
+          title="Total Premium" 
+          value={formatCurrency(totalPremium)} 
+          icon={IndianRupee} 
+          color="bg-gradient-to-br from-green-500 to-green-600"
+          subtitle="This period"
+        />
+      </div>
 
-      {/* Premium Trend - Bar Chart with improved styling */}
-      <Card className="shadow-lg border-0 bg-gradient-to-br from-background to-green-50/30 dark:to-green-950/20">
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <IndianRupee className="h-5 w-5 text-green-500" />
-            Premium Trend
-          </CardTitle>
-          <CardDescription>
-            Premium collection comparison over time
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="px-2 sm:px-6">
-          <div className="h-[280px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={monthlyTrends} margin={{ top: 20, right: 20, left: 0, bottom: 20 }}>
-                <defs>
-                  <linearGradient id="premiumGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#22C55E" stopOpacity={0.9}/>
-                    <stop offset="95%" stopColor="#22C55E" stopOpacity={0.6}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" className="opacity-30" vertical={false} />
-                <XAxis 
-                  dataKey="month" 
-                  tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }}
-                  axisLine={{ stroke: 'hsl(var(--border))' }}
-                  tickLine={false}
-                />
-                <YAxis 
-                  tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }}
-                  axisLine={false}
-                  tickLine={false}
-                  tickFormatter={(value) => value > 0 ? `₹${(value / 1000).toFixed(0)}k` : '₹0'}
-                  domain={[0, maxPremium + Math.ceil(maxPremium * 0.1)]}
-                />
-                <Tooltip content={<PremiumTooltip formatCurrency={formatCurrency} />} />
-                <Bar 
-                  dataKey="premium" 
-                  fill="url(#premiumGradient)" 
-                  radius={[6, 6, 0, 0]}
-                  maxBarSize={50}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Policy Count Trend */}
+        <Card className="shadow-sm border">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <TrendingUp className="h-5 w-5 text-blue-500" />
+              Policy Trend
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-2 sm:p-4">
+            <div className="h-[180px] sm:h-[220px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={monthlyTrends} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="policyGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                  <XAxis 
+                    dataKey="month" 
+                    tick={{ fontSize: isMobile ? 10 : 11 }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis 
+                    tick={{ fontSize: 10 }}
+                    axisLine={false}
+                    tickLine={false}
+                    allowDecimals={false}
+                  />
+                  <Tooltip content={<CustomTooltip formatCurrency={formatCurrency} />} />
+                  <Area 
+                    type="monotone" 
+                    dataKey="policies" 
+                    stroke="#3B82F6" 
+                    strokeWidth={2}
+                    fill="url(#policyGradient)"
+                    dot={{ fill: '#3B82F6', strokeWidth: 0, r: 3 }}
+                    activeDot={{ r: 5, strokeWidth: 2, stroke: '#fff' }}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Premium Trend */}
+        <Card className="shadow-sm border">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <IndianRupee className="h-5 w-5 text-green-500" />
+              Premium Trend
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-2 sm:p-4">
+            <div className="h-[180px] sm:h-[220px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={monthlyTrends} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                  <XAxis 
+                    dataKey="month" 
+                    tick={{ fontSize: isMobile ? 10 : 11 }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis 
+                    tick={{ fontSize: 10 }}
+                    axisLine={false}
+                    tickLine={false}
+                    tickFormatter={(value) => value >= 1000 ? `₹${(value / 1000).toFixed(0)}k` : `₹${value}`}
+                  />
+                  <Tooltip content={<CustomTooltip formatCurrency={formatCurrency} />} />
+                  <Bar 
+                    dataKey="premium" 
+                    fill="#22C55E" 
+                    radius={[4, 4, 0, 0]}
+                    maxBarSize={40}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
@@ -256,43 +251,37 @@ export const DistributionCharts = ({ pieChartData, barChartData, formatCurrency 
   barChartData: BarChartData[];
   formatCurrency: (amount: number) => string;
 }) => {
+  const isMobile = useIsMobile();
+  
   if (pieChartData.length === 0 && barChartData.length === 0) {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card className="shadow-lg border-0 bg-gradient-to-br from-background to-muted/20">
+        <Card className="shadow-sm border">
           <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <PieChartIcon className="h-5 w-5 text-primary" />
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <PieChartIcon className="h-5 w-5 text-purple-500" />
               Policy Distribution
             </CardTitle>
-            <CardDescription>
-              Policy count by insurance type
-            </CardDescription>
           </CardHeader>
-          <CardContent className="flex items-center justify-center h-[350px]">
+          <CardContent className="flex items-center justify-center h-[200px] sm:h-[280px]">
             <div className="text-center">
-              <PieChartIcon className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
-              <p className="text-muted-foreground">No policies to display distribution</p>
-              <p className="text-xs text-muted-foreground mt-1">Add policies to see breakdown</p>
+              <PieChartIcon className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground/30 mx-auto mb-3" />
+              <p className="text-muted-foreground text-sm">No data to display</p>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="shadow-lg border-0 bg-gradient-to-br from-background to-muted/20">
+        <Card className="shadow-sm border">
           <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <BarChart3 className="h-5 w-5 text-primary" />
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <BarChart3 className="h-5 w-5 text-amber-500" />
               Policy Count by Type
             </CardTitle>
-            <CardDescription>
-              Number of policies by insurance type
-            </CardDescription>
           </CardHeader>
-          <CardContent className="flex items-center justify-center h-[350px]">
+          <CardContent className="flex items-center justify-center h-[200px] sm:h-[280px]">
             <div className="text-center">
-              <BarChart3 className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
-              <p className="text-muted-foreground">No policies to display count</p>
-              <p className="text-xs text-muted-foreground mt-1">Add policies to see breakdown</p>
+              <BarChart3 className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground/30 mx-auto mb-3" />
+              <p className="text-muted-foreground text-sm">No data to display</p>
             </div>
           </CardContent>
         </Card>
@@ -300,24 +289,21 @@ export const DistributionCharts = ({ pieChartData, barChartData, formatCurrency 
     );
   }
 
-  // Calculate total for percentage labels
   const total = pieChartData.reduce((sum, item) => sum + item.value, 0);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      {/* Pie Chart - Enhanced Donut with center label */}
-      <Card className="shadow-lg border-0 bg-gradient-to-br from-background to-purple-50/30 dark:to-purple-950/20">
+      {/* Donut Chart - Policy Distribution */}
+      <Card className="shadow-sm border">
         <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-lg">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
             <PieChartIcon className="h-5 w-5 text-purple-500" />
             Policy Distribution
           </CardTitle>
-          <CardDescription>
-            Policy count by insurance type
-          </CardDescription>
+          <CardDescription className="text-xs sm:text-sm">By insurance type</CardDescription>
         </CardHeader>
-        <CardContent className="px-2 sm:px-6">
-          <div className="h-[350px] sm:h-[380px] w-full relative">
+        <CardContent className="p-2 sm:p-4">
+          <div className="h-[220px] sm:h-[280px] w-full relative">
             {pieChartData.length > 0 ? (
               <>
                 <ResponsiveContainer width="100%" height="100%">
@@ -327,72 +313,68 @@ export const DistributionCharts = ({ pieChartData, barChartData, formatCurrency 
                       cx="50%"
                       cy="45%"
                       labelLine={false}
-                      outerRadius={100}
-                      innerRadius={55}
+                      outerRadius={isMobile ? 70 : 90}
+                      innerRadius={isMobile ? 35 : 45}
                       fill="#8884d8"
                       dataKey="value"
                       nameKey="name"
-                      paddingAngle={3}
-                      label={({ name, percent }) => percent > 0.05 ? `${(percent * 100).toFixed(0)}%` : ''}
+                      paddingAngle={2}
                     >
                       {pieChartData.map((entry, index) => (
                         <Cell 
                           key={`cell-${index}`} 
                           fill={entry.color} 
-                          strokeWidth={2}
                           stroke="#fff"
+                          strokeWidth={2}
                         />
                       ))}
                     </Pie>
                     <Tooltip content={<CustomTooltip formatCurrency={formatCurrency} />} />
                     <Legend 
-                      wrapperStyle={{ fontSize: '12px', paddingTop: '15px' }}
+                      wrapperStyle={{ fontSize: isMobile ? '10px' : '12px', paddingTop: '10px' }}
                       layout="horizontal"
                       verticalAlign="bottom"
                       align="center"
-                      formatter={(value: string) => <span className="text-foreground">{value}</span>}
                     />
                   </PieChart>
                 </ResponsiveContainer>
                 {/* Center label */}
-                <div className="absolute top-[45%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
-                  <p className="text-2xl font-bold text-foreground">{total}</p>
+                <div className="absolute top-[40%] sm:top-[42%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
+                  <p className="text-xl sm:text-2xl font-bold text-foreground">{total}</p>
                   <p className="text-xs text-muted-foreground">Total</p>
                 </div>
               </>
             ) : (
               <div className="flex items-center justify-center h-full">
-                <p className="text-muted-foreground">No data available</p>
+                <p className="text-muted-foreground text-sm">No data</p>
               </div>
             )}
           </div>
         </CardContent>
       </Card>
 
-      {/* Bar Chart - Enhanced with better styling */}
-      <Card className="shadow-lg border-0 bg-gradient-to-br from-background to-amber-50/30 dark:to-amber-950/20">
+      {/* Horizontal Bar Chart - Policy Count by Type */}
+      <Card className="shadow-sm border">
         <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-lg">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
             <BarChart3 className="h-5 w-5 text-amber-500" />
             Policy Count by Type
           </CardTitle>
-          <CardDescription>
-            Number of policies by insurance type
-          </CardDescription>
+          <CardDescription className="text-xs sm:text-sm">Number of policies</CardDescription>
         </CardHeader>
-        <CardContent className="px-2 sm:px-6">
-          <div className="h-[350px] sm:h-[380px] w-full">
+        <CardContent className="p-2 sm:p-4">
+          <div className="h-[220px] sm:h-[280px] w-full">
             {barChartData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart 
                   data={barChartData} 
-                  margin={{ top: 20, right: 20, left: 0, bottom: 30 }}
                   layout="vertical"
+                  margin={{ top: 10, right: 20, left: isMobile ? 50 : 60, bottom: 10 }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" horizontal={true} vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" horizontal vertical={false} stroke="#E5E7EB" />
                   <XAxis 
                     type="number"
-                    tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }}
+                    tick={{ fontSize: 10 }}
                     axisLine={false}
                     tickLine={false}
                     allowDecimals={false}
@@ -400,17 +382,16 @@ export const DistributionCharts = ({ pieChartData, barChartData, formatCurrency 
                   <YAxis 
                     type="category"
                     dataKey="name" 
-                    tick={{ fontSize: 12, fill: 'hsl(var(--foreground))' }}
-                    width={70}
+                    tick={{ fontSize: isMobile ? 10 : 12 }}
                     axisLine={false}
                     tickLine={false}
+                    width={isMobile ? 50 : 60}
                   />
                   <Tooltip content={<CustomTooltip formatCurrency={formatCurrency} />} />
                   <Bar 
                     dataKey="count" 
-                    name="count" 
-                    radius={[0, 6, 6, 0]}
-                    maxBarSize={35}
+                    radius={[0, 4, 4, 0]}
+                    maxBarSize={30}
                   >
                     {barChartData.map((entry, index) => (
                       <Cell key={`bar-${index}`} fill={entry.fill} />
@@ -420,7 +401,7 @@ export const DistributionCharts = ({ pieChartData, barChartData, formatCurrency 
               </ResponsiveContainer>
             ) : (
               <div className="flex items-center justify-center h-full">
-                <p className="text-muted-foreground">No data available</p>
+                <p className="text-muted-foreground text-sm">No data</p>
               </div>
             )}
           </div>

@@ -1174,7 +1174,7 @@ const AddPolicy = () => {
 
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">
-                    Risk Start Date (PSD) <span className="text-red-500">*</span>
+                    Risk Start Date (RSD) <span className="text-red-500">*</span>
                   </Label>
                   <MaterialDatePicker
                     date={policyActiveDate}
@@ -1184,7 +1184,7 @@ const AddPolicy = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium">Risk End Date (PED)</Label>
+                  <Label className="text-sm font-medium">Risk End Date (RED)</Label>
                   <Input
                     value={policyExpiryDate ? format(policyExpiryDate, "PPP") : "Auto-calculated (1 year)"}
                     disabled

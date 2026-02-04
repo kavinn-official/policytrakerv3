@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
 import * as XLSX from '@e965/xlsx';
+import { formatDateDDMMYYYY } from "@/utils/policyUtils";
 
 interface PolicyData {
   id: string;
@@ -353,7 +354,7 @@ Please contact us for renewal.`;
       'Vehicle Number': policy.vehicle_number,
       'Vehicle Make': policy.vehicle_make,
       'Vehicle Model': policy.vehicle_model,
-      'Expiry Date': new Date(policy.policy_expiry_date).toLocaleDateString(),
+      'Expiry Date': formatDateDDMMYYYY(policy.policy_expiry_date),
       'Days to Expiry': policy.daysLeft,
       'Urgency': policy.urgency,
       'Status': policy.status,
@@ -536,7 +537,7 @@ Please contact us for renewal.`;
                         </div>
                         
                         <div className="space-y-1">
-                          <p className="text-xs sm:text-sm text-gray-600">Expires: {new Date(policy.policy_expiry_date).toLocaleDateString()}</p>
+                          <p className="text-xs sm:text-sm text-gray-600">Expires: {formatDateDDMMYYYY(policy.policy_expiry_date)}</p>
                           <p className="text-xs sm:text-sm text-gray-600">Status: {policy.status}</p>
                           <div className="flex items-center">
                             <Calendar className="h-3 w-3 text-gray-400 mr-1" />
