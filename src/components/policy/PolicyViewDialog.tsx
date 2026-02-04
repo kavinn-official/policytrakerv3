@@ -1,8 +1,7 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Phone, User, Car, Building, FileText, Hash, Tag } from "lucide-react";
-import { Policy } from "@/utils/policyUtils";
+import { Policy, formatDateDDMMYYYY } from "@/utils/policyUtils";
 
 interface PolicyViewDialogProps {
   policy: Policy | null;
@@ -132,12 +131,12 @@ const PolicyViewDialog = ({ policy, open, onOpenChange }: PolicyViewDialogProps)
                     <td className="border-r border-gray-300 bg-gray-50 px-3 py-3 sm:px-4 sm:py-4 font-semibold text-gray-700 w-1/3 sm:w-1/4">
                       <div className="flex items-center gap-2">
                         <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
-                        <span className="text-xs sm:text-sm">Risk Start Date (PSD)</span>
+                        <span className="text-xs sm:text-sm">Risk Start Date (RSD)</span>
                       </div>
                     </td>
                     <td className="px-3 py-3 sm:px-4 sm:py-4">
                       <div className="flex items-center gap-2">
-                        <span className="text-gray-900 font-medium text-xs sm:text-sm">{new Date(policy.policy_active_date).toLocaleDateString()}</span>
+                        <span className="text-gray-900 font-medium text-xs sm:text-sm">{formatDateDDMMYYYY(policy.policy_active_date)}</span>
                         <div className="h-1 w-3 sm:w-4 bg-green-500 rounded-full"></div>
                       </div>
                     </td>
@@ -146,12 +145,12 @@ const PolicyViewDialog = ({ policy, open, onOpenChange }: PolicyViewDialogProps)
                     <td className="border-r border-gray-300 bg-gray-50 px-3 py-3 sm:px-4 sm:py-4 font-semibold text-gray-700">
                       <div className="flex items-center gap-2">
                         <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-red-600" />
-                        <span className="text-xs sm:text-sm">Risk End Date (PED)</span>
+                        <span className="text-xs sm:text-sm">Risk End Date (RED)</span>
                       </div>
                     </td>
                     <td className="px-3 py-3 sm:px-4 sm:py-4">
                       <div className="flex items-center gap-2">
-                        <span className="text-gray-900 font-medium text-xs sm:text-sm">{new Date(policy.policy_expiry_date).toLocaleDateString()}</span>
+                        <span className="text-gray-900 font-medium text-xs sm:text-sm">{formatDateDDMMYYYY(policy.policy_expiry_date)}</span>
                         <div className="h-1 w-3 sm:w-4 bg-red-500 rounded-full"></div>
                       </div>
                     </td>

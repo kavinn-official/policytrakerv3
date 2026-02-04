@@ -2,7 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Car, User, Eye, Edit, Building, Trash2, FileText, AlertTriangle } from "lucide-react";
-import { Policy } from "@/utils/policyUtils";
+import { Policy, formatDateDDMMYYYY } from "@/utils/policyUtils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface PolicyCardProps {
@@ -31,21 +31,21 @@ const PolicyCard = ({ policy, daysToExpiry, statusColor, onViewPolicy, onEditPol
   const hasWarning = missingFields.length > 0;
   return (
     <Card className={`shadow-sm hover:shadow-lg transition-all duration-200 ${hasWarning ? 'border-amber-400 border-2' : 'border-gray-200'}`}>
-      <CardContent className="p-6">
+      <CardContent className="p-4 sm:p-6">
         <div className="flex justify-between items-start mb-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-blue-600 text-lg">{policy.policy_number || "No Policy #"}</h3>
+          <div className="min-w-0 flex-1 mr-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="font-semibold text-blue-600 text-base sm:text-lg break-all">{policy.policy_number || "No Policy #"}</h3>
               {policy.document_url && (
                 <span title="Document attached">
-                  <FileText className="h-4 w-4 text-purple-500" />
+                  <FileText className="h-4 w-4 text-purple-500 flex-shrink-0" />
                 </span>
               )}
               {hasWarning && (
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <span className="cursor-help">
-                      <AlertTriangle className="h-4 w-4 text-amber-500" />
+                      <AlertTriangle className="h-4 w-4 text-amber-500 flex-shrink-0" />
                     </span>
                   </TooltipTrigger>
                   <TooltipContent className="max-w-xs">
@@ -57,34 +57,34 @@ const PolicyCard = ({ policy, daysToExpiry, statusColor, onViewPolicy, onEditPol
                 </Tooltip>
               )}
             </div>
-            <p className="text-sm text-gray-600">{policy.company_name}</p>
+            <p className="text-xs sm:text-sm text-gray-600 truncate">{policy.company_name}</p>
           </div>
-          <Badge className={statusColor}>{policy.status}</Badge>
+          <Badge className={`${statusColor} flex-shrink-0 text-xs`}>{policy.status}</Badge>
         </div>
         
-        <div className="space-y-3 mb-6">
-          <div className="flex items-center text-sm">
-            <User className="h-4 w-4 mr-3 text-gray-500" />
-            <span className="font-medium">{policy.client_name}</span>
+        <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
+          <div className="flex items-center text-xs sm:text-sm">
+            <User className="h-4 w-4 mr-2 sm:mr-3 text-gray-500 flex-shrink-0" />
+            <span className="font-medium truncate">{policy.client_name}</span>
           </div>
           
-          <div className="flex items-center text-sm">
-            <Building className="h-4 w-4 mr-3 text-gray-500" />
-            <span className="text-gray-600">Agent: {policy.agent_code}</span>
+          <div className="flex items-center text-xs sm:text-sm">
+            <Building className="h-4 w-4 mr-2 sm:mr-3 text-gray-500 flex-shrink-0" />
+            <span className="text-gray-600 truncate">Agent: {policy.agent_code}</span>
           </div>
           
-          <div className="flex items-center text-sm">
-            <Car className="h-4 w-4 mr-3 text-gray-500" />
-            <span>{policy.vehicle_number} - {policy.vehicle_make} {policy.vehicle_model}</span>
+          <div className="flex items-center text-xs sm:text-sm">
+            <Car className="h-4 w-4 mr-2 sm:mr-3 text-gray-500 flex-shrink-0" />
+            <span className="truncate">{policy.vehicle_number} - {policy.vehicle_make} {policy.vehicle_model}</span>
           </div>
           
-          <div className="flex items-center text-sm">
-            <Calendar className="h-4 w-4 mr-3 text-gray-500" />
-            <span>{new Date(policy.policy_active_date).toLocaleDateString()} - {new Date(policy.policy_expiry_date).toLocaleDateString()}</span>
+          <div className="flex items-center text-xs sm:text-sm">
+            <Calendar className="h-4 w-4 mr-2 sm:mr-3 text-gray-500 flex-shrink-0" />
+            <span className="truncate">{formatDateDDMMYYYY(policy.policy_active_date)} - {formatDateDDMMYYYY(policy.policy_expiry_date)}</span>
           </div>
           
           {daysToExpiry <= 30 && (
-            <div className="text-sm text-red-600 font-medium bg-red-50 px-3 py-2 rounded-lg">
+            <div className="text-xs sm:text-sm text-red-600 font-medium bg-red-50 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg">
               {daysToExpiry > 0 ? `${daysToExpiry} days to expiry` : 'Expired'}
             </div>
           )}

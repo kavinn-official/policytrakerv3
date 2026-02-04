@@ -14,8 +14,8 @@ export const generateSampleExcelTemplate = () => {
       'Vehicle Number': 'MH01AB1234',
       'Vehicle Make': 'Maruti',
       'Vehicle Model': 'Swift',
-      'Risk Start Date (PSD)': '2025-01-01',
-      'Risk End Date (PED)': '2025-12-31',
+      'Risk Start Date (RSD)': '2025-01-01',
+      'Risk End Date (RED)': '2025-12-31',
       'Net Premium': '5000',
       'Agent Name': 'Agent Name',
       'Reference': 'REF001',
@@ -35,8 +35,8 @@ export const generateSampleExcelTemplate = () => {
     { wch: 15 }, // Vehicle Number
     { wch: 12 }, // Vehicle Make
     { wch: 12 }, // Vehicle Model
-    { wch: 18 }, // Risk Start Date (PSD)
-    { wch: 18 }, // Risk End Date (PED)
+    { wch: 18 }, // Risk Start Date (RSD)
+    { wch: 18 }, // Risk End Date (RED)
     { wch: 12 }, // Net Premium
     { wch: 15 }, // Agent Name
     { wch: 15 }, // Reference
@@ -81,18 +81,18 @@ export const validatePolicyData = (data: any): { valid: boolean; errors: string[
   if (!data['Client Name']) errors.push('Client Name is required');
   
   // Support both old and new field names for backward compatibility
-  const activeDate = data['Risk Start Date (PSD)'] || data['Active Date'] || data['Policy Active Date'];
-  const expiryDate = data['Risk End Date (PED)'] || data['Expiry Date'] || data['Policy Expiry Date'];
+  const activeDate = data['Risk Start Date (RSD)'] || data['Risk Start Date (PSD)'] || data['Active Date'] || data['Policy Active Date'];
+  const expiryDate = data['Risk End Date (RED)'] || data['Risk End Date (PED)'] || data['Expiry Date'] || data['Policy Expiry Date'];
   
-  if (!activeDate) errors.push('Risk Start Date (PSD) is required');
-  if (!expiryDate) errors.push('Risk End Date (PED) is required');
+  if (!activeDate) errors.push('Risk Start Date (RSD) is required');
+  if (!expiryDate) errors.push('Risk End Date (RED) is required');
   
   // Validate date formats
   if (activeDate && isNaN(Date.parse(activeDate))) {
-    errors.push('Risk Start Date (PSD) must be a valid date');
+    errors.push('Risk Start Date (RSD) must be a valid date');
   }
   if (expiryDate && isNaN(Date.parse(expiryDate))) {
-    errors.push('Risk End Date (PED) must be a valid date');
+    errors.push('Risk End Date (RED) must be a valid date');
   }
   
   // Validate company name (optional but normalize if present)
@@ -153,8 +153,8 @@ const parseExcelDate = (value: any): string => {
 
 export const convertExcelRowToPolicy = (row: any, userId: string): any => {
   // Support both old and new field names for backward compatibility
-  const activeDate = row['Risk Start Date (PSD)'] || row['Active Date'] || row['Policy Active Date'];
-  const expiryDate = row['Risk End Date (PED)'] || row['Expiry Date'] || row['Policy Expiry Date'];
+  const activeDate = row['Risk Start Date (RSD)'] || row['Risk Start Date (PSD)'] || row['Active Date'] || row['Policy Active Date'];
+  const expiryDate = row['Risk End Date (RED)'] || row['Risk End Date (PED)'] || row['Expiry Date'] || row['Policy Expiry Date'];
   
   // Normalize company name - specifically handle Cholamandalam variations
   let companyName = row['Company Name'] || '';

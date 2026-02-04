@@ -47,8 +47,10 @@ export const filterPolicies = (policies: Policy[], searchTerm: string) => {
   );
 };
 
+const MONTH_NAMES = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+
 /**
- * Formats a date string to DD/MM/YYYY format consistently across all devices
+ * Formats a date string to DD/MMM/YYYY format (e.g., 01/JAN/2026) consistently across all devices
  */
 export const formatDateDDMMYYYY = (dateString: string): string => {
   if (!dateString) return '';
@@ -56,10 +58,23 @@ export const formatDateDDMMYYYY = (dateString: string): string => {
   if (isNaN(date.getTime())) return '';
   
   const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const monthName = MONTH_NAMES[date.getMonth()];
   const year = date.getFullYear();
   
-  return `${day}/${month}/${year}`;
+  return `${day}/${monthName}/${year}`;
+};
+
+/**
+ * Formats a date to DD/MMM/YYYY format from a Date object
+ */
+export const formatDateFromDate = (date: Date | null | undefined): string => {
+  if (!date || isNaN(date.getTime())) return '';
+  
+  const day = String(date.getDate()).padStart(2, '0');
+  const monthName = MONTH_NAMES[date.getMonth()];
+  const year = date.getFullYear();
+  
+  return `${day}/${monthName}/${year}`;
 };
 
 export const downloadPoliciesAsExcel = (policies: Policy[], filename: string) => {
@@ -75,8 +90,8 @@ export const downloadPoliciesAsExcel = (policies: Policy[], filename: string) =>
     'Vehicle Number': policy.vehicle_number,
     'Vehicle Make': policy.vehicle_make,
     'Vehicle Model': policy.vehicle_model,
-    'Risk Start Date (PSD)': formatDateDDMMYYYY(policy.policy_active_date),
-    'Risk End Date (PED)': formatDateDDMMYYYY(policy.policy_expiry_date),
+    'Risk Start Date (RSD)': formatDateDDMMYYYY(policy.policy_active_date),
+    'Risk End Date (RED)': formatDateDDMMYYYY(policy.policy_expiry_date),
     'Status': policy.status,
     'Reference': policy.reference,
     'Contact Number': policy.contact_number || '',

@@ -419,8 +419,8 @@ const ReportsPage = () => {
       'Insurance Type': p.insurance_type || 'Vehicle Insurance',
       'Company': p.company_name || '',
       'Vehicle Number': p.vehicle_number || '',
-      'Risk Start Date (PSD)': formatDateDDMMYYYY(p.policy_active_date),
-      'Risk End Date (PED)': formatDateDDMMYYYY(p.policy_expiry_date),
+      'Risk Start Date (RSD)': formatDateDDMMYYYY(p.policy_active_date),
+      'Risk End Date (RED)': formatDateDDMMYYYY(p.policy_expiry_date),
       'Net Premium': p.net_premium || 0,
       'Status': p.status,
       'Contact': p.contact_number || '',
@@ -447,7 +447,7 @@ const ReportsPage = () => {
       return;
     }
 
-    const headers = ['S.No', 'Policy Number', 'Client Name', 'Insurance Type', 'Company', 'Vehicle Number', 'Risk Start Date (PSD)', 'Risk End Date (PED)', 'Net Premium', 'Status', 'Contact'];
+    const headers = ['S.No', 'Policy Number', 'Client Name', 'Insurance Type', 'Company', 'Vehicle Number', 'Risk Start Date (RSD)', 'Risk End Date (RED)', 'Net Premium', 'Status', 'Contact'];
     const rows = displayStats.policies.map((p, index) => [
       index + 1,
       p.policy_number,
