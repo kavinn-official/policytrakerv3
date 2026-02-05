@@ -117,6 +117,18 @@
     </image:image>
   </url>
   
+  <!-- Premium Calculator - SEO Tool Page -->
+  <url>
+    <loc>https://policytracker.in/calculator</loc>
+    <lastmod>2026-02-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://policytracker.in/og-image.png</image:loc>
+      <image:title>Insurance Premium Calculator - Motor, Health, Life Insurance</image:title>
+    </image:image>
+  </url>
+  
   <!-- Blog Articles -->
   <url>
     <loc>https://policytracker.in/blog/motor-insurance-renewal-tips</loc>
@@ -135,6 +147,41 @@
   <url>
     <loc>https://policytracker.in/blog/vehicle-insurance-claim-process</loc>
     <lastmod>2026-01-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://policytracker.in/blog/health-insurance-claim-tips</loc>
+    <lastmod>2026-02-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://policytracker.in/blog/life-insurance-selling-strategies</loc>
+    <lastmod>2026-02-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://policytracker.in/blog/policy-document-management</loc>
+    <lastmod>2026-01-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://policytracker.in/blog/family-floater-health-insurance</loc>
+    <lastmod>2026-01-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://policytracker.in/blog/term-vs-whole-life-insurance</loc>
+    <lastmod>2026-01-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>

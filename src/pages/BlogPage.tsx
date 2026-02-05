@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Calendar, User, Clock, BookOpen, Car, Shield, Heart, FileText } from "lucide-react";
+import { ArrowRight, Calendar, User, Clock, BookOpen, Car, Shield, Heart, FileText, Briefcase, FolderOpen } from "lucide-react";
 import SEOHead from "@/components/SEOHead";
 
 interface BlogPost {
@@ -83,10 +83,76 @@ const blogPosts: BlogPost[] = [
     date: "2025-01-10",
     author: "Policy Tracker Team",
     icon: <Car className="h-5 w-5" />
+  },
+  {
+    id: "7",
+    slug: "health-insurance-claim-tips",
+    title: "Health Insurance Claim Process: Complete Guide for Agents",
+    excerpt: "Help your clients file health insurance claims efficiently. Learn about cashless hospitalization, reimbursement claims, and common rejection reasons.",
+    category: "Health Insurance",
+    readTime: "8 min read",
+    date: "2025-02-03",
+    author: "Policy Tracker Team",
+    icon: <Heart className="h-5 w-5" />
+  },
+  {
+    id: "8",
+    slug: "life-insurance-selling-strategies",
+    title: "Life Insurance Selling Strategies: Convert More Leads",
+    excerpt: "Proven techniques for selling term and whole life insurance. Learn how to identify client needs, overcome objections, and close more deals.",
+    category: "Life Insurance",
+    readTime: "7 min read",
+    date: "2025-02-02",
+    author: "Policy Tracker Team",
+    icon: <Briefcase className="h-5 w-5" />
+  },
+  {
+    id: "9",
+    slug: "policy-document-management",
+    title: "Policy Document Management Best Practices for Agents",
+    excerpt: "Organize and manage insurance policy documents efficiently. Learn digital storage tips, naming conventions, and quick retrieval techniques.",
+    category: "Productivity",
+    readTime: "5 min read",
+    date: "2025-01-30",
+    author: "Policy Tracker Team",
+    icon: <FolderOpen className="h-5 w-5" />
+  },
+  {
+    id: "10",
+    slug: "family-floater-health-insurance",
+    title: "Family Floater vs Individual Health Insurance: Which to Recommend?",
+    excerpt: "Understand the pros and cons of family floater policies. Guide your clients to choose the right health insurance plan for their family.",
+    category: "Health Insurance",
+    readTime: "6 min read",
+    date: "2025-01-22",
+    author: "Policy Tracker Team",
+    icon: <Heart className="h-5 w-5" />
+  },
+  {
+    id: "11",
+    slug: "term-vs-whole-life-insurance",
+    title: "Term vs Whole Life Insurance: Complete Comparison Guide",
+    excerpt: "Help clients choose between term and whole life insurance. Understand coverage, premiums, benefits, and which suits different life stages.",
+    category: "Life Insurance",
+    readTime: "7 min read",
+    date: "2025-01-18",
+    author: "Policy Tracker Team",
+    icon: <Briefcase className="h-5 w-5" />
+  },
+  {
+    id: "12",
+    slug: "critical-illness-insurance-guide",
+    title: "Critical Illness Insurance: What Every Agent Should Know",
+    excerpt: "Comprehensive guide to selling critical illness riders. Learn covered diseases, claim process, and how to explain benefits to clients.",
+    category: "Health Insurance",
+    readTime: "6 min read",
+    date: "2025-01-12",
+    author: "Policy Tracker Team",
+    icon: <Shield className="h-5 w-5" />
   }
 ];
 
-const categories = ["All", "Motor Insurance", "Health Insurance", "Sales Tips", "Productivity"];
+const categories = ["All", "Motor Insurance", "Health Insurance", "Life Insurance", "Sales Tips", "Productivity"];
 
 const BlogPage = () => {
   return (

@@ -235,6 +235,9 @@ const LandingPage = () => {
               <Link to="/blog" className="text-gray-600 hover:text-gray-900 font-medium text-sm transition-colors">
                 Blog
               </Link>
+              <Link to="/calculator" className="text-gray-600 hover:text-gray-900 font-medium text-sm transition-colors">
+                Calculator
+              </Link>
               <Link to="/demo" className="text-gray-600 hover:text-gray-900 font-medium text-sm transition-colors">
                 Demo
               </Link>
@@ -295,6 +298,13 @@ const LandingPage = () => {
                           className="flex items-center px-3 py-3 rounded-lg text-gray-700 hover:bg-gray-100 font-medium"
                         >
                           Blog
+                        </Link>
+                        <Link 
+                          to="/calculator" 
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="flex items-center px-3 py-3 rounded-lg text-gray-700 hover:bg-gray-100 font-medium"
+                        >
+                          Calculator
                         </Link>
                         <Link 
                           to="/demo" 
