@@ -5,26 +5,41 @@
 
 // Mapping of variations to canonical company names
 const COMPANY_MAPPINGS: Record<string, string[]> = {
-  'Cholamandalam': ['CHOLA', 'CHOLA MS', 'CHOLA MS GENERAL INSURANCE', 'CHOLAMANDALAM', 'CHOLAMANDALAM MS', 'CHOLAMANDALAM GENERAL INSURANCE', 'CHOLAMANDALAM MS GENERAL INSURANCE COMPANY LTD', 'CHOLAMANDALAM MS GENERAL INSURANCE COMPANY LTD.', 'CHOLAMANDALAM MS GENERAL INSURANCE CO LTD'],
-  'BAJAJ ALLIANZ': ['BAJAJ', 'BAJAJ ALLIANZ GENERAL INSURANCE', 'BAJAJ ALLIANZ GIC'],
-  'HDFC ERGO': ['HDFC', 'HDFC ERGO GENERAL INSURANCE'],
-  'ICICI LOMBARD': ['ICICI', 'ICICI LOMBARD GENERAL INSURANCE', 'ICICI LOMBARD GIC'],
-  'NEW INDIA ASSURANCE': ['NEW INDIA', 'NIA', 'NEW INDIA ASSURANCE CO'],
-  'ORIENTAL INSURANCE': ['ORIENTAL', 'OIC', 'ORIENTAL INSURANCE CO'],
-  'UNITED INDIA': ['UII', 'UNITED INDIA INSURANCE', 'UNITED INDIA INSURANCE CO'],
-  'NATIONAL INSURANCE': ['NIC', 'NATIONAL', 'NATIONAL INSURANCE CO'],
-  'TATA AIG': ['TATA', 'TATA AIG GENERAL INSURANCE'],
-  'RELIANCE GENERAL': ['RELIANCE', 'RELIANCE GENERAL INSURANCE'],
-  'ROYAL SUNDARAM': ['ROYAL', 'ROYAL SUNDARAM GENERAL INSURANCE'],
-  'SBI GENERAL': ['SBI', 'SBI GENERAL INSURANCE'],
-  'IFFCO TOKIO': ['IFFCO', 'IFFCO TOKIO GENERAL INSURANCE'],
-  'FUTURE GENERALI': ['FUTURE', 'FUTURE GENERALI INDIA INSURANCE'],
-  'DIGIT INSURANCE': ['DIGIT', 'GO DIGIT', 'DIGIT GENERAL INSURANCE'],
-  'ACKO': ['ACKO GENERAL INSURANCE'],
-  'KOTAK MAHINDRA': ['KOTAK', 'KOTAK GENERAL INSURANCE'],
-  'LIBERTY GENERAL': ['LIBERTY', 'LIBERTY VIDEOCON'],
-  'MAGMA HDI': ['MAGMA', 'HDI GLOBAL'],
-  'SHRIRAM GENERAL': ['SHRIRAM', 'SHRIRAM GENERAL INSURANCE'],
+  'Cholamandalam': [
+    'CHOLA', 'CHOLA MS', 'CHOLA MS GENERAL INSURANCE', 
+    'CHOLAMANDALAM', 'CHOLAMANDALAM MS', 
+    'CHOLAMANDALAM GENERAL INSURANCE', 
+    'CHOLAMANDALAM MS GENERAL INSURANCE COMPANY LTD', 
+    'CHOLAMANDALAM MS GENERAL INSURANCE COMPANY LTD.',
+    'CHOLAMANDALAM MS GENERAL INSURANCE CO LTD'
+  ],
+  'National': [
+    'NATIONAL', 'NATIONAL INS', 'NATIONAL INSURANCE', 
+    'NATIONAL INSURANCE COMPANY', 'NATIONAL INSURANCE COMPANY LTD',
+    'NATIONAL INSURANCE COMPANY LTD.', 'NIC', 'NATIONAL INSURANCE CO'
+  ],
+  'Iffco Tokio': [
+    'IFFCO', 'IFFCO TOKIO', 'IFFCO TOKIO GENERAL INSURANCE',
+    'IFFCO TOKIO GENERAL', 'IFFCO TOKIO GENERAL INSURANCE COMPANY',
+    'IFFCO TOKIO GIC'
+  ],
+  'Bajaj Allianz': ['BAJAJ', 'BAJAJ ALLIANZ', 'BAJAJ ALLIANZ GENERAL INSURANCE', 'BAJAJ ALLIANZ GIC'],
+  'HDFC Ergo': ['HDFC', 'HDFC ERGO', 'HDFC ERGO GENERAL INSURANCE'],
+  'ICICI Lombard': ['ICICI', 'ICICI LOMBARD', 'ICICI LOMBARD GENERAL INSURANCE', 'ICICI LOMBARD GIC'],
+  'New India Assurance': ['NEW INDIA', 'NIA', 'NEW INDIA ASSURANCE', 'NEW INDIA ASSURANCE CO'],
+  'Oriental Insurance': ['ORIENTAL', 'OIC', 'ORIENTAL INSURANCE', 'ORIENTAL INSURANCE CO'],
+  'United India': ['UII', 'UNITED INDIA', 'UNITED INDIA INSURANCE', 'UNITED INDIA INSURANCE CO'],
+  'Tata AIG': ['TATA', 'TATA AIG', 'TATA AIG GENERAL INSURANCE'],
+  'Reliance General': ['RELIANCE', 'RELIANCE GENERAL', 'RELIANCE GENERAL INSURANCE'],
+  'Royal Sundaram': ['ROYAL', 'ROYAL SUNDARAM', 'ROYAL SUNDARAM GENERAL INSURANCE'],
+  'SBI General': ['SBI', 'SBI GENERAL', 'SBI GENERAL INSURANCE'],
+  'Future Generali': ['FUTURE', 'FUTURE GENERALI', 'FUTURE GENERALI INDIA INSURANCE'],
+  'Digit Insurance': ['DIGIT', 'GO DIGIT', 'DIGIT GENERAL INSURANCE'],
+  'Acko': ['ACKO', 'ACKO GENERAL INSURANCE'],
+  'Kotak Mahindra': ['KOTAK', 'KOTAK GENERAL INSURANCE'],
+  'Liberty General': ['LIBERTY', 'LIBERTY VIDEOCON', 'LIBERTY GENERAL'],
+  'Magma HDI': ['MAGMA', 'HDI GLOBAL', 'MAGMA HDI'],
+  'Shriram General': ['SHRIRAM', 'SHRIRAM GENERAL', 'SHRIRAM GENERAL INSURANCE'],
 };
 
 /**
@@ -33,15 +48,15 @@ const COMPANY_MAPPINGS: Record<string, string[]> = {
  * @returns Normalized company name
  */
 export const normalizeCompanyName = (companyName: string | null | undefined): string => {
-  if (!companyName) return 'UNKNOWN';
+  if (!companyName) return 'Unknown';
   
   // Normalize: uppercase, trim, collapse whitespace
   const normalized = companyName.trim().toUpperCase().replace(/\s+/g, ' ');
   
   // Check each canonical name and its variations
   for (const [canonical, variations] of Object.entries(COMPANY_MAPPINGS)) {
-    // Check if the normalized name matches the canonical name exactly
-    if (normalized === canonical) {
+    // Check if the normalized name matches the canonical name exactly (case insensitive)
+    if (normalized === canonical.toUpperCase()) {
       return canonical;
     }
     
@@ -53,13 +68,16 @@ export const normalizeCompanyName = (companyName: string | null | undefined): st
     }
     
     // Check if the normalized name contains the canonical name
-    if (normalized.includes(canonical)) {
+    if (normalized.includes(canonical.toUpperCase())) {
       return canonical;
     }
   }
   
-  // Return the normalized version if no mapping found
-  return normalized;
+  // Return title case version if no mapping found
+  return companyName.trim()
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
 };
 
 /**

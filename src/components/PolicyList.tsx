@@ -280,11 +280,11 @@ const PolicyList = () => {
       const errors: string[] = [];
 
       for (let i = 0; i < data.length; i++) {
-        const validation = validatePolicyData(data[i]);
+        const validation = validatePolicyData(data[i], i);
         if (validation.valid) {
           validPolicies.push(convertExcelRowToPolicy(data[i], user?.id || ''));
         } else {
-          errors.push(`Row ${i + 2}: ${validation.errors.join(', ')}`);
+          errors.push(...validation.errors);
         }
       }
 
