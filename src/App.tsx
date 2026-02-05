@@ -16,6 +16,7 @@ import Auth from "./pages/Auth";
 const Index = lazy(() => import("./pages/Index"));
 const Policies = lazy(() => import("./pages/Policies"));
 const DuePoliciesPage = lazy(() => import("./pages/DuePoliciesPage"));
+const ExpiredPoliciesPage = lazy(() => import("./pages/ExpiredPoliciesPage"));
 const SubscriptionPage = lazy(() => import("./pages/SubscriptionPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
@@ -73,6 +74,13 @@ const App = () => (
                 <ProtectedRoute>
                   <Layout>
                     <DuePoliciesPage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/expired-policies" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <ExpiredPoliciesPage />
                   </Layout>
                 </ProtectedRoute>
               } />
