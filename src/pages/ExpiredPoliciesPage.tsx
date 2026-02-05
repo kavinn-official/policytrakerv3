@@ -35,7 +35,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import * as XLSX from '@e965/xlsx';
 import { formatDateDDMMYYYY } from "@/utils/policyUtils";
-import BackButton from "@/components/BackButton";
+// BackButton removed - using inline navigation to Due Policies
 
 interface ExpiredPolicy {
   id: string;
@@ -370,8 +370,16 @@ Please contact us immediately for renewal.`;
   if (isLoading) {
     return (
       <div className="space-y-4 sm:space-y-6 px-2 sm:px-4 lg:px-6 pb-4 sm:pb-6">
-        <div className="flex items-center gap-4">
-          <BackButton />
+        <div className="flex items-center gap-3 sm:gap-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/due-policies')}
+            className="flex items-center gap-2 h-9 px-3"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span className="hidden xs:inline">Due Policies</span>
+          </Button>
           <div>
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Expired Policies</h1>
             <p className="text-gray-600 text-sm sm:text-base">Policies that have passed their expiry date</p>
@@ -390,22 +398,22 @@ Please contact us immediately for renewal.`;
 
   return (
     <div className="space-y-4 sm:space-y-6 px-2 sm:px-4 lg:px-6 pb-4 sm:pb-6">
-      <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-        <div className="flex items-center gap-4">
-          <BackButton />
+      <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/due-policies')}
+            className="flex items-center gap-2 h-9 px-3"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span className="hidden xs:inline">Due Policies</span>
+          </Button>
           <div>
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Expired Policies</h1>
             <p className="text-gray-600 text-sm sm:text-base">Policies that have passed their expiry date</p>
           </div>
         </div>
-        <Button
-          variant="outline"
-          onClick={() => navigate('/due-policies')}
-          className="flex items-center gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Due Policies
-        </Button>
       </div>
 
       <Card className="shadow-lg border-0">

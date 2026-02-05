@@ -5,6 +5,19 @@
 [build.environment]
   NODE_VERSION = "20"
 
+# www to non-www redirect (must be first)
+[[redirects]]
+  from = "https://www.policytracker.in/*"
+  to = "https://policytracker.in/:splat"
+  status = 301
+  force = true
+
+# Legacy /welcome route redirect
+[[redirects]]
+  from = "/welcome"
+  to = "/"
+  status = 301
+
 # SPA redirect rule for client-side routing - MUST be last
 [[redirects]]
   from = "/*"

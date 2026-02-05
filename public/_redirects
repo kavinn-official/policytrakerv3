@@ -1,1 +1,8 @@
+# www to non-www redirect
+https://www.policytracker.in/*  https://policytracker.in/:splat  301!
+
+# Legacy welcome route
+/welcome    /   301
+
+# SPA fallback
 /*    /index.html   200

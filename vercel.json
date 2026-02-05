@@ -1,7 +1,25 @@
 {
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.policytracker.in"
+        }
+      ],
+      "destination": "https://policytracker.in/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/welcome",
+      "destination": "/",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
-      "source": "/((?!api|assets|logo.png|manifest.json|robots.txt|sitemap.xml|sw.js|favicon.ico).*)",
+      "source": "/((?!api|assets|logo.png|manifest.json|robots.txt|sitemap.xml|sw.js|favicon.ico|og-image.png).*)",
       "destination": "/index.html"
     }
   ],
@@ -20,6 +38,10 @@
         {
           "key": "Referrer-Policy",
           "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
         }
       ]
     },
@@ -38,6 +60,41 @@
         {
           "key": "Cache-Control",
           "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/og-image.png",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/sitemap.xml",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400"
+        },
+        {
+          "key": "Content-Type",
+          "value": "application/xml"
+        }
+      ]
+    },
+    {
+      "source": "/robots.txt",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400"
+        },
+        {
+          "key": "Content-Type",
+          "value": "text/plain"
         }
       ]
     }
