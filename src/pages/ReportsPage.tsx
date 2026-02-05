@@ -327,12 +327,18 @@ const ReportsPage = () => {
     setSelectedCompany('all');
   }, [selectedMonth, selectedYear, reportType]);
 
+  // Format currency for display (using ₹ symbol)
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: 'INR',
       maximumFractionDigits: 0,
     }).format(amount);
+  };
+
+  // Format currency for PDF (using Rs. to avoid font issues)
+  const formatCurrencyForPDF = (amount: number) => {
+    return `Rs. ${amount.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
   };
 
   const getPeriodLabel = () => {
@@ -417,7 +423,7 @@ const ReportsPage = () => {
       'Policy Number': p.policy_number,
       'Client Name': p.client_name,
       'Insurance Type': p.insurance_type || 'Vehicle Insurance',
-      'Company': p.company_name || '',
+      'Company': normalizeCompanyName(p.company_name),
       'Vehicle Number': p.vehicle_number || '',
       'Risk Start Date (RSD)': formatDateDDMMYYYY(p.policy_active_date),
       'Risk End Date (RED)': formatDateDDMMYYYY(p.policy_expiry_date),
@@ -453,7 +459,7 @@ const ReportsPage = () => {
       p.policy_number,
       p.client_name,
       p.insurance_type || 'Vehicle Insurance',
-      p.company_name || '',
+      normalizeCompanyName(p.company_name),
       p.vehicle_number || '',
       formatDateDDMMYYYY(p.policy_active_date),
       formatDateDDMMYYYY(p.policy_expiry_date),
@@ -534,7 +540,7 @@ const ReportsPage = () => {
     doc.setFontSize(11);
     doc.setFont('helvetica', 'normal');
     doc.text(`Total Policies: ${displayStats.totalPolicies}`, 14, yPos + 10);
-    doc.text(`Total Net Premium: ${formatCurrency(displayStats.totalNetPremium)}`, 14, yPos + 18);
+    doc.text(`Total Net Premium: ${formatCurrencyForPDF(displayStats.totalNetPremium)}`, 14, yPos + 18);
 
     // Insurance type breakdown
     doc.setFontSize(14);
@@ -545,14 +551,20 @@ const ReportsPage = () => {
       startY: yPos + 42,
       head: [['Type', 'Count', 'Premium']],
       body: [
-        ['Vehicle Insurance', String(displayStats.vehicleInsurance.count), formatCurrency(displayStats.vehicleInsurance.premium)],
-        ['Health Insurance', String(displayStats.healthInsurance.count), formatCurrency(displayStats.healthInsurance.premium)],
-        ['Life Insurance', String(displayStats.lifeInsurance.count), formatCurrency(displayStats.lifeInsurance.premium)],
-        ['Other Insurance', String(displayStats.otherInsurance.count), formatCurrency(displayStats.otherInsurance.premium)],
+        ['Vehicle Insurance', String(displayStats.vehicleInsurance.count), formatCurrencyForPDF(displayStats.vehicleInsurance.premium)],
+        ['Health Insurance', String(displayStats.healthInsurance.count), formatCurrencyForPDF(displayStats.healthInsurance.premium)],
+        ['Life Insurance', String(displayStats.lifeInsurance.count), formatCurrencyForPDF(displayStats.lifeInsurance.premium)],
+        ['Other Insurance', String(displayStats.otherInsurance.count), formatCurrencyForPDF(displayStats.otherInsurance.premium)],
       ],
       theme: 'striped',
-      headStyles: { fillColor: [59, 130, 246] },
+      headStyles: { fillColor: [59, 130, 246], fontSize: 10, fontStyle: 'bold' },
+      bodyStyles: { fontSize: 10 },
       margin: { left: 14, right: 14 },
+      columnStyles: {
+        0: { cellWidth: 80 },
+        1: { cellWidth: 40, halign: 'center' },
+        2: { cellWidth: 50, halign: 'right' },
+      },
     });
 
     // Company breakdown
@@ -563,15 +575,21 @@ const ReportsPage = () => {
 
     const companyData = Object.entries(displayStats.byCompany)
       .sort((a, b) => b[1].premium - a[1].premium)
-      .map(([company, data]) => [company, String(data.count), formatCurrency(data.premium)]);
+      .map(([company, data]) => [company, String(data.count), formatCurrencyForPDF(data.premium)]);
 
     autoTable(doc, {
       startY: yAfterTypeTable + 7,
       head: [['Company', 'Count', 'Premium']],
       body: companyData,
       theme: 'striped',
-      headStyles: { fillColor: [59, 130, 246] },
+      headStyles: { fillColor: [59, 130, 246], fontSize: 10, fontStyle: 'bold' },
+      bodyStyles: { fontSize: 10 },
       margin: { left: 14, right: 14 },
+      columnStyles: {
+        0: { cellWidth: 80 },
+        1: { cellWidth: 40, halign: 'center' },
+        2: { cellWidth: 50, halign: 'right' },
+      },
     });
 
     // Policy details on new page
@@ -589,7 +607,7 @@ const ReportsPage = () => {
       p.policy_number,
       p.client_name,
       p.insurance_type || 'Vehicle',
-      formatCurrency(Number(p.net_premium) || 0),
+      formatCurrencyForPDF(Number(p.net_premium) || 0),
     ]);
 
     autoTable(doc, {
@@ -597,9 +615,16 @@ const ReportsPage = () => {
       head: [['#', 'Policy Number', 'Client Name', 'Type', 'Premium']],
       body: policyTableData,
       theme: 'striped',
-      headStyles: { fillColor: [59, 130, 246] },
+      headStyles: { fillColor: [59, 130, 246], fontSize: 9, fontStyle: 'bold' },
+      bodyStyles: { fontSize: 9 },
       margin: { left: 14, right: 14 },
-      styles: { fontSize: 9 },
+      columnStyles: {
+        0: { cellWidth: 12, halign: 'center' },
+        1: { cellWidth: 45 },
+        2: { cellWidth: 55 },
+        3: { cellWidth: 35 },
+        4: { cellWidth: 35, halign: 'right' },
+      },
     });
 
     // Footer
@@ -671,17 +696,17 @@ const ReportsPage = () => {
     colorClass: string;
   }) => (
     <Card className="shadow-md border-0">
-      <CardContent className="p-4">
+      <CardContent className="p-3 sm:p-4">
         <div className="flex items-start justify-between">
-          <div>
-            <p className="text-sm text-muted-foreground">{title}</p>
-            <p className="text-2xl font-bold mt-1">{count}</p>
-            <p className="text-sm text-muted-foreground mt-1">
+          <div className="min-w-0 flex-1">
+            <p className="text-xs sm:text-sm text-muted-foreground truncate">{title}</p>
+            <p className="text-xl sm:text-2xl font-bold mt-1">{count}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1 truncate">
               {formatCurrency(premium)}
             </p>
           </div>
-          <div className={`p-3 rounded-lg ${colorClass}`}>
-            <Icon className="h-5 w-5 text-white" />
+          <div className={`p-2 sm:p-3 rounded-lg ${colorClass} flex-shrink-0`}>
+            <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
           </div>
         </div>
       </CardContent>
@@ -784,7 +809,7 @@ const ReportsPage = () => {
             <div className="flex gap-2 w-full sm:w-auto flex-wrap">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button disabled={loading || !displayStats || displayStats.policies.length === 0}>
+                  <Button disabled={loading || !displayStats || displayStats.policies.length === 0} size="sm" className="flex-1 sm:flex-none">
                     <Download className="h-4 w-4 mr-2" />
                     Download
                   </Button>
@@ -808,6 +833,8 @@ const ReportsPage = () => {
                 onClick={emailReport}
                 disabled={emailing || loading || !displayStats || displayStats.policies.length === 0}
                 variant="outline"
+                size="sm"
+                className="flex-1 sm:flex-none"
               >
                 {emailing ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -837,16 +864,16 @@ const ReportsPage = () => {
         </div>
       ) : displayStats ? (
         <>
-          {/* Overall Summary with Comparison */}
+          {/* Overall Summary with Comparison - Single Row Only */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Card className="shadow-lg border-0 bg-gradient-to-br from-blue-500 to-indigo-600 text-white">
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-blue-100">Total Policies</p>
-                    <p className="text-4xl font-bold mt-2">{displayStats.totalPolicies}</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <p className="text-blue-100 text-sm">{periodLabel}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-blue-100 text-sm">Total Policies</p>
+                    <p className="text-2xl sm:text-4xl font-bold mt-2">{displayStats.totalPolicies}</p>
+                    <div className="flex items-center gap-2 mt-2 flex-wrap">
+                      <p className="text-blue-100 text-xs sm:text-sm">{periodLabel}</p>
                       {policyComparison && (
                         <span className={`flex items-center text-xs px-2 py-0.5 rounded-full ${policyComparison.isPositive ? 'bg-green-400/30 text-green-100' : 'bg-red-400/30 text-red-100'}`}>
                           {policyComparison.isPositive ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
@@ -855,21 +882,21 @@ const ReportsPage = () => {
                       )}
                     </div>
                   </div>
-                  <div className="p-4 bg-white/20 rounded-xl">
-                    <FileText className="h-8 w-8" />
+                  <div className="p-3 sm:p-4 bg-white/20 rounded-xl flex-shrink-0">
+                    <FileText className="h-6 w-6 sm:h-8 sm:w-8" />
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             <Card className="shadow-lg border-0 bg-gradient-to-br from-green-500 to-emerald-600 text-white">
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-green-100">Total Net Premium</p>
-                    <p className="text-4xl font-bold mt-2">{formatCurrency(displayStats.totalNetPremium)}</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <p className="text-green-100 text-sm">Collected in {periodLabel}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-green-100 text-sm">Total Net Premium</p>
+                    <p className="text-2xl sm:text-4xl font-bold mt-2">{formatCurrency(displayStats.totalNetPremium)}</p>
+                    <div className="flex items-center gap-2 mt-2 flex-wrap">
+                      <p className="text-green-100 text-xs sm:text-sm">Collected in {periodLabel}</p>
                       {premiumComparison && displayStats.totalNetPremium > 0 && (
                         <span className={`flex items-center text-xs px-2 py-0.5 rounded-full ${premiumComparison.isPositive ? 'bg-green-400/30 text-green-100' : 'bg-red-400/30 text-red-100'}`}>
                           {premiumComparison.isPositive ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
@@ -878,23 +905,24 @@ const ReportsPage = () => {
                       )}
                     </div>
                   </div>
-                  <div className="p-4 bg-white/20 rounded-xl">
-                    <IndianRupee className="h-8 w-8" />
+                  <div className="p-3 sm:p-4 bg-white/20 rounded-xl flex-shrink-0">
+                    <IndianRupee className="h-6 w-6 sm:h-8 sm:w-8" />
                   </div>
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Month-over-Month Trend Charts */}
-          <TrendCharts monthlyTrends={monthlyTrends} formatCurrency={formatCurrency} />
-
-          {/* Charts Section - Policy Distribution */}
+          {/* Distribution Charts - Pass company data */}
           <DistributionCharts 
             pieChartData={getPieChartData()} 
             barChartData={getBarChartData()} 
             formatCurrency={formatCurrency}
+            companyData={displayStats.byCompany}
           />
+
+          {/* Month-over-Month Trend */}
+          <TrendCharts monthlyTrends={monthlyTrends} formatCurrency={formatCurrency} />
 
           {/* No Data Message */}
           {displayStats.totalPolicies === 0 && (
@@ -920,7 +948,7 @@ const ReportsPage = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                   <StatCard
                     title="Vehicle Insurance"
                     count={displayStats.vehicleInsurance.count}
@@ -967,13 +995,13 @@ const ReportsPage = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
+                <div className="overflow-x-auto -mx-4 sm:mx-0">
+                  <table className="w-full text-sm min-w-[400px]">
                     <thead>
                       <tr className="border-b bg-muted/50">
-                        <th className="text-left py-3 px-4 font-semibold">Company Name</th>
-                        <th className="text-center py-3 px-4 font-semibold">Policy Count</th>
-                        <th className="text-right py-3 px-4 font-semibold">Net Premium</th>
+                        <th className="text-left py-3 px-3 sm:px-4 font-semibold">Company Name</th>
+                        <th className="text-center py-3 px-3 sm:px-4 font-semibold">Count</th>
+                        <th className="text-right py-3 px-3 sm:px-4 font-semibold">Net Premium</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -981,13 +1009,13 @@ const ReportsPage = () => {
                         .sort((a, b) => b[1].premium - a[1].premium)
                         .map(([company, data], index) => (
                           <tr key={company} className={`border-b hover:bg-muted/50 ${index % 2 === 0 ? 'bg-background' : 'bg-muted/20'}`}>
-                            <td className="py-3 px-4 font-medium">{company}</td>
-                            <td className="py-3 px-4 text-center">
-                              <span className="inline-flex items-center justify-center min-w-[40px] px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                            <td className="py-3 px-3 sm:px-4 font-medium">{company}</td>
+                            <td className="py-3 px-3 sm:px-4 text-center">
+                              <span className="inline-flex items-center justify-center min-w-[32px] px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
                                 {data.count}
                               </span>
                             </td>
-                            <td className="py-3 px-4 text-right font-semibold text-green-600">
+                            <td className="py-3 px-3 sm:px-4 text-right font-semibold text-green-600">
                               {formatCurrency(data.premium)}
                             </td>
                           </tr>
@@ -995,9 +1023,9 @@ const ReportsPage = () => {
                     </tbody>
                     <tfoot>
                       <tr className="bg-muted/50 font-bold">
-                        <td className="py-3 px-4">Total</td>
-                        <td className="py-3 px-4 text-center">{displayStats.totalPolicies}</td>
-                        <td className="py-3 px-4 text-right text-green-600">{formatCurrency(displayStats.totalNetPremium)}</td>
+                        <td className="py-3 px-3 sm:px-4">Total</td>
+                        <td className="py-3 px-3 sm:px-4 text-center">{displayStats.totalPolicies}</td>
+                        <td className="py-3 px-3 sm:px-4 text-right text-green-600">{formatCurrency(displayStats.totalNetPremium)}</td>
                       </tr>
                     </tfoot>
                   </table>
@@ -1016,8 +1044,8 @@ const ReportsPage = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
+                <div className="overflow-x-auto -mx-4 sm:mx-0">
+                  <table className="w-full text-sm min-w-[400px]">
                     <thead>
                       <tr className="border-b">
                         <th className="text-left py-3 px-2 font-medium">Policy #</th>
@@ -1031,14 +1059,14 @@ const ReportsPage = () => {
                       {displayStats.policies.slice(0, 10).map((policy) => (
                         <tr key={policy.id} className="border-b hover:bg-muted/50">
                           <td className="py-3 px-2 font-mono text-xs">{policy.policy_number}</td>
-                          <td className="py-3 px-2">{policy.client_name}</td>
+                          <td className="py-3 px-2 truncate max-w-[120px]">{policy.client_name}</td>
                           <td className="py-3 px-2 hidden sm:table-cell">
-                            <span className="px-2 py-1 rounded-full text-xs bg-primary/10 text-primary">
+                            <span className="px-2 py-1 rounded-full text-xs bg-primary/10 text-primary whitespace-nowrap">
                               {policy.insurance_type || 'Vehicle'}
                             </span>
                           </td>
-                          <td className="py-3 px-2 hidden md:table-cell">{policy.company_name}</td>
-                          <td className="py-3 px-2 text-right font-medium">
+                          <td className="py-3 px-2 hidden md:table-cell truncate max-w-[120px]">{normalizeCompanyName(policy.company_name)}</td>
+                          <td className="py-3 px-2 text-right font-medium whitespace-nowrap">
                             {formatCurrency(Number(policy.net_premium) || 0)}
                           </td>
                         </tr>
