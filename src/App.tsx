@@ -34,6 +34,8 @@ const EnquiryPage = lazy(() => import("./pages/EnquiryPage"));
 const DemoPage = lazy(() => import("./pages/DemoPage"));
 const FeaturesPage = lazy(() => import("./pages/FeaturesPage"));
 const PricingPage = lazy(() => import("./pages/PricingPage"));
+const BlogPage = lazy(() => import("./pages/BlogPage"));
+const BlogArticlePage = lazy(() => import("./pages/BlogArticlePage"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -141,6 +143,8 @@ const App = () => (
               <Route path="/demo" element={<DemoPage />} />
               <Route path="/features" element={<FeaturesPage />} />
               <Route path="/pricing" element={<PricingPage />} />
+              <Route path="/blog" element={<BlogPage />} />
+              <Route path="/blog/:slug" element={<BlogArticlePage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

@@ -523,7 +523,7 @@ Please contact us immediately for renewal.`;
                         
                         <div className="space-y-1">
                           <p className="text-xs sm:text-sm text-red-600 font-medium">Expired: {formatDateDDMMYYYY(policy.policy_expiry_date)}</p>
-                          <p className="text-xs sm:text-sm text-gray-600">Status: {policy.status}</p>
+                          <p className="text-xs sm:text-sm text-red-600 font-semibold">Status: Expired</p>
                           {policy.whatsapp_reminder_count > 0 && (
                             <div className="flex items-center">
                               <MessageSquare className="h-3 w-3 text-green-500 mr-1" />

@@ -13,6 +13,7 @@ Allow: /contact
 Allow: /terms-conditions
 Allow: /privacy
 Allow: /cancellation-refunds
+Allow: /blog
 Disallow: /dashboard
 Disallow: /policies
 Disallow: /due-policies
