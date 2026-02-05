@@ -260,9 +260,21 @@ const PolicyList = () => {
     });
   };
 
+  const MAX_EXCEL_SIZE = 10 * 1024 * 1024; // 10MB
+
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+
+    // File size validation
+    if (file.size > MAX_EXCEL_SIZE) {
+      toast({
+        title: "File Too Large",
+        description: "Excel file must be less than 10MB",
+        variant: "destructive",
+      });
+      return;
+    }
 
     if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
       toast({
