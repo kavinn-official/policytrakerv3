@@ -363,9 +363,9 @@ const LandingPage = () => {
                   <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" aria-hidden="true" />
                 </Button>
               </Link>
-              <Link to="/demo" className="w-full sm:w-auto">
-                <Button size="lg" variant="outline" className="w-full sm:w-auto text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 border-2">
-                  Try Policy Tracker Demo
+              <Link to="/demo-request" className="w-full sm:w-auto">
+                <Button size="lg" variant="outline" className="w-full sm:w-auto text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 border-2 border-cyan-600 text-cyan-700 hover:bg-cyan-50">
+                  Request a Demo
                 </Button>
               </Link>
             </div>
