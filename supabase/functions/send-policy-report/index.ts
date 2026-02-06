@@ -6,7 +6,7 @@ import * as XLSX from "https://esm.sh/xlsx@0.18.5";
 // CORS headers for all origins
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
 interface Policy {
@@ -331,9 +331,18 @@ const handler = async (req: Request): Promise<Response> => {
           return expiryDate < today;
         });
 
-        // Generate Excel file
-        const excelBuffer = await generateExcelFile(policies, isMonthlyReport, startDate, endDate);
-        const excelBase64 = btoa(String.fromCharCode(...new Uint8Array(excelBuffer)));
+        // Generate Excel file - limit to 500 policies for email attachment
+        const policiesToExport = policies.length > 500 ? policies.slice(0, 500) : policies;
+        const excelBuffer = await generateExcelFile(policiesToExport, isMonthlyReport, startDate, endDate);
+        
+        // Use Uint8Array directly for base64 encoding to handle large files
+        const bytes = new Uint8Array(excelBuffer);
+        let binary = '';
+        const chunkSize = 0x8000; // 32KB chunks
+        for (let i = 0; i < bytes.length; i += chunkSize) {
+          binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + chunkSize)));
+        }
+        const excelBase64 = btoa(binary);
 
         // Generate appropriate email content
         let emailContent: string;
