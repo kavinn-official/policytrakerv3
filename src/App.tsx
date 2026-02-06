@@ -37,6 +37,7 @@ const PricingPage = lazy(() => import("./pages/PricingPage"));
 const BlogPage = lazy(() => import("./pages/BlogPage"));
 const BlogArticlePage = lazy(() => import("./pages/BlogArticlePage"));
 const PremiumCalculatorPage = lazy(() => import("./pages/PremiumCalculatorPage"));
+const DemoRequestPage = lazy(() => import("./pages/DemoRequestPage"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -147,6 +148,7 @@ const App = () => (
               <Route path="/blog" element={<BlogPage />} />
               <Route path="/blog/:slug" element={<BlogArticlePage />} />
               <Route path="/calculator" element={<PremiumCalculatorPage />} />
+              <Route path="/demo-request" element={<DemoRequestPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
