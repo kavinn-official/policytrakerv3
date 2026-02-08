@@ -90,18 +90,28 @@ export type Database = {
         Row: {
           agent_code: string | null
           client_name: string
+          commission_percentage: number | null
           company_name: string | null
           contact_number: string | null
           created_at: string
           document_url: string | null
+          first_year_commission: number | null
           id: string
+          idv: number | null
           insurance_type: string
+          members_covered: number | null
           net_premium: number | null
+          plan_type: string | null
           policy_active_date: string
           policy_expiry_date: string
           policy_number: string
+          policy_term: number | null
+          premium_frequency: string | null
+          premium_payment_term: number | null
           reference: string | null
           status: string
+          sum_assured: number | null
+          sum_insured: number | null
           updated_at: string
           user_id: string
           vehicle_make: string | null
@@ -112,18 +122,28 @@ export type Database = {
         Insert: {
           agent_code?: string | null
           client_name: string
+          commission_percentage?: number | null
           company_name?: string | null
           contact_number?: string | null
           created_at?: string
           document_url?: string | null
+          first_year_commission?: number | null
           id?: string
+          idv?: number | null
           insurance_type?: string
+          members_covered?: number | null
           net_premium?: number | null
+          plan_type?: string | null
           policy_active_date: string
           policy_expiry_date: string
           policy_number: string
+          policy_term?: number | null
+          premium_frequency?: string | null
+          premium_payment_term?: number | null
           reference?: string | null
           status?: string
+          sum_assured?: number | null
+          sum_insured?: number | null
           updated_at?: string
           user_id: string
           vehicle_make?: string | null
@@ -134,18 +154,28 @@ export type Database = {
         Update: {
           agent_code?: string | null
           client_name?: string
+          commission_percentage?: number | null
           company_name?: string | null
           contact_number?: string | null
           created_at?: string
           document_url?: string | null
+          first_year_commission?: number | null
           id?: string
+          idv?: number | null
           insurance_type?: string
+          members_covered?: number | null
           net_premium?: number | null
+          plan_type?: string | null
           policy_active_date?: string
           policy_expiry_date?: string
           policy_number?: string
+          policy_term?: number | null
+          premium_frequency?: string | null
+          premium_payment_term?: number | null
           reference?: string | null
           status?: string
+          sum_assured?: number | null
+          sum_insured?: number | null
           updated_at?: string
           user_id?: string
           vehicle_make?: string | null
@@ -282,6 +312,39 @@ export type Database = {
           razorpay_subscription_id?: string | null
           start_date?: string | null
           status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      usage_tracking: {
+        Row: {
+          created_at: string
+          id: string
+          last_backup_at: string | null
+          month_year: string
+          ocr_scans_used: number
+          storage_used_bytes: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_backup_at?: string | null
+          month_year: string
+          ocr_scans_used?: number
+          storage_used_bytes?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_backup_at?: string | null
+          month_year?: string
+          ocr_scans_used?: number
+          storage_used_bytes?: number
           updated_at?: string
           user_id?: string
         }

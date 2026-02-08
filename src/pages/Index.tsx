@@ -1,11 +1,15 @@
 import { useState, useEffect } from "react";
 import DashboardStats from "@/components/DashboardStats";
 import DuePolicies from "@/components/DuePolicies";
+import UsageIndicators from "@/components/dashboard/UsageIndicators";
+import CommissionSummary from "@/components/dashboard/CommissionSummary";
+import TodayFollowUps from "@/components/dashboard/TodayFollowUps";
+import UpcomingRenewals from "@/components/dashboard/UpcomingRenewals";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
-import { FileText, Shield, Phone, Mail, Scale, AlertTriangle, CreditCard, Plus, BarChart3 } from "lucide-react";
+import { FileText, Shield, Phone, Mail, Scale, AlertTriangle, Plus, BarChart3, Upload } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -35,6 +39,7 @@ const Index = () => {
 
   const quickAccessButtons = [
     { name: 'Add Policy', path: '/add-policy', icon: Plus, color: 'from-green-500 to-green-600' },
+    { name: 'Bulk Upload', path: '/bulk-upload', icon: Upload, color: 'from-purple-500 to-purple-600' },
     { name: 'Policies', path: '/policies', icon: FileText, color: 'from-indigo-500 to-indigo-600' },
     { name: 'Due Policies', path: '/due-policies', icon: AlertTriangle, color: 'from-orange-500 to-orange-600' },
     { name: 'Reports', path: '/reports', icon: BarChart3, color: 'from-teal-500 to-teal-600' },
@@ -60,22 +65,33 @@ const Index = () => {
             <CardTitle className="text-base sm:text-lg font-semibold text-gray-900">Quick Access</CardTitle>
           </CardHeader>
           <CardContent className="p-4">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
               {quickAccessButtons.map((button) => (
                 <Button
                   key={button.path}
                   onClick={() => navigate(button.path)}
-                  className={`h-24 flex flex-col items-center justify-center gap-2 bg-gradient-to-br ${button.color} hover:opacity-90 transition-opacity`}
+                  className={`h-20 sm:h-24 flex flex-col items-center justify-center gap-2 bg-gradient-to-br ${button.color} hover:opacity-90 transition-opacity`}
                 >
-                  <button.icon className="h-6 w-6 text-white" />
-                  <span className="text-sm font-medium text-white">{button.name}</span>
+                  <button.icon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                  <span className="text-xs sm:text-sm font-medium text-white text-center">{button.name}</span>
                 </Button>
               ))}
             </div>
           </CardContent>
         </Card>
         
+        {/* Dashboard Stats */}
         <DashboardStats />
+        
+        {/* Dashboard Widgets Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+          <UsageIndicators />
+          <CommissionSummary />
+          <TodayFollowUps />
+          <UpcomingRenewals />
+        </div>
+        
+        {/* Due Policies */}
         <DuePolicies />
         
         {/* Policy Pages Section */}
