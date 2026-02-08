@@ -26,6 +26,19 @@ const DemoRequestPage = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [errors, setErrors] = useState<{ email?: string; phone?: string }>({});
+
+  // Email validation regex
+  const isValidEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  // Phone validation - Indian numbers (10 digits)
+  const isValidPhone = (phone: string): boolean => {
+    const digitsOnly = phone.replace(/\D/g, '');
+    return digitsOnly.length >= 10;
+  };
 
   const insuranceTypeOptions = [
     "Motor Insurance",
@@ -47,6 +60,11 @@ const DemoRequestPage = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    
+    // Clear errors when user starts typing
+    if (name === 'email' || name === 'phone') {
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
 
   const handleCheckboxChange = (field: "insuranceTypes" | "challenges", value: string) => {
@@ -109,6 +127,24 @@ Demo Request Details:
   };
 
   const nextStep = () => {
+    // Validate step 1 fields before proceeding
+    if (step === 1) {
+      const newErrors: { email?: string; phone?: string } = {};
+      
+      if (!isValidEmail(formData.email)) {
+        newErrors.email = "Please enter a valid email address";
+      }
+      
+      if (!isValidPhone(formData.phone)) {
+        newErrors.phone = "Please enter a valid 10-digit phone number";
+      }
+      
+      if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors);
+        return;
+      }
+    }
+    
     if (step < 3) setStep(step + 1);
   };
 
@@ -262,7 +298,11 @@ Demo Request Details:
                         onChange={handleInputChange}
                         placeholder="you@example.com"
                         required
+                        className={errors.email ? "border-red-500" : ""}
                       />
+                      {errors.email && (
+                        <p className="text-sm text-red-500">{errors.email}</p>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="phone">Phone Number *</Label>
@@ -274,7 +314,11 @@ Demo Request Details:
                         onChange={handleInputChange}
                         placeholder="+91 98765 43210"
                         required
+                        className={errors.phone ? "border-red-500" : ""}
                       />
+                      {errors.phone && (
+                        <p className="text-sm text-red-500">{errors.phone}</p>
+                      )}
                     </div>
                   </div>
                 )}
