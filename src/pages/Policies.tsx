@@ -1,6 +1,8 @@
-
 import PolicyList from "@/components/PolicyList";
 import BackButton from "@/components/BackButton";
+import BulkUpload from "@/components/BulkUpload";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Upload } from "lucide-react";
 
 const Policies = () => {
   return (
@@ -16,6 +18,19 @@ const Policies = () => {
       </div>
 
       <PolicyList />
+      
+      {/* Bulk Upload Section */}
+      <Card className="shadow-lg border-0">
+        <CardHeader className="bg-gradient-to-r from-purple-50 to-indigo-50">
+          <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <Upload className="h-5 w-5 text-purple-600" />
+            Bulk Policy Upload
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-4 sm:p-6">
+          <BulkUpload />
+        </CardContent>
+      </Card>
     </div>
   );
 };

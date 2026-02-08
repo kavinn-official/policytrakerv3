@@ -4,12 +4,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { User, Mail, Phone, Crown, Calendar, CreditCard, ArrowLeft, Edit2, Save, X, Settings } from "lucide-react";
+import { User, Mail, Phone, Crown, Calendar, CreditCard, ArrowLeft, Edit2, Save, X, Settings, BarChart3 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import UsageStatistics from "@/components/dashboard/UsageStatistics";
 
 interface Transaction {
   id: string;
@@ -339,6 +340,9 @@ const ProfilePage = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Usage Statistics */}
+      <UsageStatistics />
 
       {/* Transaction History */}
       <Card className="shadow-lg border-0">

@@ -9,7 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
-import { FileText, Shield, Phone, Mail, Scale, AlertTriangle, Plus, BarChart3, Upload } from "lucide-react";
+import { FileText, Shield, Phone, Mail, Scale, AlertTriangle, Plus, BarChart3 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -39,7 +39,6 @@ const Index = () => {
 
   const quickAccessButtons = [
     { name: 'Add Policy', path: '/add-policy', icon: Plus, color: 'from-green-500 to-green-600' },
-    { name: 'Bulk Upload', path: '/bulk-upload', icon: Upload, color: 'from-purple-500 to-purple-600' },
     { name: 'Policies', path: '/policies', icon: FileText, color: 'from-indigo-500 to-indigo-600' },
     { name: 'Due Policies', path: '/due-policies', icon: AlertTriangle, color: 'from-orange-500 to-orange-600' },
     { name: 'Reports', path: '/reports', icon: BarChart3, color: 'from-teal-500 to-teal-600' },
@@ -65,7 +64,7 @@ const Index = () => {
             <CardTitle className="text-base sm:text-lg font-semibold text-gray-900">Quick Access</CardTitle>
           </CardHeader>
           <CardContent className="p-4">
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {quickAccessButtons.map((button) => (
                 <Button
                   key={button.path}

@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { IndianRupee, TrendingUp, Calendar, Wallet } from "lucide-react";
-import { format, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns";
+import { startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns";
 
 interface CommissionData {
   monthlyCommission: number;
@@ -44,6 +44,7 @@ const CommissionSummary = () => {
 
         if (error) {
           console.error('Error fetching commission data:', error);
+          setLoading(false);
           return;
         }
 
@@ -108,10 +109,10 @@ const CommissionSummary = () => {
       <Card className="shadow-lg border-0">
         <CardContent className="p-4">
           <div className="animate-pulse space-y-3">
-            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+            <div className="h-4 bg-muted rounded w-1/2"></div>
             <div className="grid grid-cols-2 gap-3">
               {[1, 2, 3, 4].map(i => (
-                <div key={i} className="h-16 bg-gray-200 rounded"></div>
+                <div key={i} className="h-16 bg-muted rounded"></div>
               ))}
             </div>
           </div>
@@ -154,7 +155,7 @@ const CommissionSummary = () => {
   return (
     <Card className="shadow-lg border-0">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-gray-700 flex items-center gap-2">
+        <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
           <IndianRupee className="h-4 w-4 text-green-600" />
           Commission Summary
         </CardTitle>
@@ -168,7 +169,7 @@ const CommissionSummary = () => {
             >
               <div className="flex items-center gap-1.5 mb-1">
                 <stat.icon className={`h-3 w-3 ${stat.color}`} />
-                <span className="text-xs text-gray-600">{stat.label}</span>
+                <span className="text-xs text-muted-foreground">{stat.label}</span>
               </div>
               <span className={`text-sm font-bold ${stat.color}`}>{stat.value}</span>
             </div>
