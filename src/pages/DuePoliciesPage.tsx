@@ -9,8 +9,8 @@ const DuePoliciesPage = () => {
         <div className="flex items-center gap-4">
           <BackButton />
           <div>
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Due Policies</h1>
-            <p className="text-gray-600 text-sm sm:text-base">Policies expiring within the next 30 days</p>
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">Due Policies</h1>
+            <p className="text-muted-foreground text-sm sm:text-base">Policies expiring within the next 30 days</p>
           </div>
         </div>
       </div>

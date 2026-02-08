@@ -11,7 +11,7 @@ import PolicyCard from "./policy/PolicyCard";
 import PolicyTableRow from "./policy/PolicyTableRow";
 import PolicySearch from "./policy/PolicySearch";
 import PolicyDateFilter from "./policy/PolicyDateFilter";
-import PolicyViewDialog from "./policy/PolicyViewDialog";
+import PolicyViewDialogRevamped from "./policy/PolicyViewDialogRevamped";
 import PolicyEditDialog from "./policy/PolicyEditDialog";
 import PolicyDocumentPreviewDialog from "./policy/PolicyDocumentPreviewDialog";
 import { Policy, getStatusColor, getDaysToExpiry, filterPolicies, downloadPoliciesAsExcel } from "@/utils/policyUtils";
@@ -630,7 +630,7 @@ const PolicyList = () => {
       </div>
 
       {/* View Policy Dialog */}
-      <PolicyViewDialog
+      <PolicyViewDialogRevamped
         policy={selectedPolicy}
         open={viewDialogOpen}
         onOpenChange={setViewDialogOpen}

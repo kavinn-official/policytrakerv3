@@ -19,6 +19,19 @@ export interface Policy {
   updated_at: string;
   user_id?: string;
   document_url?: string;
+  insurance_type?: string;
+  net_premium?: number;
+  idv?: number;
+  sum_assured?: number;
+  sum_insured?: number;
+  members_covered?: number;
+  policy_term?: number;
+  premium_frequency?: string;
+  premium_payment_term?: number;
+  plan_type?: string;
+  commission_percentage?: number;
+  first_year_commission?: number;
+  whatsapp_reminder_count?: number;
 }
 
 export const getStatusColor = (status: string) => {
