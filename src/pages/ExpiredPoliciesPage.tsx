@@ -535,31 +535,31 @@ Please contact us immediately for renewal.`;
                         </div>
                       </div>
 
-                      <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 pt-2">
+                      <div className="flex flex-row gap-2 pt-2">
                         <Button 
                           size="sm" 
-                          className="bg-blue-600 hover:bg-blue-700 text-white min-h-[40px] flex-1 sm:flex-none"
+                          className="bg-blue-600 hover:bg-blue-700 text-white min-h-[40px] flex-1"
                           onClick={() => handleRenewPolicy(policy)}
                         >
-                          <RefreshCw className="h-4 w-4 mr-2" />
-                          Renew
+                          <RefreshCw className="h-4 w-4 mr-1" />
+                          <span>Renew</span>
                         </Button>
                         <Button 
                           size="sm" 
-                          className="bg-green-600 hover:bg-green-700 text-white min-h-[40px] flex-1 sm:flex-none"
+                          className="bg-green-600 hover:bg-green-700 text-white min-h-[40px] flex-1"
                           onClick={() => handleWhatsApp(policy)}
                         >
-                          <MessageSquare className="h-4 w-4 mr-2" />
-                          Follow Up
+                          <MessageSquare className="h-4 w-4 mr-1" />
+                          <span>Follow Up</span>
                         </Button>
                         <Button 
                           size="sm" 
                           variant="outline"
-                          className="hover:bg-blue-50 hover:border-blue-200 min-h-[40px] flex-1 sm:flex-none"
+                          className="hover:bg-blue-50 hover:border-blue-200 min-h-[40px] w-10 sm:flex-1 sm:w-auto p-0 sm:px-3"
                           onClick={() => handleCall(policy)}
                         >
-                          <Phone className="h-4 w-4 mr-2" />
-                          Call
+                          <Phone className="h-4 w-4" />
+                          <span className="hidden sm:inline sm:ml-1">Call</span>
                         </Button>
                       </div>
                     </div>
