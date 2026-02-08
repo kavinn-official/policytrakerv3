@@ -14,7 +14,7 @@ const VALID_INSURANCE_TYPES = ['Vehicle Insurance', 'Health Insurance', 'Life In
 interface PolicyData {
   policy_number: string;
   client_name: string;
-  vehicle_number: string;
+  vehicle_number?: string;
   vehicle_make?: string;
   vehicle_model?: string;
   company_name?: string;
@@ -23,10 +23,22 @@ interface PolicyData {
   reference?: string;
   status?: string;
   net_premium?: number;
+  commission_percentage?: number;
   policy_active_date: string;
   policy_expiry_date: string;
   document_url?: string;
   insurance_type: string;
+  premium_frequency?: string;
+  // Motor specific
+  idv?: number;
+  // Health specific
+  sum_insured?: number;
+  members_covered?: number;
+  plan_type?: string;
+  // Life specific
+  sum_assured?: number;
+  policy_term?: number;
+  premium_payment_term?: number;
 }
 
 interface ValidationError {
@@ -50,10 +62,19 @@ function validatePolicyData(data: any): { valid: boolean; errors: ValidationErro
     errors.push({ field: 'client_name', message: 'Client name must be less than 200 characters' });
   }
 
-  if (!data.vehicle_number || typeof data.vehicle_number !== 'string' || data.vehicle_number.trim().length === 0) {
-    errors.push({ field: 'vehicle_number', message: 'Vehicle number is required' });
-  } else if (data.vehicle_number.length > 20) {
-    errors.push({ field: 'vehicle_number', message: 'Vehicle number must be less than 20 characters' });
+  // Insurance type validation first (needed for conditional checks)
+  const insuranceType = data.insurance_type || 'Vehicle Insurance';
+  if (!VALID_INSURANCE_TYPES.includes(insuranceType)) {
+    errors.push({ field: 'insurance_type', message: 'Invalid insurance type' });
+  }
+
+  // Vehicle number is only required for Vehicle Insurance
+  if (insuranceType === 'Vehicle Insurance') {
+    if (!data.vehicle_number || typeof data.vehicle_number !== 'string' || data.vehicle_number.trim().length === 0) {
+      errors.push({ field: 'vehicle_number', message: 'Vehicle number is required for Vehicle Insurance' });
+    } else if (data.vehicle_number.length > 20) {
+      errors.push({ field: 'vehicle_number', message: 'Vehicle number must be less than 20 characters' });
+    }
   }
 
   // Date validation
@@ -97,13 +118,6 @@ function validatePolicyData(data: any): { valid: boolean; errors: ValidationErro
     errors.push({ field: 'reference', message: 'Reference must be less than 200 characters' });
   }
 
-  // Insurance type validation
-  if (!data.insurance_type || typeof data.insurance_type !== 'string') {
-    errors.push({ field: 'insurance_type', message: 'Insurance type is required' });
-  } else if (!VALID_INSURANCE_TYPES.includes(data.insurance_type)) {
-    errors.push({ field: 'insurance_type', message: 'Invalid insurance type' });
-  }
-
   if (errors.length > 0) {
     return { valid: false, errors };
   }
@@ -112,7 +126,7 @@ function validatePolicyData(data: any): { valid: boolean; errors: ValidationErro
   const sanitized: PolicyData = {
     policy_number: data.policy_number.trim().toUpperCase(),
     client_name: data.client_name.trim(),
-    vehicle_number: data.vehicle_number.trim().toUpperCase().replace(/[^A-Z0-9]/g, ''),
+    vehicle_number: data.vehicle_number ? data.vehicle_number.trim().toUpperCase().replace(/[^A-Z0-9]/g, '') : null,
     vehicle_make: data.vehicle_make?.trim() || null,
     vehicle_model: data.vehicle_model?.trim() || null,
     company_name: data.company_name?.trim() || null,
@@ -121,10 +135,22 @@ function validatePolicyData(data: any): { valid: boolean; errors: ValidationErro
     reference: data.reference?.trim() || null,
     status: data.status || 'Active',
     net_premium: data.net_premium ? Number(data.net_premium) : 0,
+    commission_percentage: data.commission_percentage ? Number(data.commission_percentage) : 0,
     policy_active_date: data.policy_active_date,
     policy_expiry_date: data.policy_expiry_date,
     document_url: data.document_url || null,
-    insurance_type: data.insurance_type || 'Vehicle Insurance',
+    insurance_type: insuranceType,
+    premium_frequency: data.premium_frequency || 'yearly',
+    // Motor specific
+    idv: data.idv ? Number(data.idv) : 0,
+    // Health specific
+    sum_insured: data.sum_insured ? Number(data.sum_insured) : 0,
+    members_covered: data.members_covered ? Number(data.members_covered) : 0,
+    plan_type: data.plan_type?.trim() || null,
+    // Life specific
+    sum_assured: data.sum_assured ? Number(data.sum_assured) : 0,
+    policy_term: data.policy_term ? Number(data.policy_term) : null,
+    premium_payment_term: data.premium_payment_term ? Number(data.premium_payment_term) : null,
   };
 
   return { valid: true, errors: [], sanitized };
