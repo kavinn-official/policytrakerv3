@@ -579,35 +579,8 @@ const PolicyList = () => {
           </CardContent>
         </Card>
 
-        {/* Download, Upload and Email Buttons at Bottom */}
+        {/* Download and Email Buttons at Bottom */}
         <div className="flex flex-col sm:flex-row justify-center gap-3 px-4 sm:px-0">
-          <Button 
-            variant="outline"
-            onClick={handleDownloadTemplate}
-            className="hover:bg-purple-50 border-purple-200 text-purple-700 hover:text-purple-800 min-h-[44px] w-full sm:w-auto"
-          >
-            <FileSpreadsheet className="h-4 w-4 mr-2" />
-            Download Template
-          </Button>
-
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".xlsx,.xls"
-            onChange={handleFileUpload}
-            className="hidden"
-          />
-          
-          <Button 
-            variant="outline"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
-            className="hover:bg-orange-50 border-orange-200 text-orange-700 hover:text-orange-800 min-h-[44px] w-full sm:w-auto"
-          >
-            <Upload className="h-4 w-4 mr-2" />
-            {isUploading ? 'Uploading...' : 'Upload Excel'}
-          </Button>
-          
           <Button 
             variant="outline"
             onClick={downloadAllPolicies}

@@ -70,6 +70,17 @@ const AddPolicy = () => {
       net_premium: "",
       commission_percentage: "",
       insurance_type: "Vehicle Insurance",
+      premium_frequency: "yearly",
+      // Motor specific
+      idv: "",
+      // Health specific
+      sum_insured: "",
+      members_covered: "",
+      plan_type: "",
+      // Life specific
+      sum_assured: "",
+      policy_term: "",
+      premium_payment_term: "",
     };
   });
 
@@ -619,8 +630,9 @@ const AddPolicy = () => {
       validationErrors.push("Client name must be at least 2 characters");
     }
 
-    if (!formData.vehicle_number || formData.vehicle_number.trim() === "") {
-      validationErrors.push("Vehicle number is required");
+    // Vehicle number is only required for Vehicle Insurance
+    if (formData.insurance_type === 'Vehicle Insurance' && (!formData.vehicle_number || formData.vehicle_number.trim() === "")) {
+      validationErrors.push("Vehicle number is required for Vehicle Insurance");
     }
 
     if (formData.contact_number && formData.contact_number.replace(/\D/g, '').length !== 10) {
@@ -729,6 +741,12 @@ const AddPolicy = () => {
             ...formData,
             net_premium: formData.net_premium ? parseFloat(formData.net_premium) : 0,
             commission_percentage: formData.commission_percentage ? parseFloat(formData.commission_percentage) : 0,
+            idv: formData.idv ? parseFloat(formData.idv) : 0,
+            sum_insured: formData.sum_insured ? parseFloat(formData.sum_insured) : 0,
+            sum_assured: formData.sum_assured ? parseFloat(formData.sum_assured) : 0,
+            members_covered: formData.members_covered ? parseInt(formData.members_covered) : 0,
+            policy_term: formData.policy_term ? parseInt(formData.policy_term) : null,
+            premium_payment_term: formData.premium_payment_term ? parseInt(formData.premium_payment_term) : null,
             policy_active_date: format(policyActiveDate, "yyyy-MM-dd"),
             policy_expiry_date: format(policyExpiryDate, "yyyy-MM-dd"),
             document_url: documentUrl,
@@ -829,6 +847,14 @@ const AddPolicy = () => {
       net_premium: "",
       commission_percentage: "",
       insurance_type: "Vehicle Insurance",
+      premium_frequency: "yearly",
+      idv: "",
+      sum_insured: "",
+      members_covered: "",
+      plan_type: "",
+      sum_assured: "",
+      policy_term: "",
+      premium_payment_term: "",
     });
     setPolicyActiveDate(undefined);
     setPolicyExpiryDate(undefined);
@@ -880,17 +906,17 @@ const AddPolicy = () => {
         {/* PDF Upload Card with Drag & Drop */}
         <Card className="shadow-lg border-0 bg-gradient-to-r from-blue-50 to-indigo-50">
           <CardContent className="p-4 sm:p-6">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center flex-shrink-0">
-                <Sparkles className="w-6 h-6 text-white" />
+            <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center flex-shrink-0">
+                <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-gray-900 mb-1">Smart Auto-Fill</h3>
-                <p className="text-sm text-gray-600 mb-3">
-                  Upload a policy PDF or image and we'll automatically extract the details for you.
+              <div className="flex-1 w-full min-w-0">
+                <h3 className="font-semibold text-gray-900 mb-1 text-sm sm:text-base">Smart Auto-Fill</h3>
+                <p className="text-xs sm:text-sm text-gray-600 mb-3">
+                  Upload a policy PDF or image and we'll auto extract details.
                   <span className="block mt-1 text-xs text-blue-600">
                     <Share2 className="w-3 h-3 inline mr-1" />
-                    Tip: You can also share PDFs directly from other apps or drag & drop files!
+                    Tip: Share PDFs from other apps!
                   </span>
                 </p>
                 
@@ -906,23 +932,23 @@ const AddPolicy = () => {
                 
                 {uploadedFile ? (
                   <div className="space-y-2">
-                    <div className="flex items-center gap-2 p-3 bg-white rounded-lg border">
-                      <FileText className="w-5 h-5 text-blue-500" />
-                      <span className="text-sm text-gray-700 flex-1 truncate">{uploadedFile.name}</span>
+                    <div className="flex items-center gap-2 p-2 sm:p-3 bg-white rounded-lg border min-w-0">
+                      <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 flex-shrink-0" />
+                      <span className="text-xs sm:text-sm text-gray-700 flex-1 truncate min-w-0">{uploadedFile.name}</span>
                       {parsing ? (
-                        <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
+                        <Loader2 className="w-4 h-4 animate-spin text-blue-500 flex-shrink-0" />
                       ) : parseError ? (
                         <Button 
                           size="sm" 
                           variant="outline" 
                           onClick={retryParsing}
-                          className="h-7 px-2 text-xs"
+                          className="h-7 px-2 text-xs flex-shrink-0"
                         >
                           <RefreshCw className="w-3 h-3 mr-1" />
                           Retry
                         </Button>
                       ) : (
-                        <button onClick={clearUploadedFile} className="p-1 hover:bg-gray-100 rounded">
+                        <button onClick={clearUploadedFile} className="p-1 hover:bg-gray-100 rounded flex-shrink-0">
                           <X className="w-4 h-4 text-gray-400" />
                         </button>
                       )}
@@ -944,16 +970,16 @@ const AddPolicy = () => {
                     {parseError && !parsing && (
                       <Alert variant="destructive" className="py-2">
                         <AlertCircle className="h-4 w-4" />
-                        <AlertDescription className="flex items-center justify-between">
+                        <AlertDescription className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:justify-between">
                           <span className="text-xs">{parseError}</span>
                           <Button 
                             size="sm" 
                             variant="ghost" 
                             onClick={retryParsing}
-                            className="h-6 px-2 text-xs ml-2"
+                            className="h-6 px-2 text-xs"
                           >
                             <RefreshCw className="w-3 h-3 mr-1" />
-                            Retry Parsing
+                            Retry
                           </Button>
                         </AlertDescription>
                       </Alert>
@@ -968,16 +994,16 @@ const AddPolicy = () => {
                     onDrop={handleDrop}
                     onClick={() => fileInputRef.current?.click()}
                     className={`
-                      flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg cursor-pointer transition-all
+                      flex flex-col items-center justify-center p-4 sm:p-6 border-2 border-dashed rounded-lg cursor-pointer transition-all
                       ${isDragging 
                         ? 'border-blue-500 bg-blue-50' 
                         : 'border-gray-300 bg-white hover:border-blue-400 hover:bg-gray-50'
                       }
                     `}
                   >
-                    <Upload className={`w-8 h-8 mb-2 ${isDragging ? 'text-blue-500' : 'text-gray-400'}`} />
-                    <span className="text-sm font-medium text-gray-700 text-center">
-                      {parsing ? "Processing..." : isDragging ? "Drop file here" : "Click or drag file to upload"}
+                    <Upload className={`w-6 h-6 sm:w-8 sm:h-8 mb-2 ${isDragging ? 'text-blue-500' : 'text-gray-400'}`} />
+                    <span className="text-xs sm:text-sm font-medium text-gray-700 text-center">
+                      {parsing ? "Processing..." : isDragging ? "Drop file here" : "Click or drag to upload"}
                     </span>
                     <span className="text-xs text-gray-500 mt-1">
                       PDF or images (max 10MB)
@@ -1052,50 +1078,182 @@ const AddPolicy = () => {
                   <p className="text-xs text-gray-500">Letters only (auto Camel Case)</p>
                 </div>
 
-                <div className="space-y-2 sm:col-span-2">
-                  <Label htmlFor="vehicle_number" className="text-sm font-medium">
-                    Vehicle Number <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="vehicle_number"
-                    name="vehicle_number"
-                    type="text"
-                    value={formData.vehicle_number}
-                    onChange={handleInputChange}
-                    required
-                    className={`h-10 text-sm uppercase ${duplicateError?.includes('vehicle') ? 'border-destructive' : ''}`}
-                    placeholder="TN01AB1234"
-                  />
-                  <p className="text-xs text-gray-500">Uppercase letters and numbers only</p>
-                </div>
+                {/* Dynamic Vehicle Fields - Only for Vehicle Insurance */}
+                {formData.insurance_type === 'Vehicle Insurance' && (
+                  <>
+                    <div className="space-y-2 sm:col-span-2">
+                      <Label htmlFor="vehicle_number" className="text-sm font-medium">
+                        Vehicle Number <span className="text-red-500">*</span>
+                      </Label>
+                      <Input
+                        id="vehicle_number"
+                        name="vehicle_number"
+                        type="text"
+                        value={formData.vehicle_number}
+                        onChange={handleInputChange}
+                        required
+                        className={`h-10 text-sm uppercase ${duplicateError?.includes('vehicle') ? 'border-destructive' : ''}`}
+                        placeholder="TN01AB1234"
+                      />
+                      <p className="text-xs text-gray-500">Uppercase letters and numbers only</p>
+                    </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="vehicle_make" className="text-sm font-medium">
-                    Vehicle Make
-                  </Label>
-                  <Input
-                    id="vehicle_make"
-                    name="vehicle_make"
-                    value={formData.vehicle_make}
-                    onChange={handleInputChange}
-                    className="h-10 text-sm"
-                    placeholder="e.g., Maruti, Honda, Toyota"
-                  />
-                </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="vehicle_make" className="text-sm font-medium">
+                        Vehicle Make
+                      </Label>
+                      <Input
+                        id="vehicle_make"
+                        name="vehicle_make"
+                        value={formData.vehicle_make}
+                        onChange={handleInputChange}
+                        className="h-10 text-sm"
+                        placeholder="e.g., Maruti, Honda, Toyota"
+                      />
+                    </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="vehicle_model" className="text-sm font-medium">
-                    Vehicle Model
-                  </Label>
-                  <Input
-                    id="vehicle_model"
-                    name="vehicle_model"
-                    value={formData.vehicle_model}
-                    onChange={handleInputChange}
-                    className="h-10 text-sm"
-                    placeholder="e.g., Swift, City, Fortuner"
-                  />
-                </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="vehicle_model" className="text-sm font-medium">
+                        Vehicle Model
+                      </Label>
+                      <Input
+                        id="vehicle_model"
+                        name="vehicle_model"
+                        value={formData.vehicle_model}
+                        onChange={handleInputChange}
+                        className="h-10 text-sm"
+                        placeholder="e.g., Swift, City, Fortuner"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="idv" className="text-sm font-medium">
+                        IDV (₹)
+                      </Label>
+                      <Input
+                        id="idv"
+                        name="idv"
+                        type="number"
+                        inputMode="numeric"
+                        value={formData.idv}
+                        onChange={handleInputChange}
+                        className="h-10 text-sm"
+                        placeholder="e.g., 500000"
+                        min="0"
+                      />
+                      <p className="text-xs text-gray-500">Insured Declared Value</p>
+                    </div>
+                  </>
+                )}
+
+                {/* Dynamic Health Insurance Fields */}
+                {formData.insurance_type === 'Health Insurance' && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="sum_insured" className="text-sm font-medium">
+                        Sum Insured (₹)
+                      </Label>
+                      <Input
+                        id="sum_insured"
+                        name="sum_insured"
+                        type="number"
+                        inputMode="numeric"
+                        value={formData.sum_insured}
+                        onChange={handleInputChange}
+                        className="h-10 text-sm"
+                        placeholder="e.g., 500000"
+                        min="0"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="members_covered" className="text-sm font-medium">
+                        Members Covered
+                      </Label>
+                      <Input
+                        id="members_covered"
+                        name="members_covered"
+                        type="number"
+                        inputMode="numeric"
+                        value={formData.members_covered}
+                        onChange={handleInputChange}
+                        className="h-10 text-sm"
+                        placeholder="e.g., 4"
+                        min="1"
+                      />
+                    </div>
+
+                    <div className="space-y-2 sm:col-span-2">
+                      <Label htmlFor="plan_type" className="text-sm font-medium">
+                        Plan Type
+                      </Label>
+                      <Input
+                        id="plan_type"
+                        name="plan_type"
+                        value={formData.plan_type}
+                        onChange={handleInputChange}
+                        className="h-10 text-sm"
+                        placeholder="e.g., Individual, Family Floater"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* Dynamic Life Insurance Fields */}
+                {formData.insurance_type === 'Life Insurance' && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="sum_assured" className="text-sm font-medium">
+                        Sum Assured (₹)
+                      </Label>
+                      <Input
+                        id="sum_assured"
+                        name="sum_assured"
+                        type="number"
+                        inputMode="numeric"
+                        value={formData.sum_assured}
+                        onChange={handleInputChange}
+                        className="h-10 text-sm"
+                        placeholder="e.g., 5000000"
+                        min="0"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="policy_term" className="text-sm font-medium">
+                        Policy Term (Years)
+                      </Label>
+                      <Input
+                        id="policy_term"
+                        name="policy_term"
+                        type="number"
+                        inputMode="numeric"
+                        value={formData.policy_term}
+                        onChange={handleInputChange}
+                        className="h-10 text-sm"
+                        placeholder="e.g., 20"
+                        min="1"
+                      />
+                    </div>
+
+                    <div className="space-y-2 sm:col-span-2">
+                      <Label htmlFor="premium_payment_term" className="text-sm font-medium">
+                        Premium Payment Term (Years)
+                      </Label>
+                      <Input
+                        id="premium_payment_term"
+                        name="premium_payment_term"
+                        type="number"
+                        inputMode="numeric"
+                        value={formData.premium_payment_term}
+                        onChange={handleInputChange}
+                        className="h-10 text-sm"
+                        placeholder="e.g., 15"
+                        min="1"
+                      />
+                    </div>
+                  </>
+                )}
 
                 <div className="space-y-2">
                   <Label htmlFor="company_name" className="text-sm font-medium">
