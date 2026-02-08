@@ -66,53 +66,65 @@ const PolicyViewDialogRevamped = ({ policy, open, onOpenChange }: PolicyViewDial
   const commissionPercent = Number(policy.commission_percentage) || 0;
   const firstYearCommission = Number(policy.first_year_commission) || ((netPremium * commissionPercent) / 100);
 
-  const InfoRow = ({ icon: Icon, label, value, iconColor = "text-gray-500" }: { icon: any; label: string; value: string | number | null | undefined; iconColor?: string }) => (
-    <div className="flex items-start gap-3 py-2">
-      <Icon className={`h-4 w-4 mt-0.5 flex-shrink-0 ${iconColor}`} />
-      <div className="flex-1 min-w-0">
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="text-sm font-medium text-foreground truncate">{value || 'Not provided'}</p>
+  // Check if value is meaningful (not empty, null, undefined, 0, or "0")
+  const hasValue = (val: string | number | null | undefined): boolean => {
+    if (val === null || val === undefined) return false;
+    if (typeof val === 'number') return val !== 0;
+    if (typeof val === 'string') return val.trim() !== '' && val !== '0';
+    return true;
+  };
+
+  const InfoRow = ({ icon: Icon, label, value, iconColor = "text-gray-500" }: { icon: any; label: string; value: string | number | null | undefined; iconColor?: string }) => {
+    // Don't render if value is empty/0
+    if (!hasValue(value)) return null;
+    
+    return (
+      <div className="flex items-start gap-3 py-2">
+        <Icon className={`h-4 w-4 mt-0.5 flex-shrink-0 ${iconColor}`} />
+        <div className="flex-1 min-w-0">
+          <p className="text-xs text-muted-foreground">{label}</p>
+          <p className="text-sm font-medium text-foreground truncate">{value}</p>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg w-[95vw] max-h-[90vh] p-0 overflow-hidden [&>button]:top-2 [&>button]:right-2 [&>button]:text-white [&>button]:bg-white/20 [&>button]:rounded-full [&>button]:p-1.5 [&>button]:hover:bg-white/30 [&>button]:z-20">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-4 sm:p-6 pt-10 sm:pt-6 text-white relative">
-          <DialogHeader className="space-y-2">
-            <div className="flex items-start justify-between gap-3 pr-8 sm:pr-0">
-              <div className="flex items-center gap-3 min-w-0 flex-1">
-                <div className="p-2 bg-white/20 rounded-lg flex-shrink-0">
-                  <FileText className="h-5 w-5" />
+      <DialogContent className="max-w-lg w-[95vw] max-h-[90vh] p-0 overflow-hidden [&>button]:top-3 [&>button]:right-3 [&>button]:text-white [&>button]:bg-black/30 [&>button]:rounded-full [&>button]:p-1.5 [&>button]:hover:bg-black/50 [&>button]:z-30">
+        {/* Scrollable Container */}
+        <ScrollArea className="max-h-[90vh]">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-4 sm:p-6 text-white relative">
+            <DialogHeader className="space-y-2">
+              <div className="flex items-start justify-between gap-3 pr-10">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className="p-2 bg-white/20 rounded-lg flex-shrink-0">
+                    {getInsuranceIcon()}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <DialogTitle className="text-lg sm:text-xl font-bold text-white">
+                      Policy Details
+                    </DialogTitle>
+                    <p className="text-blue-100 text-sm mt-0.5 truncate">{policy.insurance_type || 'Vehicle Insurance'}</p>
+                  </div>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <DialogTitle className="text-lg sm:text-xl font-bold text-white">
-                    Policy Details
-                  </DialogTitle>
-                  <p className="text-blue-100 text-sm mt-0.5 truncate">{policy.insurance_type || 'Vehicle Insurance'}</p>
+                <div className="flex-shrink-0 mt-1">
+                  {getStatusBadge()}
                 </div>
               </div>
-              <div className="flex-shrink-0">
-                {getStatusBadge()}
-              </div>
-            </div>
-          </DialogHeader>
+            </DialogHeader>
 
-          {/* Policy Number Header Card */}
-          <div className="mt-4 bg-white/10 rounded-xl p-4 backdrop-blur-sm">
-            <div className="flex items-center gap-2 mb-2">
-              {getInsuranceIcon()}
-              <span className="text-blue-100 text-xs uppercase tracking-wide">Policy Number</span>
+            {/* Policy Number Header Card */}
+            <div className="mt-4 bg-white/10 rounded-xl p-4 backdrop-blur-sm">
+              <div className="flex items-center gap-2 mb-2">
+                <FileText className="h-4 w-4 text-blue-200" />
+                <span className="text-blue-100 text-xs uppercase tracking-wide">Policy Number</span>
+              </div>
+              <p className="text-lg sm:text-xl font-bold break-all">{policy.policy_number}</p>
+              <p className="text-blue-200 text-sm mt-1 truncate">{policy.company_name || 'Insurance Company'}</p>
             </div>
-            <p className="text-lg sm:text-xl font-bold break-all">{policy.policy_number}</p>
-            <p className="text-blue-200 text-sm mt-1 truncate">{policy.company_name || 'Insurance Company'}</p>
           </div>
-        </div>
-
-        {/* Content */}
-        <ScrollArea className="max-h-[60vh]">
           <div className="p-4 sm:p-6 space-y-5">
             
             {/* Client Information Section */}
