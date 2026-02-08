@@ -44,7 +44,7 @@ const PolicyDateFilter = ({
           <Calendar className="h-4 w-4" />
           <span className="hidden sm:inline">
             {hasFilter 
-              ? `${fromDate ? format(fromDate, 'dd/MM/yy') : '...'} - ${toDate ? format(toDate, 'dd/MM/yy') : '...'}`
+              ? `${fromDate ? format(fromDate, 'dd-MMM-yy') : '...'} - ${toDate ? format(toDate, 'dd-MMM-yy') : '...'}`
               : 'Date Filter'
             }
           </span>

@@ -142,8 +142,9 @@ const PolicyViewDialogRevamped = ({ policy, open, onOpenChange }: PolicyViewDial
               </div>
             </div>
 
-            {/* Vehicle Information Section - Show only for vehicle insurance */}
-            {(policy.insurance_type === 'Vehicle Insurance' || !policy.insurance_type) && (
+            {/* Vehicle Information Section - Show only for vehicle insurance with actual data */}
+            {(policy.insurance_type === 'Vehicle Insurance' || !policy.insurance_type) && 
+             (hasValue(policy.vehicle_number) || hasValue(policy.vehicle_make) || hasValue(policy.vehicle_model) || (policy.idv && policy.idv > 0)) && (
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   <Car className="h-4 w-4 text-green-600" />
@@ -151,13 +152,13 @@ const PolicyViewDialogRevamped = ({ policy, open, onOpenChange }: PolicyViewDial
                 </div>
                 <div className="bg-green-50 rounded-xl p-4 space-y-1">
                   <InfoRow icon={Hash} label="Vehicle Number" value={policy.vehicle_number} iconColor="text-green-600" />
-                  <Separator className="my-1" />
+                  {hasValue(policy.vehicle_number) && hasValue(policy.vehicle_make) && <Separator className="my-1" />}
                   <InfoRow icon={Tag} label="Vehicle Make" value={policy.vehicle_make} iconColor="text-green-600" />
-                  <Separator className="my-1" />
+                  {(hasValue(policy.vehicle_number) || hasValue(policy.vehicle_make)) && hasValue(policy.vehicle_model) && <Separator className="my-1" />}
                   <InfoRow icon={Tag} label="Vehicle Model" value={policy.vehicle_model} iconColor="text-green-600" />
-                  {policy.idv && (
+                  {policy.idv && policy.idv > 0 && (
                     <>
-                      <Separator className="my-1" />
+                      {(hasValue(policy.vehicle_number) || hasValue(policy.vehicle_make) || hasValue(policy.vehicle_model)) && <Separator className="my-1" />}
                       <InfoRow icon={IndianRupee} label="IDV" value={`₹${policy.idv.toLocaleString('en-IN')}`} iconColor="text-green-600" />
                     </>
                   )}
@@ -165,8 +166,13 @@ const PolicyViewDialogRevamped = ({ policy, open, onOpenChange }: PolicyViewDial
               </div>
             )}
 
-            {/* Life/Health Insurance Specific Fields */}
-            {(policy.insurance_type === 'Life Insurance' || policy.insurance_type === 'Health Insurance') && (
+            {/* Life/Health Insurance Specific Fields - Show only if there's actual data */}
+            {(policy.insurance_type === 'Life Insurance' || policy.insurance_type === 'Health Insurance') && 
+             ((policy.sum_assured && policy.sum_assured > 0) || 
+              (policy.sum_insured && policy.sum_insured > 0) || 
+              (policy.members_covered && policy.members_covered > 0) || 
+              (policy.policy_term && policy.policy_term > 0) || 
+              hasValue(policy.plan_type)) && (
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   {policy.insurance_type === 'Health Insurance' ? (
@@ -177,7 +183,7 @@ const PolicyViewDialogRevamped = ({ policy, open, onOpenChange }: PolicyViewDial
                   <h3 className="font-semibold text-foreground">Policy Coverage</h3>
                 </div>
                 <div className={`${policy.insurance_type === 'Health Insurance' ? 'bg-red-50' : 'bg-emerald-50'} rounded-xl p-4 space-y-1`}>
-                  {policy.sum_assured && (
+                  {policy.sum_assured && policy.sum_assured > 0 && (
                     <InfoRow 
                       icon={IndianRupee} 
                       label="Sum Assured" 
@@ -185,9 +191,9 @@ const PolicyViewDialogRevamped = ({ policy, open, onOpenChange }: PolicyViewDial
                       iconColor={policy.insurance_type === 'Health Insurance' ? "text-red-600" : "text-emerald-600"} 
                     />
                   )}
-                  {policy.sum_insured && (
+                  {policy.sum_insured && policy.sum_insured > 0 && (
                     <>
-                      <Separator className="my-1" />
+                      {policy.sum_assured && policy.sum_assured > 0 && <Separator className="my-1" />}
                       <InfoRow 
                         icon={IndianRupee} 
                         label="Sum Insured" 
@@ -196,9 +202,9 @@ const PolicyViewDialogRevamped = ({ policy, open, onOpenChange }: PolicyViewDial
                       />
                     </>
                   )}
-                  {policy.members_covered && (
+                  {policy.members_covered && policy.members_covered > 0 && (
                     <>
-                      <Separator className="my-1" />
+                      {((policy.sum_assured && policy.sum_assured > 0) || (policy.sum_insured && policy.sum_insured > 0)) && <Separator className="my-1" />}
                       <InfoRow 
                         icon={User} 
                         label="Members Covered" 
@@ -207,7 +213,7 @@ const PolicyViewDialogRevamped = ({ policy, open, onOpenChange }: PolicyViewDial
                       />
                     </>
                   )}
-                  {policy.policy_term && (
+                  {policy.policy_term && policy.policy_term > 0 && (
                     <>
                       <Separator className="my-1" />
                       <InfoRow 
@@ -218,7 +224,7 @@ const PolicyViewDialogRevamped = ({ policy, open, onOpenChange }: PolicyViewDial
                       />
                     </>
                   )}
-                  {policy.plan_type && (
+                  {hasValue(policy.plan_type) && (
                     <>
                       <Separator className="my-1" />
                       <InfoRow 
