@@ -395,7 +395,7 @@ const ReportsPage = () => {
     const summaryData = [
       [reportType === 'yearly' ? 'Yearly Policy Report' : 'Monthly Policy Report'],
       ['Period', periodLabel],
-      ['Generated On', format(new Date(), 'dd/MM/yyyy HH:mm')],
+      ['Generated On', format(new Date(), 'dd-MMM-yyyy HH:mm')],
       ...(selectedInsuranceType !== 'all' ? [['Filtered by Type', selectedInsuranceType]] : []),
       ...(selectedCompany !== 'all' ? [['Filtered by Company', selectedCompany]] : []),
       [],
@@ -419,23 +419,34 @@ const ReportsPage = () => {
     const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
     XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary');
 
-    const policyData = displayStats.policies.map((p, index) => ({
-      'S.No': index + 1,
-      'Policy Number': p.policy_number,
-      'Client Name': p.client_name,
-      'Insurance Type': p.insurance_type || 'Vehicle Insurance',
-      'Company': normalizeCompanyName(p.company_name),
-      'Vehicle Number': p.vehicle_number || '',
-      'Vehicle Make': p.vehicle_make || '',
-      'Vehicle Model': p.vehicle_model || '',
-      'Agent Name': p.agent_code || '',
-      'Reference': p.reference || '',
-      'Risk Start Date (RSD)': formatDateDDMMYYYY(p.policy_active_date),
-      'Risk End Date (RED)': formatDateDDMMYYYY(p.policy_expiry_date),
-      'Net Premium': p.net_premium || 0,
-      'Status': p.status,
-      'Contact': p.contact_number || '',
-    }));
+    const policyData = displayStats.policies.map((p, index) => {
+      const premium = Number(p.net_premium) || 0;
+      const commissionRate = Number(p.commission_percentage) || 0;
+      const commission = Number(p.first_year_commission) || ((premium * commissionRate) / 100);
+      
+      return {
+        'S.No': index + 1,
+        'Policy Number': p.policy_number,
+        'Client Name': p.client_name,
+        'Insurance Type': p.insurance_type || 'Vehicle Insurance',
+        'Company': normalizeCompanyName(p.company_name),
+        'Vehicle Number': p.vehicle_number || '',
+        'Vehicle Make': p.vehicle_make || '',
+        'Vehicle Model': p.vehicle_model || '',
+        'Agent Name': p.agent_code || '',
+        'Reference': p.reference || '',
+        'Risk Start Date (RSD)': formatDateDDMMYYYY(p.policy_active_date),
+        'Risk End Date (RED)': formatDateDDMMYYYY(p.policy_expiry_date),
+        'Net Premium': premium,
+        'Commission %': commissionRate,
+        'Commission Amount': commission,
+        'IDV': p.idv || '',
+        'Sum Insured': p.sum_insured || '',
+        'Sum Assured': p.sum_assured || '',
+        'Status': p.status,
+        'Contact': p.contact_number || '',
+      };
+    });
     const policiesSheet = XLSX.utils.json_to_sheet(policyData);
     XLSX.utils.book_append_sheet(workbook, policiesSheet, 'Policies');
 
@@ -458,24 +469,32 @@ const ReportsPage = () => {
       return;
     }
 
-    const headers = ['S.No', 'Policy Number', 'Client Name', 'Insurance Type', 'Company', 'Vehicle Number', 'Vehicle Make', 'Vehicle Model', 'Agent Name', 'Reference', 'Risk Start Date (RSD)', 'Risk End Date (RED)', 'Net Premium', 'Status', 'Contact'];
-    const rows = displayStats.policies.map((p, index) => [
-      index + 1,
-      p.policy_number,
-      p.client_name,
-      p.insurance_type || 'Vehicle Insurance',
-      normalizeCompanyName(p.company_name),
-      p.vehicle_number || '',
-      p.vehicle_make || '',
-      p.vehicle_model || '',
-      p.agent_code || '',
-      p.reference || '',
-      formatDateDDMMYYYY(p.policy_active_date),
-      formatDateDDMMYYYY(p.policy_expiry_date),
-      p.net_premium || 0,
-      p.status,
-      p.contact_number || '',
-    ]);
+    const headers = ['S.No', 'Policy Number', 'Client Name', 'Insurance Type', 'Company', 'Vehicle Number', 'Vehicle Make', 'Vehicle Model', 'Agent Name', 'Reference', 'Risk Start Date (RSD)', 'Risk End Date (RED)', 'Net Premium', 'Commission %', 'Commission Amount', 'Status', 'Contact'];
+    const rows = displayStats.policies.map((p, index) => {
+      const premium = Number(p.net_premium) || 0;
+      const commissionRate = Number(p.commission_percentage) || 0;
+      const commission = Number(p.first_year_commission) || ((premium * commissionRate) / 100);
+      
+      return [
+        index + 1,
+        p.policy_number,
+        p.client_name,
+        p.insurance_type || 'Vehicle Insurance',
+        normalizeCompanyName(p.company_name),
+        p.vehicle_number || '',
+        p.vehicle_make || '',
+        p.vehicle_model || '',
+        p.agent_code || '',
+        p.reference || '',
+        formatDateDDMMYYYY(p.policy_active_date),
+        formatDateDDMMYYYY(p.policy_expiry_date),
+        premium,
+        commissionRate,
+        commission,
+        p.status,
+        p.contact_number || '',
+      ];
+    });
 
     const csvContent = [headers, ...rows]
       .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
@@ -523,7 +542,7 @@ const ReportsPage = () => {
     
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(9);
-    doc.text(`Generated: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, pageWidth - 14, 28, { align: 'right' });
+    doc.text(`Generated: ${format(new Date(), 'dd-MMM-yyyy HH:mm')}`, pageWidth - 14, 28, { align: 'right' });
 
     // Filters info
     let yPos = 50;
@@ -611,28 +630,38 @@ const ReportsPage = () => {
     doc.setFont('helvetica', 'bold');
     doc.text('Policy Details', 14, 16);
 
-    const policyTableData = displayStats.policies.map((p, index) => [
-      String(index + 1),
-      p.policy_number,
-      p.client_name,
-      p.insurance_type || 'Vehicle',
-      formatCurrencyForPDF(Number(p.net_premium) || 0),
-    ]);
+    const policyTableData = displayStats.policies.map((p, index) => {
+      const premium = Number(p.net_premium) || 0;
+      const commissionRate = Number(p.commission_percentage) || 0;
+      const commission = Number(p.first_year_commission) || ((premium * commissionRate) / 100);
+      
+      return [
+        String(index + 1),
+        p.policy_number,
+        p.client_name,
+        p.insurance_type || 'Vehicle',
+        formatCurrencyForPDF(premium),
+        commissionRate > 0 ? `${commissionRate}%` : '-',
+        commission > 0 ? formatCurrencyForPDF(commission) : '-',
+      ];
+    });
 
     autoTable(doc, {
       startY: 35,
-      head: [['#', 'Policy Number', 'Client Name', 'Type', 'Premium']],
+      head: [['#', 'Policy Number', 'Client', 'Type', 'Premium', 'Comm %', 'Comm Amt']],
       body: policyTableData,
       theme: 'striped',
-      headStyles: { fillColor: [59, 130, 246], fontSize: 9, fontStyle: 'bold' },
-      bodyStyles: { fontSize: 9 },
+      headStyles: { fillColor: [59, 130, 246], fontSize: 8, fontStyle: 'bold' },
+      bodyStyles: { fontSize: 8 },
       margin: { left: 14, right: 14 },
       columnStyles: {
-        0: { cellWidth: 12, halign: 'center' },
-        1: { cellWidth: 45 },
-        2: { cellWidth: 55 },
-        3: { cellWidth: 35 },
-        4: { cellWidth: 35, halign: 'right' },
+        0: { cellWidth: 10, halign: 'center' },
+        1: { cellWidth: 35 },
+        2: { cellWidth: 40 },
+        3: { cellWidth: 25 },
+        4: { cellWidth: 28, halign: 'right' },
+        5: { cellWidth: 18, halign: 'center' },
+        6: { cellWidth: 26, halign: 'right' },
       },
     });
 

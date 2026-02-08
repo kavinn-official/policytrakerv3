@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { IndianRupee, TrendingUp, Percent, Briefcase } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { normalizeCompanyName } from "@/utils/companyNormalization";
 
 interface CommissionData {
   totalCommission: number;
@@ -28,6 +29,7 @@ const CommissionAnalytics = ({ policies, formatCurrency, periodLabel }: Commissi
     topCompanies: [],
   };
 
+  // Use normalized company names for grouping
   const companyCommissions: Record<string, { commission: number; count: number }> = {};
   let totalCommissionRate = 0;
   let policiesWithCommission = 0;
@@ -51,8 +53,8 @@ const CommissionAnalytics = ({ policies, formatCurrency, periodLabel }: Commissi
       commissionData.renewalCommission += firstYearComm;
     }
 
-    // Track by company
-    const company = policy.company_name || 'Unknown';
+    // Track by normalized company name
+    const company = normalizeCompanyName(policy.company_name);
     if (!companyCommissions[company]) {
       companyCommissions[company] = { commission: 0, count: 0 };
     }

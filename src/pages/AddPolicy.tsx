@@ -450,7 +450,7 @@ const AddPolicy = () => {
             // Check if dates overlap
             if (newActiveDate <= existingExpiry && newExpiryDate >= existingActive) {
               setDuplicateError(
-                `⚠️ Duplicate Found: A policy for vehicle "${vehicleNum}" from the same company already exists (Policy: ${existing.policy_number}, Period: ${format(existingActive, 'dd/MM/yyyy')} - ${format(existingExpiry, 'dd/MM/yyyy')}). This policy cannot be submitted.`
+                `⚠️ Duplicate Found: A policy for vehicle "${vehicleNum}" from the same company already exists (Policy: ${existing.policy_number}, Period: ${format(existingActive, 'dd-MMM-yyyy')} - ${format(existingExpiry, 'dd-MMM-yyyy')}). This policy cannot be submitted.`
               );
               return true;
             }
@@ -601,7 +601,7 @@ const AddPolicy = () => {
             // Check if dates overlap
             if (newActiveDate <= existingExpiry && newExpiryDate >= existingActive) {
               setDuplicateError(
-                `A policy for vehicle "${vehicleNumber}" from the same company already exists (Policy: ${existing.policy_number}, Period: ${format(existingActive, 'dd/MM/yyyy')} - ${format(existingExpiry, 'dd/MM/yyyy')}).`
+                `A policy for vehicle "${vehicleNumber}" from the same company already exists (Policy: ${existing.policy_number}, Period: ${format(existingActive, 'dd-MMM-yyyy')} - ${format(existingExpiry, 'dd-MMM-yyyy')}).`
               );
               return true;
             }
@@ -746,6 +746,9 @@ const AddPolicy = () => {
           });
         } else {
           documentUrl = fileName;
+          // Track storage usage after successful upload
+          await addStorageUsage(uploadedFile.size);
+          await refreshUsage();
         }
       }
 
