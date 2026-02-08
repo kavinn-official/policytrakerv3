@@ -66,11 +66,15 @@ const PolicyViewDialogRevamped = ({ policy, open, onOpenChange }: PolicyViewDial
   const commissionPercent = Number(policy.commission_percentage) || 0;
   const firstYearCommission = Number(policy.first_year_commission) || ((netPremium * commissionPercent) / 100);
 
-  // Check if value is meaningful (not empty, null, undefined, 0, or "0")
+  // Check if value is meaningful (not empty, null, undefined, 0, "0", or "00")
   const hasValue = (val: string | number | null | undefined): boolean => {
     if (val === null || val === undefined) return false;
     if (typeof val === 'number') return val !== 0;
-    if (typeof val === 'string') return val.trim() !== '' && val !== '0';
+    if (typeof val === 'string') {
+      const trimmed = val.trim();
+      // Filter out empty, "0", "00", or any string that's just zeros
+      return trimmed !== '' && !/^0+$/.test(trimmed);
+    }
     return true;
   };
 
