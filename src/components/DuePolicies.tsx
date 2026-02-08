@@ -649,32 +649,33 @@ Please contact us for renewal.`;
                         </div>
                       </div>
 
-                      <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 pt-2">
+                      <div className="flex flex-row gap-2 pt-2">
                         <Button 
                           size="sm" 
-                          className="bg-blue-600 hover:bg-blue-700 text-white min-h-[40px] flex-1 sm:flex-none"
+                          className="bg-blue-600 hover:bg-blue-700 text-white min-h-[40px] flex-1"
                           onClick={() => handleRenewPolicy(policy)}
                           disabled={isRenewing === policy.id}
                         >
-                          <Edit className="h-4 w-4 mr-2" />
-                          {isRenewing === policy.id ? "Opening..." : "Renew"}
+                          <Edit className="h-4 w-4 mr-1" />
+                          <span className="hidden xs:inline">{isRenewing === policy.id ? "Opening..." : "Renew"}</span>
+                          <span className="xs:hidden">{isRenewing === policy.id ? "..." : "Renew"}</span>
                         </Button>
                         <Button 
                           size="sm" 
-                          className="bg-green-600 hover:bg-green-700 text-white min-h-[40px] flex-1 sm:flex-none"
+                          className="bg-green-600 hover:bg-green-700 text-white min-h-[40px] flex-1"
                           onClick={() => handleWhatsApp(policy)}
                         >
-                          <MessageSquare className="h-4 w-4 mr-2" />
-                          WhatsApp {policy.whatsapp_reminder_count > 0 && `(${policy.whatsapp_reminder_count})`}
+                          <MessageSquare className="h-4 w-4 mr-1" />
+                          <span>WhatsApp</span>
                         </Button>
                         <Button 
                           size="sm" 
                           variant="outline"
-                          className="hover:bg-blue-50 hover:border-blue-200 min-h-[40px] flex-1 sm:flex-none"
+                          className="hover:bg-blue-50 hover:border-blue-200 min-h-[40px] flex-1"
                           onClick={() => handleCall(policy)}
                         >
-                          <Phone className="h-4 w-4 mr-2" />
-                          Call
+                          <Phone className="h-4 w-4 mr-1" />
+                          <span>Call</span>
                         </Button>
                       </div>
                     </div>

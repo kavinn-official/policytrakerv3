@@ -38,10 +38,10 @@ const Index = () => {
   }, [user?.id]);
 
   const quickAccessButtons = [
-    { name: 'Add Policy', path: '/add-policy', icon: Plus, color: 'from-green-500 to-green-600' },
-    { name: 'Policies', path: '/policies', icon: FileText, color: 'from-indigo-500 to-indigo-600' },
-    { name: 'Due Policies', path: '/due-policies', icon: AlertTriangle, color: 'from-orange-500 to-orange-600' },
-    { name: 'Reports', path: '/reports', icon: BarChart3, color: 'from-teal-500 to-teal-600' },
+    { name: 'Add Policy', path: '/add-policy', icon: Plus, color: 'bg-sky-400 hover:bg-sky-500' },
+    { name: 'Policies', path: '/policies', icon: FileText, color: 'bg-slate-800 hover:bg-slate-900' },
+    { name: 'Due Policies', path: '/due-policies', icon: AlertTriangle, color: 'bg-amber-500 hover:bg-amber-600' },
+    { name: 'Reports', path: '/reports', icon: BarChart3, color: 'bg-emerald-500 hover:bg-emerald-600' },
   ];
 
   return (
@@ -69,7 +69,7 @@ const Index = () => {
                 <Button
                   key={button.path}
                   onClick={() => navigate(button.path)}
-                  className={`h-20 sm:h-24 flex flex-col items-center justify-center gap-2 bg-gradient-to-br ${button.color} hover:opacity-90 transition-opacity`}
+                  className={`h-20 sm:h-24 flex flex-col items-center justify-center gap-2 ${button.color} transition-colors rounded-xl`}
                 >
                   <button.icon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                   <span className="text-xs sm:text-sm font-medium text-white text-center">{button.name}</span>
