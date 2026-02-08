@@ -1,765 +1,148 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import SEOHead from "@/components/SEOHead";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { 
-  Shield, 
-  Bell, 
-  FileText, 
-  Users, 
-  Clock, 
-  CheckCircle, 
-  ArrowRight,
-  Star,
-  BarChart3,
-  Smartphone,
-  MessageCircle,
-  Upload,
-  FileSpreadsheet,
-  BookOpen,
-  Database,
-  Zap,
-  TrendingUp,
-  Lock,
-  Award,
-  Headphones,
-  ShieldCheck,
-  Menu
-} from "lucide-react";
-import logo from '@/assets/logo.png';
-import howItWorksImg from '@/assets/screenshots/how-it-works.png';
+import Navigation from "@/components/landing/Navigation";
+import HeroSection from "@/components/landing/HeroSection";
+import BenefitsSection from "@/components/landing/BenefitsSection";
+import InsuranceTypesSection from "@/components/landing/InsuranceTypesSection";
+import FeaturesSection from "@/components/landing/FeaturesSection";
+import HowItWorksSection from "@/components/landing/HowItWorksSection";
+import TestimonialsSection from "@/components/landing/TestimonialsSection";
+import PricingSection from "@/components/landing/PricingSection";
+import FAQSection from "@/components/landing/FAQSection";
+import CTASection from "@/components/landing/CTASection";
+import Footer from "@/components/landing/Footer";
 import WhatsAppFloatingButton from '@/components/WhatsAppFloatingButton';
 
-// Declare global trackSignupClick function
-declare global {
-  interface Window {
-    trackSignupClick?: (location: string) => void;
-  }
-}
+// JSON-LD Structured Data for SEO
+const organizationSchema = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "PolicyTracker.in",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Web, iOS, Android",
+  "description": "India's #1 insurance agent CRM and policy management software. Track motor, health, and life insurance policies, send WhatsApp renewal reminders, manage commissions, and grow your insurance business.",
+  "url": "https://policytracker.in",
+  "author": {
+    "@type": "Organization",
+    "name": "PolicyTracker.in",
+    "url": "https://policytracker.in"
+  },
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "INR",
+    "description": "Free Forever Plan with up to 200 policies"
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "4.9",
+    "ratingCount": "1500",
+    "bestRating": "5"
+  },
+  "featureList": [
+    "Policy Management for Motor, Health, Life Insurance",
+    "Automated WhatsApp Renewal Reminders",
+    "Commission Tracking and Analytics",
+    "OCR PDF Auto-Fill",
+    "Bulk Policy Upload from Excel",
+    "Secure Document Storage",
+    "Mobile Access PWA",
+    "Business Reports and Analytics"
+  ]
+};
+
+const breadcrumbSchema = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Home",
+      "item": "https://policytracker.in"
+    }
+  ]
+};
+
+const localBusinessSchema = {
+  "@context": "https://schema.org",
+  "@type": "LocalBusiness",
+  "name": "PolicyTracker.in",
+  "description": "Insurance Agent CRM and Policy Management Software",
+  "url": "https://policytracker.in",
+  "telephone": "+91-6381615829",
+  "email": "support@policytracker.in",
+  "address": {
+    "@type": "PostalAddress",
+    "addressLocality": "Chennai",
+    "addressRegion": "Tamil Nadu",
+    "addressCountry": "IN"
+  },
+  "priceRange": "₹0 - ₹1999"
+};
 
 const LandingPage = () => {
-  // SEO-optimized features with high-intent keywords
-  const features = [
-    {
-      icon: FileText,
-      title: "Insurance Policy Management",
-      description: "Best-in-class policy tracking app for agents. Store and manage all motor, health, and life insurance policies in one centralized dashboard."
-    },
-    {
-      icon: Bell,
-      title: "Policy Renewal Reminder App",
-      description: "Never miss a policy renewal. Get automated renewal alerts and notifications for expiring policies - the smartest policy reminder system."
-    },
-    {
-      icon: MessageCircle,
-      title: "WhatsApp Reminders Integration",
-      description: "Send automated WhatsApp reminders to clients for policy renewals with one click. Keep clients engaged and boost retention."
-    },
-    {
-      icon: Users,
-      title: "Insurance Agent CRM",
-      description: "Complete client management system for insurance agents. Maintain detailed records with contact information and policy history."
-    },
-    {
-      icon: BarChart3,
-      title: "Dashboard & Reports Analytics",
-      description: "Visual dashboard showing total policies, renewals due, premium reports, and business insights. Export to Excel anytime."
-    },
-    {
-      icon: Smartphone,
-      title: "Mobile Policy Tracking App",
-      description: "Access your agent policy tracker anywhere - desktop, tablet, or mobile phone. Install as PWA for native app experience."
-    }
-  ];
-
-  const steps = [
-    {
-      step: 1,
-      title: "Dashboard Overview",
-      description: "Get an overview of all your insurance policies with a quick glance at active, due, expired, and new policies."
-    },
-    {
-      step: 2,
-      title: "Add New Policy",
-      description: "Easily input new policy details with our smart auto-fill feature that extracts data from PDFs and images."
-    },
-    {
-      step: 3,
-      title: "Manage Policies",
-      description: "View, edit, and organize all your policies in one convenient list."
-    },
-    {
-      step: 4,
-      title: "Track and Renew Due Policies",
-      description: "Get alerts for policies up for renewal and easily send reminders or renew them with a few clicks."
-    }
-  ];
-
-  const bulkImportSources = [
-    { icon: FileSpreadsheet, title: "Excel Sheets", description: "Import from .xlsx or .csv files" },
-    { icon: FileText, title: "Notepad Files", description: "Convert text records to digital" },
-    { icon: BookOpen, title: "Diary Records", description: "Digitize handwritten entries" },
-    { icon: Database, title: "Other Systems", description: "Migrate from any format" }
-  ];
-
-  const testimonials = [
-    {
-      name: "Rajesh Kumar",
-      role: "Insurance Agent, Delhi",
-      content: "Policy Tracker.in has transformed how I manage my client policies. The WhatsApp reminders have helped me retain more clients.",
-      rating: 5
-    },
-    {
-      name: "Priya Sharma",
-      role: "Insurance Advisor, Mumbai",
-      content: "Simple, effective, and exactly what I needed. The Excel report feature saves me hours of manual work every week.",
-      rating: 5
-    },
-    {
-      name: "Amit Patel",
-      role: "Agency Owner, Gujarat",
-      content: "My team relies on Policy Tracker daily. It's become an essential tool for our motor insurance business operations.",
-      rating: 5
-    },
-    {
-      name: "Sunita Verma",
-      role: "LIC Agent, Rajasthan",
-      content: "The PDF auto-fill feature is incredible! I save 30 minutes daily just by uploading policy documents instead of typing.",
-      rating: 5
-    },
-    {
-      name: "Vikram Singh",
-      role: "Senior Insurance Consultant, Punjab",
-      content: "Best investment for my agency. Client renewal rate improved by 25% after using the WhatsApp reminder feature.",
-      rating: 5
-    },
-    {
-      name: "Meera Reddy",
-      role: "Health Insurance Specialist, Hyderabad",
-      content: "Finally, a policy tracker that understands Indian insurance agents! The vernacular support and INR pricing is perfect.",
-      rating: 5
-    }
-  ];
-
-  const trustBadges = [
-    { icon: Lock, title: "SSL Secured", description: "256-bit encryption" },
-    { icon: ShieldCheck, title: "Data Protected", description: "Your data is safe" },
-    { icon: Award, title: "1000+ Users", description: "Trusted platform" },
-    { icon: Headphones, title: "24/7 Support", description: "Always here to help" }
-  ];
-
-  // SEO-optimized FAQs with high-intent keywords for AEO
-  const faqs = [
-    {
-      question: "What is the best agent policy tracker for insurance agents in India?",
-      answer: "Policy Tracker.in is the best agent policy tracker for insurance agents in India. It's a comprehensive insurance policy management software that helps you track motor, health, and life insurance policies, manage client relationships, send automated WhatsApp reminders for renewals, and generate Excel reports. Trusted by 1000+ insurance agents with a 4.8-star rating."
-    },
-    {
-      question: "What is Policy Tracker.in and how does it work?",
-      answer: "Policy Tracker.in is India's #1 policy tracking app for insurance agents. It works as an all-in-one insurance agent CRM where you can add policies (manually or via PDF upload), track renewal dates, send WhatsApp reminders to clients, manage client information, and generate premium reports. The platform is designed specifically for Indian insurance agents."
-    },
-    {
-      question: "Is this insurance policy management software free to use?",
-      answer: "Yes! Policy Tracker.in offers a free forever plan that includes up to 50 policies, basic renewal alerts, and client management. For agents managing more policies, we have affordable premium plans starting at just ₹199/month with unlimited policies and advanced features like WhatsApp automation and priority support."
-    },
-    {
-      question: "How does the policy renewal reminder app feature work?",
-      answer: "The policy renewal reminder feature automatically tracks all policy expiry dates. You get alerts on your dashboard for upcoming renewals. With one click, you can send personalized WhatsApp reminders to clients including policy details, expiry date, and your contact information. Premium plans include fully automated reminders sent before policy expiry."
-    },
-    {
-      question: "Can I use Policy Tracker as an insurance agent CRM?",
-      answer: "Absolutely! Policy Tracker.in works as a complete insurance agent CRM. You can manage client contact information, view policy history for each client, track all communications, and maintain relationships with your insurance clients in one organized platform."
-    },
-    {
-      question: "What makes this the best policy tracking app for agents?",
-      answer: "Policy Tracker.in is built specifically for Indian insurance agents with features like WhatsApp integration, Hindi language support, INR pricing, and support for all Indian insurance types. It's the most affordable agent policy tracker with a generous free tier, premium plans from ₹199/month, and features like PDF auto-fill that no other policy tracker offers."
-    },
-    {
-      question: "What types of insurance policies can I track?",
-      answer: "You can track all types of insurance policies including Motor Insurance (car, bike, two-wheeler, commercial vehicles), Health Insurance, Life Insurance, Term Plans, and general insurance policies. For motor insurance, the policy tracker supports vehicle details like make, model, and registration number."
-    },
-    {
-      question: "Is this policy tracker app available on mobile?",
-      answer: "Yes! Policy Tracker.in is a fully responsive policy tracking app that works perfectly on mobile phones, tablets, and desktops. You can also install it as a PWA (Progressive Web App) on your phone for quick access just like a native mobile app - no app store download needed."
-    },
-    {
-      question: "How do I import my existing policy data into the tracker?",
-      answer: "You can import policies from Excel files, CSV files, or any digital format. We also offer free data migration assistance where our team will personally help you digitize your existing records from diaries, notepads, or any other format into the policy tracker."
-    },
-    {
-      question: "Is my client and policy data secure?",
-      answer: "Yes, your data is completely secure. Policy Tracker.in uses industry-standard 256-bit SSL encryption, secure cloud storage, and regular backups. Your policy and client data is private and never shared with third parties. Only you can access your account data."
-    }
-  ];
-
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
   return (
     <>
       <SEOHead
-        title="Agent Policy Tracker | #1 Insurance Policy Management Software India"
-        description="Best agent policy tracker for insurance agents in India. Track motor policies, send WhatsApp renewal reminders, manage clients with our policy tracking app. Free trial - no credit card required."
+        title="PolicyTracker.in | #1 Insurance Agent CRM & Policy Management Software India"
+        description="India's best insurance agent CRM for motor, health & life insurance. Track policies, send WhatsApp renewal reminders, manage commissions, OCR PDF auto-fill. Free forever plan. Trusted by 1500+ agents."
         canonicalPath="/"
-        keywords="agent policy tracker, insurance policy tracker, policy tracking app for agents, insurance agent CRM, policy renewal reminder app, insurance policy management software"
+        keywords="insurance agent CRM, policy tracker India, insurance renewal reminder software, commission tracking software, motor insurance software, health insurance agent software, life insurance CRM, policy management software, WhatsApp policy reminder, insurance agent app India"
+        ogTitle="PolicyTracker.in - All-in-One CRM for Insurance Agents"
+        ogDescription="Track policies, send WhatsApp reminders, manage commissions. Free forever plan for insurance agents. Join 1500+ agents growing their business."
       />
-    <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-white to-teal-50">
-      {/* Navigation */}
-      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50">
-        <nav className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8" aria-label="Main navigation">
-          <div className="flex justify-between items-center h-14 sm:h-16">
-            {/* Logo */}
-            <Link to="/" className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-shrink-0">
-              <img src={logo} alt="Agent Policy Tracker" className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0" />
-              <div className="min-w-0">
-                <h1 className="text-base sm:text-xl font-bold text-gray-900 truncate">Policy Tracker.in</h1>
-                <p className="text-xs text-gray-600 hidden sm:block">Agent Policy Tracker</p>
-              </div>
-            </Link>
-            
-            {/* Desktop Navigation Links */}
-            <div className="hidden md:flex items-center space-x-6">
-              <Link to="/features" className="text-gray-600 hover:text-gray-900 font-medium text-sm transition-colors">
-                Features
-              </Link>
-              <Link to="/pricing" className="text-gray-600 hover:text-gray-900 font-medium text-sm transition-colors">
-                Pricing
-              </Link>
-              <Link to="/blog" className="text-gray-600 hover:text-gray-900 font-medium text-sm transition-colors">
-                Blog
-              </Link>
-              <Link to="/calculator" className="text-gray-600 hover:text-gray-900 font-medium text-sm transition-colors">
-                Calculator
-              </Link>
-              <Link to="/demo" className="text-gray-600 hover:text-gray-900 font-medium text-sm transition-colors">
-                Demo
-              </Link>
-            </div>
 
-            {/* Right side - Buttons */}
-            <div className="flex items-center space-x-2 sm:space-x-3">
-              {/* Desktop Auth Buttons */}
-              <Link to="/auth" className="hidden sm:block">
-                <Button variant="outline" size="sm">Login</Button>
-              </Link>
-              <Link to="/auth" className="hidden xs:block">
-                <Button size="sm" className="bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700 text-xs sm:text-sm px-2 sm:px-4">
-                  Start Free
-                </Button>
-              </Link>
+      {/* JSON-LD Structured Data */}
+      <script 
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+      />
+      <script 
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+      <script 
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
+      />
 
-              {/* Mobile Menu Button */}
-              <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-                <SheetTrigger asChild className="md:hidden">
-                  <Button variant="outline" size="sm" className="h-9 w-9 p-0">
-                    <Menu className="h-4 w-4" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="right" className="w-72 z-50 bg-white p-0">
-                  <div className="flex flex-col h-full">
-                    {/* Mobile Menu Header */}
-                    <div className="p-4 border-b">
-                      <div className="flex items-center space-x-3">
-                        <img src={logo} alt="Policy Tracker" className="w-10 h-10" />
-                        <div>
-                          <h2 className="font-bold text-gray-900">Policy Tracker.in</h2>
-                          <p className="text-xs text-gray-500">Agent Policy Tracker</p>
-                        </div>
-                      </div>
-                    </div>
+      <div className="min-h-screen bg-white">
+        {/* Navigation */}
+        <Navigation />
 
-                    {/* Mobile Navigation Links */}
-                    <div className="flex-1 py-4">
-                      <div className="space-y-1 px-3">
-                        <Link 
-                          to="/features" 
-                          onClick={() => setIsMobileMenuOpen(false)}
-                          className="flex items-center px-3 py-3 rounded-lg text-gray-700 hover:bg-gray-100 font-medium"
-                        >
-                          Features
-                        </Link>
-                        <Link 
-                          to="/pricing" 
-                          onClick={() => setIsMobileMenuOpen(false)}
-                          className="flex items-center px-3 py-3 rounded-lg text-gray-700 hover:bg-gray-100 font-medium"
-                        >
-                          Pricing
-                        </Link>
-                        <Link 
-                          to="/blog" 
-                          onClick={() => setIsMobileMenuOpen(false)}
-                          className="flex items-center px-3 py-3 rounded-lg text-gray-700 hover:bg-gray-100 font-medium"
-                        >
-                          Blog
-                        </Link>
-                        <Link 
-                          to="/calculator" 
-                          onClick={() => setIsMobileMenuOpen(false)}
-                          className="flex items-center px-3 py-3 rounded-lg text-gray-700 hover:bg-gray-100 font-medium"
-                        >
-                          Calculator
-                        </Link>
-                        <Link 
-                          to="/demo" 
-                          onClick={() => setIsMobileMenuOpen(false)}
-                          className="flex items-center px-3 py-3 rounded-lg text-gray-700 hover:bg-gray-100 font-medium"
-                        >
-                          Demo
-                        </Link>
-                      </div>
-                    </div>
+        {/* Hero Section - H1, Main Value Proposition */}
+        <HeroSection />
 
-                    {/* Mobile Auth Buttons */}
-                    <div className="p-4 border-t space-y-3">
-                      <Link to="/auth" onClick={() => setIsMobileMenuOpen(false)} className="block">
-                        <Button variant="outline" className="w-full">Login</Button>
-                      </Link>
-                      <Link to="/auth" onClick={() => setIsMobileMenuOpen(false)} className="block">
-                        <Button className="w-full bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700">
-                          Start Free Trial
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
-                </SheetContent>
-              </Sheet>
-            </div>
-          </div>
-        </nav>
-      </header>
+        {/* Benefits Section - Key Agent Benefits */}
+        <BenefitsSection />
 
-      {/* Hero Section - Optimized for SEO, AEO & AI Search */}
-      <section className="py-8 sm:py-12 lg:py-20 px-4 sm:px-6 lg:px-8" aria-labelledby="hero-heading">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center max-w-4xl mx-auto">
-            <div className="inline-flex items-center gap-2 bg-teal-50 text-teal-700 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium mb-4 sm:mb-6">
-              <Zap className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" aria-hidden="true" />
-              <span className="leading-tight">#1 Agent Policy Tracker - Trusted by 1000+ Insurance Agents in India</span>
-            </div>
-            <h2 id="hero-heading" className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-gray-900 leading-tight">
-              Best Insurance Policy
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-600 to-teal-600">
-                Tracker for Agents
-              </span>
-            </h2>
-            <p className="mt-4 sm:mt-6 text-base sm:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed px-2">
-              India's #1 <strong>agent policy tracker</strong> and <strong>insurance policy management software</strong>. 
-              Track motor policies, send WhatsApp renewal reminders, manage clients with our 
-              <strong> policy tracking app for agents</strong>. <span className="text-teal-600 font-semibold">Free to start. No credit card required.</span>
-            </p>
-            
-            {/* Primary CTA */}
-            <div className="mt-6 sm:mt-10 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-2">
-              <Link to="/auth" onClick={() => window.trackSignupClick?.('hero_primary')} className="w-full sm:w-auto">
-                <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700 text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 shadow-lg shadow-teal-200">
-                  Start Free Trial - No Credit Card
-                  <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" aria-hidden="true" />
-                </Button>
-              </Link>
-              <Link to="/demo-request" className="w-full sm:w-auto">
-                <Button size="lg" variant="outline" className="w-full sm:w-auto text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 border-2 border-cyan-600 text-cyan-700 hover:bg-cyan-50">
-                  Request a Demo
-                </Button>
-              </Link>
-            </div>
+        {/* Insurance Types Section - Motor, Health, Life, General */}
+        <InsuranceTypesSection />
 
-            {/* Trust Badges - Keyword Rich */}
-            <div className="mt-6 sm:mt-10 flex flex-wrap justify-center gap-3 sm:gap-6 lg:gap-10 text-gray-600 px-2">
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-teal-600 flex-shrink-0" aria-hidden="true" />
-                <span className="text-sm sm:text-base font-medium">Free Policy Tracker</span>
-              </div>
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-teal-600 flex-shrink-0" aria-hidden="true" />
-                <span className="text-sm sm:text-base font-medium">WhatsApp Reminders</span>
-              </div>
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-teal-600 flex-shrink-0" aria-hidden="true" />
-                <span className="text-sm sm:text-base font-medium">Insurance Agent CRM</span>
-              </div>
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-teal-600 flex-shrink-0" aria-hidden="true" />
-                <span className="text-sm sm:text-base font-medium">Mobile Policy Tracking</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+        {/* Features Section - Product Features Grid */}
+        <FeaturesSection />
 
-      {/* Trust Badges Section */}
-      <section className="py-6 sm:py-8 bg-gray-50 border-y border-gray-200" aria-label="Trust indicators">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            {trustBadges.map((badge, index) => (
-              <div key={index} className="flex items-center justify-center gap-2 sm:gap-3 py-3 sm:py-4">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-cyan-100 to-teal-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <badge.icon className="h-5 w-5 sm:h-6 sm:w-6 text-teal-600" />
-                </div>
-                <div className="min-w-0">
-                  <p className="font-semibold text-gray-900 text-xs sm:text-sm lg:text-base truncate">{badge.title}</p>
-                  <p className="text-xs sm:text-sm text-gray-500 truncate">{badge.description}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+        {/* How It Works - 3-Step Process */}
+        <HowItWorksSection />
 
-      {/* Step-by-Step Section with Single Image */}
-      <section className="py-16 sm:py-24 bg-white" id="how-it-works" aria-labelledby="steps-heading">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 id="steps-heading" className="text-3xl sm:text-4xl font-bold text-gray-900">
-              See Exactly How It Works
-            </h2>
-            <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-              From chaos to clarity in 4 simple steps. Here's how insurance agents like you manage policies effortlessly.
-            </p>
-          </div>
-          
-          {/* Single Combined Screenshot */}
-          <div className="relative mb-12">
-            <div className="absolute -inset-4 bg-gradient-to-r from-cyan-200/40 to-teal-200/40 rounded-2xl blur-xl"></div>
-            <div className="relative rounded-xl overflow-hidden shadow-2xl border border-gray-200 bg-white">
-              <div className="bg-gray-100 px-4 py-2 flex items-center gap-2">
-                <div className="flex gap-1.5">
-                  <div className="w-3 h-3 rounded-full bg-red-400"></div>
-                  <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
-                  <div className="w-3 h-3 rounded-full bg-green-400"></div>
-                </div>
-                <span className="text-xs text-gray-500 ml-2">policytracker.in</span>
-              </div>
-              <img 
-                src={howItWorksImg} 
-                alt="Agent Policy Tracker Dashboard - How to track insurance policies, manage renewals, send WhatsApp reminders"
-                title="Best Agent Policy Tracker - Insurance Policy Management Software"
-                className="w-full h-auto"
-                loading="lazy"
-                width="1200"
-                height="675"
-              />
-            </div>
-          </div>
+        {/* Testimonials & Social Proof */}
+        <TestimonialsSection />
 
-          {/* Steps Description */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {steps.map((item, index) => (
-              <div key={index} className="text-center p-6 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-100 shadow-sm">
-                <div className="inline-flex items-center justify-center w-10 h-10 bg-gradient-to-r from-cyan-600 to-teal-600 text-white rounded-full font-bold mb-4">
-                  {item.step}
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">{item.title}</h3>
-                <p className="text-gray-600 text-sm">{item.description}</p>
-              </div>
-            ))}
-          </div>
+        {/* Pricing Section */}
+        <PricingSection />
 
-          <div className="mt-16 text-center">
-            <Link to="/auth" onClick={() => window.trackSignupClick?.('after_screenshots')}>
-              <Button size="lg" className="bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700 text-lg px-10 py-6 shadow-lg shadow-teal-200">
-                Start Managing Policies Now
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
+        {/* FAQ Section - SEO & AEO Optimized */}
+        <FAQSection />
 
-      {/* Bulk Import Section */}
-      <section className="py-16 sm:py-24 bg-gradient-to-br from-cyan-600 to-teal-600" aria-labelledby="bulk-import-heading">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 bg-white/20 text-white px-4 py-2 rounded-full text-sm font-medium mb-6">
-              <Upload className="h-4 w-4" />
-              Data Migration Made Easy
-            </div>
-            <h2 id="bulk-import-heading" className="text-3xl sm:text-4xl font-bold text-white mb-4">
-              Got Existing Data? We'll Help You Import It!
-            </h2>
-            <p className="text-lg text-cyan-100 max-w-2xl mx-auto">
-              Don't start from scratch. Bring your existing policy records from any format — we'll help you go digital in minutes.
-            </p>
-          </div>
+        {/* Final CTA */}
+        <CTASection />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            {bulkImportSources.map((source, index) => (
-              <Card key={index} className="bg-white/10 backdrop-blur-sm border-white/20 text-white hover:bg-white/20 transition-colors">
-                <CardContent className="p-6 text-center">
-                  <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-4">
-                    <source.icon className="h-7 w-7" />
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2">{source.title}</h3>
-                  <p className="text-cyan-100 text-sm">{source.description}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+        {/* Footer */}
+        <Footer />
 
-          <div className="text-center">
-            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 max-w-3xl mx-auto">
-              <h3 className="text-2xl font-bold text-white mb-4">
-                Need Help Importing Your Data?
-              </h3>
-              <p className="text-cyan-100 mb-6">
-                Our team will personally help you migrate your existing policy records into Policy Tracker. 
-                <strong className="text-white"> Free data import assistance</strong> for all new users.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link to="/enquiry">
-                  <Button size="lg" variant="secondary" className="w-full sm:w-auto bg-white text-teal-600 hover:bg-gray-100 text-lg px-8">
-                    Request Free Data Import
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </Link>
-                <Link to="/auth">
-                  <Button size="lg" className="w-full sm:w-auto bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 border border-white/40 text-lg px-8">
-                    Start Fresh Instead
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Grid Section */}
-      <section id="features" className="py-12 sm:py-16 lg:py-24 bg-white" aria-labelledby="features-heading">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10 sm:mb-16">
-            <h2 id="features-heading" className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 leading-tight">
-              Complete Insurance Policy Management Software
-            </h2>
-            <p className="mt-3 sm:mt-4 text-base sm:text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
-              Everything you need in an <strong>agent policy tracker</strong>. Built specifically for insurance agents in India. Simple, powerful, and designed to save you time.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-            {features.map((feature, index) => (
-              <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 bg-white group">
-                <CardContent className="p-4 sm:p-6">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-cyan-100 to-teal-100 rounded-lg flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform">
-                    <feature.icon className="h-5 w-5 sm:h-6 sm:w-6 text-teal-600" />
-                  </div>
-                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 leading-tight">{feature.title}</h3>
-                  <p className="text-sm sm:text-base text-gray-600 leading-relaxed">{feature.description}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {/* CTA after features */}
-          <div className="mt-8 sm:mt-12 text-center">
-            <Link to="/auth" onClick={() => window.trackSignupClick?.('after_features')}>
-              <Button size="lg" className="bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700 text-base sm:text-lg px-6 sm:px-10">
-                Get All Features Free
-                <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Quick Stats Section */}
-      <section className="py-16 bg-gradient-to-br from-cyan-50 to-teal-50" aria-label="Platform statistics">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="text-4xl sm:text-5xl font-bold text-teal-600">1000+</div>
-              <p className="text-gray-600 mt-2">Active Agents</p>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl sm:text-5xl font-bold text-teal-600">50K+</div>
-              <p className="text-gray-600 mt-2">Policies Tracked</p>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl sm:text-5xl font-bold text-teal-600">₹10Cr+</div>
-              <p className="text-gray-600 mt-2">Premiums Managed</p>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl sm:text-5xl font-bold text-teal-600">4.8★</div>
-              <p className="text-gray-600 mt-2">User Rating</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials Section */}
-      <section className="py-12 sm:py-16 lg:py-24 bg-white" aria-labelledby="testimonials-heading">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-8 sm:mb-12">
-            <h2 id="testimonials-heading" className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 leading-tight">
-              What Insurance Agents Say
-            </h2>
-            <p className="mt-3 sm:mt-4 text-base sm:text-lg text-gray-600">
-              Trusted by thousands of insurance professionals across India
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-2 mt-3 sm:mt-4">
-              <div className="flex">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-400 fill-current" />
-                ))}
-              </div>
-              <span className="text-base sm:text-lg font-semibold text-gray-900">4.8/5</span>
-              <span className="text-sm sm:text-base text-gray-500">(Based on 500+ reviews)</span>
-            </div>
-          </div>
-
-          {/* Written Testimonials - Responsive grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {testimonials.map((testimonial, index) => (
-              <Card key={index} className="border-0 shadow-lg bg-gradient-to-br from-gray-50 to-white hover:shadow-xl transition-shadow">
-                <CardContent className="p-4 sm:p-6">
-                  <div className="flex mb-3 sm:mb-4">
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star key={i} className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-400 fill-current" />
-                    ))}
-                  </div>
-                  <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4 italic leading-relaxed">"{testimonial.content}"</p>
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-cyan-500 to-teal-500 rounded-full flex items-center justify-center text-white font-bold text-sm sm:text-base flex-shrink-0">
-                      {testimonial.name.charAt(0)}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-semibold text-gray-900 text-sm sm:text-base truncate">{testimonial.name}</p>
-                      <p className="text-xs sm:text-sm text-gray-500 truncate">{testimonial.role}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {/* Google Review Schema CTA */}
-          <div className="mt-12 text-center">
-            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-cyan-50 to-teal-50 text-teal-700 px-6 py-3 rounded-full border border-teal-200">
-              <CheckCircle className="h-5 w-5" />
-              <span className="font-medium">Verified Reviews from Real Insurance Agents</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ Section */}
-      <section className="py-16 sm:py-24 bg-gray-50" id="faq" aria-labelledby="faq-heading">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 id="faq-heading" className="text-3xl sm:text-4xl font-bold text-gray-900">
-              Frequently Asked Questions
-            </h2>
-            <p className="mt-4 text-lg text-gray-600">
-              Everything you need to know about Policy Tracker.in
-            </p>
-          </div>
-          
-          <Accordion type="single" collapsible className="space-y-4">
-            {faqs.map((faq, index) => (
-              <AccordionItem 
-                key={index} 
-                value={`faq-${index}`}
-                className="bg-white rounded-xl border border-gray-200 px-6 shadow-sm"
-              >
-                <AccordionTrigger className="text-left text-gray-900 font-semibold hover:text-teal-600 py-5">
-                  {faq.question}
-                </AccordionTrigger>
-                <AccordionContent className="text-gray-600 pb-5">
-                  {faq.answer}
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-
-          <div className="mt-10 text-center">
-            <p className="text-gray-600 mb-4">Still have questions?</p>
-            <Link to="/enquiry">
-              <Button variant="outline" size="lg" className="border-teal-600 text-teal-600 hover:bg-teal-50">
-                <Headphones className="mr-2 h-5 w-5" />
-                Contact Support
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Final CTA Section */}
-      <section className="py-16 sm:py-24 bg-gray-900" aria-labelledby="final-cta-heading">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <TrendingUp className="h-12 w-12 text-teal-400 mx-auto mb-6" />
-          <h2 id="final-cta-heading" className="text-3xl sm:text-4xl font-bold text-white mb-6">
-            Ready to Stop Missing Renewals?
-          </h2>
-          <p className="text-lg text-gray-300 mb-8 max-w-2xl mx-auto">
-            Join 1000+ insurance agents who are growing their business with Policy Tracker. 
-            Start free today — no credit card, no commitment.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/auth" onClick={() => window.trackSignupClick?.('final_cta')}>
-              <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-600 hover:to-teal-600 text-lg px-10 py-6">
-                Start Free Trial Now
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-            <Link to="/enquiry">
-              <Button size="lg" className="w-full sm:w-auto bg-gray-700 text-white hover:bg-gray-600 border border-gray-500 text-lg px-10 py-6">
-                Contact Us
-              </Button>
-            </Link>
-          </div>
-          <p className="mt-6 text-gray-500 text-sm">
-            ✓ Free forever plan available &nbsp;•&nbsp; ✓ No credit card required &nbsp;•&nbsp; ✓ Cancel anytime
-          </p>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-gray-900 text-gray-400 py-12 border-t border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div className="md:col-span-2">
-              <div className="flex items-center space-x-3 mb-4">
-                <img src={logo} alt="Policy Tracker.in - Best Agent Policy Tracker Software India" className="w-10 h-10" />
-                <span className="text-xl font-bold text-white">Policy Tracker.in</span>
-              </div>
-              <p className="text-sm mb-4">
-                India's #1 <strong>agent policy tracker</strong> and insurance policy management software. 
-                Track renewals, send WhatsApp reminders, manage clients with our policy tracking app for agents.
-              </p>
-              <p className="text-sm">
-                <strong className="text-white">Contact:</strong> policytracker.in@gmail.com
-              </p>
-            </div>
-            <div>
-              <h4 className="text-white font-semibold mb-4">Quick Links</h4>
-              <ul className="space-y-2 text-sm">
-                <li><Link to="/auth" className="hover:text-white transition-colors">Login</Link></li>
-                <li><Link to="/auth" className="hover:text-white transition-colors">Sign Up Free</Link></li>
-                <li><Link to="/enquiry" className="hover:text-white transition-colors">Enquiry</Link></li>
-                <li><Link to="/contact" className="hover:text-white transition-colors">Contact Us</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-white font-semibold mb-4">Legal</h4>
-              <ul className="space-y-2 text-sm">
-                <li><Link to="/terms-conditions" className="hover:text-white transition-colors">Terms & Conditions</Link></li>
-                <li><Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
-                <li><Link to="/cancellation-refunds" className="hover:text-white transition-colors">Refund Policy</Link></li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm">
-            <p>© 2026 PolicyTracker.in - Best Agent Policy Tracker | Insurance Policy Management Software for Indian Agents | Policy Tracking App | All Rights Reserved</p>
-          </div>
-        </div>
-      </footer>
-
-      <WhatsAppFloatingButton />
-    </div>
+        {/* WhatsApp Floating Button */}
+        <WhatsAppFloatingButton />
+      </div>
     </>
   );
 };
