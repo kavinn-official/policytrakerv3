@@ -78,23 +78,25 @@ const PolicyViewDialogRevamped = ({ policy, open, onOpenChange }: PolicyViewDial
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg w-[95vw] max-h-[90vh] p-0 overflow-hidden">
+      <DialogContent className="max-w-lg w-[95vw] max-h-[90vh] p-0 overflow-hidden [&>button]:top-2 [&>button]:right-2 [&>button]:text-white [&>button]:bg-white/20 [&>button]:rounded-full [&>button]:p-1.5 [&>button]:hover:bg-white/30 [&>button]:z-20">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-4 sm:p-6 text-white">
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-4 sm:p-6 pt-10 sm:pt-6 text-white relative">
           <DialogHeader className="space-y-2">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-white/20 rounded-lg">
+            <div className="flex items-start justify-between gap-3 pr-8 sm:pr-0">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="p-2 bg-white/20 rounded-lg flex-shrink-0">
                   <FileText className="h-5 w-5" />
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <DialogTitle className="text-lg sm:text-xl font-bold text-white">
                     Policy Details
                   </DialogTitle>
-                  <p className="text-blue-100 text-sm mt-0.5">{policy.insurance_type || 'Vehicle Insurance'}</p>
+                  <p className="text-blue-100 text-sm mt-0.5 truncate">{policy.insurance_type || 'Vehicle Insurance'}</p>
                 </div>
               </div>
-              {getStatusBadge()}
+              <div className="flex-shrink-0">
+                {getStatusBadge()}
+              </div>
             </div>
           </DialogHeader>
 
@@ -104,8 +106,8 @@ const PolicyViewDialogRevamped = ({ policy, open, onOpenChange }: PolicyViewDial
               {getInsuranceIcon()}
               <span className="text-blue-100 text-xs uppercase tracking-wide">Policy Number</span>
             </div>
-            <p className="text-xl sm:text-2xl font-bold">{policy.policy_number}</p>
-            <p className="text-blue-200 text-sm mt-1">{policy.company_name || 'Insurance Company'}</p>
+            <p className="text-lg sm:text-xl font-bold break-all">{policy.policy_number}</p>
+            <p className="text-blue-200 text-sm mt-1 truncate">{policy.company_name || 'Insurance Company'}</p>
           </div>
         </div>
 
