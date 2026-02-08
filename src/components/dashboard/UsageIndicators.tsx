@@ -16,9 +16,9 @@ const UsageIndicators = () => {
       <Card className="shadow-lg border-0">
         <CardContent className="p-4">
           <div className="animate-pulse space-y-3">
-            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-            <div className="h-2 bg-gray-200 rounded"></div>
-            <div className="h-2 bg-gray-200 rounded"></div>
+            <div className="h-4 bg-muted rounded w-1/2"></div>
+            <div className="h-2 bg-muted rounded"></div>
+            <div className="h-2 bg-muted rounded"></div>
           </div>
         </CardContent>
       </Card>
@@ -30,15 +30,15 @@ const UsageIndicators = () => {
   const storagePercentage = getUsagePercentage(usage.storageUsedBytes, limits.maxStorageBytes);
 
   const getProgressColor = (percentage: number) => {
-    if (percentage >= 90) return "bg-red-500";
+    if (percentage >= 90) return "bg-destructive";
     if (percentage >= 70) return "bg-orange-500";
-    return "bg-blue-500";
+    return "bg-primary";
   };
 
   return (
     <Card className="shadow-lg border-0">
       <CardHeader className="pb-2 flex flex-row items-center justify-between">
-        <CardTitle className="text-sm font-medium text-gray-700 flex items-center gap-2">
+        <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
           {subscribed ? (
             <>
               <Crown className="h-4 w-4 text-yellow-500" />
@@ -63,7 +63,7 @@ const UsageIndicators = () => {
         {/* Policies */}
         <div className="space-y-1">
           <div className="flex items-center justify-between text-xs">
-            <span className="flex items-center gap-1.5 text-gray-600">
+            <span className="flex items-center gap-1.5 text-muted-foreground">
               <FileText className="h-3 w-3" />
               Policies
             </span>
@@ -83,7 +83,7 @@ const UsageIndicators = () => {
         {/* OCR Scans */}
         <div className="space-y-1">
           <div className="flex items-center justify-between text-xs">
-            <span className="flex items-center gap-1.5 text-gray-600">
+            <span className="flex items-center gap-1.5 text-muted-foreground">
               <Scan className="h-3 w-3" />
               OCR Scans (Monthly)
             </span>
@@ -103,7 +103,7 @@ const UsageIndicators = () => {
         {/* Storage */}
         <div className="space-y-1">
           <div className="flex items-center justify-between text-xs">
-            <span className="flex items-center gap-1.5 text-gray-600">
+            <span className="flex items-center gap-1.5 text-muted-foreground">
               <HardDrive className="h-3 w-3" />
               Storage
             </span>
