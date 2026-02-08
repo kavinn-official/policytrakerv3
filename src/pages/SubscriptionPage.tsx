@@ -1,8 +1,8 @@
-
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
-import SubscriptionCard from "@/components/SubscriptionCard";
+import SubscriptionPageRevamped from "@/components/subscription/SubscriptionPageRevamped";
 import BackButton from "@/components/BackButton";
+import { Loader2 } from "lucide-react";
 
 const SubscriptionPage = () => {
   const { user, loading } = useAuth();
@@ -11,8 +11,8 @@ const SubscriptionPage = () => {
     return (
       <div className="min-h-screen flex items-center justify-center px-2 sm:px-4">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 sm:mt-4 text-gray-600 text-sm sm:text-base">Loading...</p>
+          <Loader2 className="h-8 w-8 sm:h-12 sm:w-12 animate-spin text-primary mx-auto" />
+          <p className="mt-2 sm:mt-4 text-muted-foreground text-sm sm:text-base">Loading...</p>
         </div>
       </div>
     );
@@ -28,13 +28,13 @@ const SubscriptionPage = () => {
         <div className="flex items-center gap-4">
           <BackButton />
           <div>
-            <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-900">Subscription</h1>
-            <p className="text-gray-600 text-xs sm:text-sm lg:text-base">Manage your subscription plan</p>
+            <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold text-foreground">Subscription</h1>
+            <p className="text-muted-foreground text-xs sm:text-sm lg:text-base">Manage your subscription plan</p>
           </div>
         </div>
       </div>
 
-      <SubscriptionCard />
+      <SubscriptionPageRevamped />
     </div>
   );
 };

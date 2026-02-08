@@ -1,7 +1,7 @@
 import PolicyList from "@/components/PolicyList";
 import BackButton from "@/components/BackButton";
 import BulkUpload from "@/components/BulkUpload";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Upload } from "lucide-react";
 
 const Policies = () => {
@@ -11,8 +11,8 @@ const Policies = () => {
         <div className="flex items-center gap-4">
           <BackButton />
           <div>
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Policies</h1>
-            <p className="text-gray-600 text-sm sm:text-base">Manage and track all your insurance policies</p>
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">Policies</h1>
+            <p className="text-muted-foreground text-sm sm:text-base">Manage and track all your insurance policies</p>
           </div>
         </div>
       </div>
@@ -22,10 +22,11 @@ const Policies = () => {
       {/* Bulk Upload Section */}
       <Card className="shadow-lg border-0">
         <CardHeader className="bg-gradient-to-r from-purple-50 to-indigo-50">
-          <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
             <Upload className="h-5 w-5 text-purple-600" />
             Bulk Policy Upload
           </CardTitle>
+          <CardDescription>Upload multiple policies at once using Excel template</CardDescription>
         </CardHeader>
         <CardContent className="p-4 sm:p-6">
           <BulkUpload />

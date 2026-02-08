@@ -671,11 +671,11 @@ Please contact us for renewal.`;
                         <Button 
                           size="sm" 
                           variant="outline"
-                          className="hover:bg-blue-50 hover:border-blue-200 min-h-[40px] flex-1"
+                          className="hover:bg-blue-50 hover:border-blue-200 min-h-[40px] w-10 sm:flex-1 sm:w-auto p-0 sm:px-3"
                           onClick={() => handleCall(policy)}
                         >
-                          <Phone className="h-4 w-4 mr-1" />
-                          <span>Call</span>
+                          <Phone className="h-4 w-4" />
+                          <span className="hidden sm:inline sm:ml-1">Call</span>
                         </Button>
                       </div>
                     </div>

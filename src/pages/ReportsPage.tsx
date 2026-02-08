@@ -44,6 +44,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { TrendCharts, DistributionCharts } from "@/components/reports/ReportCharts";
 import { ReportFilters } from "@/components/reports/ReportFilters";
+import CommissionAnalytics from "@/components/reports/CommissionAnalytics";
 
 interface PolicyStats {
   totalPolicies: number;
@@ -928,6 +929,26 @@ const ReportsPage = () => {
             formatCurrency={formatCurrency}
             companyData={displayStats.byCompany}
           />
+
+          {/* Commission Analytics Section */}
+          <Card className="shadow-lg border-0">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <IndianRupee className="h-5 w-5 text-amber-600" />
+                Commission Analytics
+              </CardTitle>
+              <CardDescription>
+                Track your commission earnings and performance
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CommissionAnalytics 
+                policies={displayStats.policies} 
+                formatCurrency={formatCurrency} 
+                periodLabel={periodLabel}
+              />
+            </CardContent>
+          </Card>
 
           {/* Month-over-Month Trend */}
           <TrendCharts monthlyTrends={monthlyTrends} formatCurrency={formatCurrency} />
