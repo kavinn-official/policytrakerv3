@@ -1,7 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const ADMIN_WHATSAPP = "916381615829";
+// Use environment variable with fallback for backwards compatibility
+const ADMIN_WHATSAPP = Deno.env.get('ADMIN_WHATSAPP_NUMBER') ?? "916381615829";
 
 // Allowed origins for CORS - restrict to production domains
 const ALLOWED_ORIGINS = [

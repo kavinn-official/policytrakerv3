@@ -1,8 +1,9 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 // HTML escape function to prevent XSS
@@ -28,7 +29,45 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    // Authenticate the user
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized - Missing or invalid authorization header" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+    
+    if (claimsError || !claimsData?.claims) {
+      console.error("Authentication failed");
+      return new Response(
+        JSON.stringify({ error: "Unauthorized - Invalid token" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const userId = claimsData.claims.sub;
+    const userEmail = claimsData.claims.email as string;
+
     const { name, email }: WelcomeEmailRequest = await req.json();
+
+    // Ensure user can only send welcome email to their own email address
+    if (email !== userEmail) {
+      console.error("Email mismatch - user attempted to send email to different address");
+      return new Response(
+        JSON.stringify({ error: "You can only send welcome emails to your own email address" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     if (!email) {
       console.error("Missing email address");
@@ -47,8 +86,9 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    console.log(`Sending welcome email for user: ${userId.substring(0, 8)}...`);
+
     const userName = escapeHtml(name) || "Valued User";
-    console.log(`Sending welcome email to user`);
 
     const emailResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",
