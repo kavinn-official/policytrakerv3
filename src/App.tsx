@@ -40,6 +40,17 @@ const PremiumCalculatorPage = lazy(() => import("./pages/PremiumCalculatorPage")
 const DemoRequestPage = lazy(() => import("./pages/DemoRequestPage"));
 const BulkUploadPage = lazy(() => import("./pages/BulkUploadPage"));
 
+// Admin Panel Pages
+const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
+const AdminBlog = lazy(() => import("./pages/admin/AdminBlog"));
+const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
+const AdminAuditLogs = lazy(() => import("./pages/admin/AdminAuditLogs"));
+const AdminSubscriptions = lazy(() => import("./pages/admin/AdminSubscriptions"));
+const AdminSupport = lazy(() => import("./pages/admin/AdminSupport"));
+const AdminAnalytics = lazy(() => import("./pages/admin/AdminAnalytics"));
+
 // Loading fallback component
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center">
@@ -157,6 +168,23 @@ const App = () => (
               <Route path="/blog/:slug" element={<BlogArticlePage />} />
               <Route path="/calculator" element={<PremiumCalculatorPage />} />
               <Route path="/demo-request" element={<DemoRequestPage />} />
+              
+              {/* Admin Panel Routes */}
+              <Route path="/admin" element={
+                <ProtectedRoute>
+                  <AdminLayout />
+                </ProtectedRoute>
+              }>
+                <Route index element={<AdminDashboard />} />
+                <Route path="users" element={<AdminUsers />} />
+                <Route path="subscriptions" element={<AdminSubscriptions />} />
+                <Route path="support" element={<AdminSupport />} />
+                <Route path="blog" element={<AdminBlog />} />
+                <Route path="analytics" element={<AdminAnalytics />} />
+                <Route path="settings" element={<AdminSettings />} />
+                <Route path="audit" element={<AdminAuditLogs />} />
+              </Route>
+              
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

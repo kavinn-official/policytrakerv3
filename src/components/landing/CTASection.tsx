@@ -51,7 +51,7 @@ const CTASection = () => {
             </Button>
           </Link>
           <Link to="/demo-request">
-            <Button size="lg" variant="outline" className="w-full sm:w-auto border-2 border-white text-white hover:bg-white/10 text-lg px-10 py-7">
+            <Button size="lg" variant="outline" className="w-full sm:w-auto border-2 border-white bg-white/10 text-white hover:bg-white hover:text-teal-700 text-lg px-10 py-7 backdrop-blur-sm">
               Request a Demo
             </Button>
           </Link>

@@ -6,7 +6,7 @@
   <!-- Homepage / Landing Page - Highest Priority -->
   <url>
     <loc>https://policytracker.in</loc>
-    <lastmod>2026-02-05</lastmod>
+    <lastmod>2026-02-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
     <image:image>
@@ -24,7 +24,7 @@
   <!-- Features Page - SEO Important -->
   <url>
     <loc>https://policytracker.in/features</loc>
-    <lastmod>2026-02-05</lastmod>
+    <lastmod>2026-02-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.95</priority>
     <image:image>
@@ -36,7 +36,7 @@
   <!-- Pricing Page - Conversion Important -->
   <url>
     <loc>https://policytracker.in/pricing</loc>
-    <lastmod>2026-02-05</lastmod>
+    <lastmod>2026-02-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.95</priority>
     <image:image>
@@ -45,10 +45,22 @@
     </image:image>
   </url>
   
+  <!-- Demo Request Page -->
+  <url>
+    <loc>https://policytracker.in/demo-request</loc>
+    <lastmod>2026-02-08</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://policytracker.in/og-image.png</image:loc>
+      <image:title>Request Demo - Policy Tracker Insurance Software</image:title>
+    </image:image>
+  </url>
+  
   <!-- Demo Page - Important for user engagement -->
   <url>
     <loc>https://policytracker.in/demo</loc>
-    <lastmod>2026-02-05</lastmod>
+    <lastmod>2026-02-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
     <image:image>
@@ -60,7 +72,7 @@
   <!-- Authentication / Signup Page -->
   <url>
     <loc>https://policytracker.in/auth</loc>
-    <lastmod>2026-02-05</lastmod>
+    <lastmod>2026-02-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.85</priority>
   </url>
@@ -68,7 +80,7 @@
   <!-- Enquiry / Contact Form - Lead Generation -->
   <url>
     <loc>https://policytracker.in/enquiry</loc>
-    <lastmod>2026-02-05</lastmod>
+    <lastmod>2026-02-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -76,7 +88,7 @@
   <!-- Contact Us -->
   <url>
     <loc>https://policytracker.in/contact</loc>
-    <lastmod>2026-02-05</lastmod>
+    <lastmod>2026-02-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -84,7 +96,7 @@
   <!-- Terms & Conditions -->
   <url>
     <loc>https://policytracker.in/terms-conditions</loc>
-    <lastmod>2026-02-05</lastmod>
+    <lastmod>2026-02-08</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -92,7 +104,7 @@
   <!-- Privacy Policy -->
   <url>
     <loc>https://policytracker.in/privacy</loc>
-    <lastmod>2026-02-05</lastmod>
+    <lastmod>2026-02-08</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -100,7 +112,7 @@
   <!-- Cancellation & Refunds -->
   <url>
     <loc>https://policytracker.in/cancellation-refunds</loc>
-    <lastmod>2026-02-05</lastmod>
+    <lastmod>2026-02-08</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.4</priority>
   </url>
@@ -108,7 +120,7 @@
   <!-- Blog Section - SEO Important for Organic Traffic -->
   <url>
     <loc>https://policytracker.in/blog</loc>
-    <lastmod>2026-02-05</lastmod>
+    <lastmod>2026-02-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
     <image:image>
@@ -120,7 +132,7 @@
   <!-- Premium Calculator - SEO Tool Page -->
   <url>
     <loc>https://policytracker.in/calculator</loc>
-    <lastmod>2026-02-05</lastmod>
+    <lastmod>2026-02-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.85</priority>
     <image:image>
@@ -132,56 +144,56 @@
   <!-- Blog Articles -->
   <url>
     <loc>https://policytracker.in/blog/motor-insurance-renewal-tips</loc>
-    <lastmod>2026-02-01</lastmod>
+    <lastmod>2026-02-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   
   <url>
     <loc>https://policytracker.in/blog/whatsapp-reminder-strategies</loc>
-    <lastmod>2026-01-28</lastmod>
+    <lastmod>2026-02-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   
   <url>
     <loc>https://policytracker.in/blog/vehicle-insurance-claim-process</loc>
-    <lastmod>2026-01-25</lastmod>
+    <lastmod>2026-02-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   
   <url>
     <loc>https://policytracker.in/blog/health-insurance-claim-tips</loc>
-    <lastmod>2026-02-03</lastmod>
+    <lastmod>2026-02-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   
   <url>
     <loc>https://policytracker.in/blog/life-insurance-selling-strategies</loc>
-    <lastmod>2026-02-02</lastmod>
+    <lastmod>2026-02-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   
   <url>
     <loc>https://policytracker.in/blog/policy-document-management</loc>
-    <lastmod>2026-01-30</lastmod>
+    <lastmod>2026-02-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   
   <url>
     <loc>https://policytracker.in/blog/family-floater-health-insurance</loc>
-    <lastmod>2026-01-22</lastmod>
+    <lastmod>2026-02-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   
   <url>
     <loc>https://policytracker.in/blog/term-vs-whole-life-insurance</loc>
-    <lastmod>2026-01-18</lastmod>
+    <lastmod>2026-02-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>

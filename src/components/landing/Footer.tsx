@@ -61,9 +61,9 @@ const Footer = () => {
             
             {/* Contact Info */}
             <div className="space-y-3 text-sm">
-              <a href="mailto:support@policytracker.in" className="flex items-center gap-2 hover:text-white transition-colors">
+              <a href="mailto:policytracker.in@gmail.com" className="flex items-center gap-2 hover:text-white transition-colors">
                 <Mail className="h-4 w-4" />
-                support@policytracker.in
+                policytracker.in@gmail.com
               </a>
               <a href="tel:+916381615829" className="flex items-center gap-2 hover:text-white transition-colors">
                 <Phone className="h-4 w-4" />

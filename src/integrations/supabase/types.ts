@@ -14,6 +14,102 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit_logs: {
+        Row: {
+          action: string
+          admin_user_id: string
+          created_at: string
+          details: Json | null
+          id: string
+          ip_address: string | null
+          target_id: string | null
+          target_type: string
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          admin_user_id: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          target_id?: string | null
+          target_type: string
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          admin_user_id?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          target_id?: string | null
+          target_type?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
+      blog_posts: {
+        Row: {
+          author_id: string
+          category: string
+          content: string
+          created_at: string
+          excerpt: string | null
+          featured_image: string | null
+          id: string
+          is_featured: boolean
+          is_published: boolean
+          meta_description: string | null
+          meta_title: string | null
+          published_at: string | null
+          slug: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          author_id: string
+          category?: string
+          content: string
+          created_at?: string
+          excerpt?: string | null
+          featured_image?: string | null
+          id?: string
+          is_featured?: boolean
+          is_published?: boolean
+          meta_description?: string | null
+          meta_title?: string | null
+          published_at?: string | null
+          slug: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          author_id?: string
+          category?: string
+          content?: string
+          created_at?: string
+          excerpt?: string | null
+          featured_image?: string | null
+          id?: string
+          is_featured?: boolean
+          is_published?: boolean
+          meta_description?: string | null
+          meta_title?: string | null
+          published_at?: string | null
+          slug?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           address: string | null
@@ -44,6 +140,42 @@ export type Database = {
           phone?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      email_logs: {
+        Row: {
+          created_at: string
+          email_type: string
+          error_message: string | null
+          id: string
+          metadata: Json | null
+          recipient_email: string
+          recipient_user_id: string | null
+          status: string
+          subject: string
+        }
+        Insert: {
+          created_at?: string
+          email_type: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          recipient_email: string
+          recipient_user_id?: string | null
+          status?: string
+          subject: string
+        }
+        Update: {
+          created_at?: string
+          email_type?: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          recipient_email?: string
+          recipient_user_id?: string | null
+          status?: string
+          subject?: string
         }
         Relationships: []
       }
@@ -83,6 +215,36 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      platform_settings: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value: Json
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
         }
         Relationships: []
       }
@@ -317,6 +479,51 @@ export type Database = {
         }
         Relationships: []
       }
+      support_tickets: {
+        Row: {
+          admin_response: string | null
+          created_at: string
+          id: string
+          message: string
+          priority: string
+          responded_at: string | null
+          responded_by: string | null
+          status: string
+          subject: string
+          updated_at: string
+          user_email: string
+          user_id: string | null
+        }
+        Insert: {
+          admin_response?: string | null
+          created_at?: string
+          id?: string
+          message: string
+          priority?: string
+          responded_at?: string | null
+          responded_by?: string | null
+          status?: string
+          subject: string
+          updated_at?: string
+          user_email: string
+          user_id?: string | null
+        }
+        Update: {
+          admin_response?: string | null
+          created_at?: string
+          id?: string
+          message?: string
+          priority?: string
+          responded_at?: string | null
+          responded_by?: string | null
+          status?: string
+          subject?: string
+          updated_at?: string
+          user_email?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       usage_tracking: {
         Row: {
           created_at: string
@@ -345,6 +552,30 @@ export type Database = {
           month_year?: string
           ocr_scans_used?: number
           storage_used_bytes?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
           user_id?: string
         }
@@ -436,9 +667,17 @@ export type Database = {
     }
     Functions: {
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -565,6 +804,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+    },
   },
 } as const
