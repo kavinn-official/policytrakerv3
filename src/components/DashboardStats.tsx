@@ -154,7 +154,7 @@ const DashboardStats = () => {
     {
       title: "Total Policies",
       value: isLoading ? "..." : stats.totalPolicies.toString(),
-      subtitle: subscribed ? "Unlimited" : `Used: ${stats.totalPolicies} / 50`,
+      subtitle: subscribed ? "Unlimited" : `Used: ${stats.totalPolicies} / 200`,
       icon: FileText,
       color: "bg-blue-500",
       textColor: "text-blue-600",
