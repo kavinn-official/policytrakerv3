@@ -13,6 +13,7 @@ import { Progress } from "@/components/ui/progress";
 import { format, addDays, parse } from "date-fns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useUsageTracking } from "@/hooks/useUsageTracking";
 
 const INSURANCE_TYPES = [
   "Vehicle Insurance",
@@ -31,6 +32,7 @@ const AddPolicy = () => {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const { user } = useAuth();
+  const { incrementOcrUsage, addStorageUsage, canUseOcr, refreshUsage } = useUsageTracking();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(false);
@@ -295,6 +297,16 @@ const AddPolicy = () => {
           insurance_type: INSURANCE_TYPES.includes(extracted.insurance_type) 
             ? extracted.insurance_type 
             : formData.insurance_type,
+          // Motor specific
+          idv: extracted.idv ? String(extracted.idv) : formData.idv,
+          // Health specific
+          sum_insured: extracted.sum_insured ? String(extracted.sum_insured) : formData.sum_insured,
+          members_covered: extracted.members_covered ? String(extracted.members_covered) : formData.members_covered,
+          plan_type: extracted.plan_type || formData.plan_type,
+          // Life specific
+          sum_assured: extracted.sum_assured ? String(extracted.sum_assured) : formData.sum_assured,
+          policy_term: extracted.policy_term ? String(extracted.policy_term) : formData.policy_term,
+          premium_payment_term: extracted.premium_payment_term ? String(extracted.premium_payment_term) : formData.premium_payment_term,
         };
         
         setFormData(newFormData);
@@ -324,6 +336,10 @@ const AddPolicy = () => {
           newActiveDate,
           newExpiryDate
         );
+
+        // Track OCR usage after successful parse
+        await incrementOcrUsage();
+        await refreshUsage();
 
         setParseProgress(100);
         toast({
@@ -1330,7 +1346,28 @@ const AddPolicy = () => {
                     min="0"
                     step="0.01"
                   />
-                  <p className="text-xs text-gray-500">Auto-extracted from PDF (optional)</p>
+                  <p className="text-xs text-muted-foreground">Auto-extracted from PDF (optional)</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="premium_frequency" className="text-sm font-medium">
+                    Premium Frequency
+                  </Label>
+                  <Select
+                    value={formData.premium_frequency}
+                    onValueChange={(value) => setFormData({ ...formData, premium_frequency: value })}
+                  >
+                    <SelectTrigger className="h-10 text-sm">
+                      <SelectValue placeholder="Select frequency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                      <SelectItem value="quarterly">Quarterly</SelectItem>
+                      <SelectItem value="half-yearly">Half-Yearly</SelectItem>
+                      <SelectItem value="yearly">Yearly</SelectItem>
+                      <SelectItem value="single">Single Premium</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="space-y-2">
@@ -1351,7 +1388,7 @@ const AddPolicy = () => {
                     step="0.1"
                   />
                   {formData.net_premium && formData.commission_percentage && (
-                    <p className="text-xs text-green-600 font-medium">
+                    <p className="text-xs text-emerald-600 font-medium">
                       Commission: ₹{((parseFloat(formData.net_premium) * parseFloat(formData.commission_percentage)) / 100).toFixed(2)}
                     </p>
                   )}
@@ -1370,11 +1407,12 @@ const AddPolicy = () => {
 
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">Risk End Date (RED)</Label>
-                  <Input
-                    value={policyExpiryDate ? format(policyExpiryDate, "PPP") : "Auto-calculated (1 year)"}
-                    disabled
-                    className="h-10 text-sm bg-gray-50"
+                  <MaterialDatePicker
+                    date={policyExpiryDate}
+                    onDateChange={(date) => setPolicyExpiryDate(date)}
+                    placeholder="Auto-calculated (1 year)"
                   />
+                  <p className="text-xs text-muted-foreground">Auto-calculated from RSD (editable)</p>
                 </div>
               </div>
 

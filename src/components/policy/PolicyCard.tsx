@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Car, User, Eye, Edit, Building, Trash2, FileText, AlertTriangle } from "lucide-react";
+import { Calendar, Car, User, Eye, Edit, Building, Trash2, FileText, AlertTriangle, Heart, Shield } from "lucide-react";
 import { Policy, formatDateDDMMYYYY } from "@/utils/policyUtils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -15,12 +15,46 @@ interface PolicyCardProps {
   onPreviewDocument?: (policy: Policy) => void;
 }
 
-// Check for missing required fields
+// Get icon based on insurance type
+const getInsuranceIcon = (insuranceType?: string) => {
+  switch (insuranceType) {
+    case 'Health Insurance':
+      return <Heart className="h-4 w-4 mr-2 sm:mr-3 text-red-500 flex-shrink-0" />;
+    case 'Life Insurance':
+      return <Shield className="h-4 w-4 mr-2 sm:mr-3 text-emerald-500 flex-shrink-0" />;
+    case 'Vehicle Insurance':
+    default:
+      return <Car className="h-4 w-4 mr-2 sm:mr-3 text-blue-500 flex-shrink-0" />;
+  }
+};
+
+// Get display text for vehicle/coverage info based on insurance type
+const getInsuranceDetailText = (policy: Policy): string => {
+  switch (policy.insurance_type) {
+    case 'Health Insurance':
+      const sumInsured = policy.sum_insured ? `₹${policy.sum_insured.toLocaleString('en-IN')}` : '';
+      const members = policy.members_covered ? `${policy.members_covered} members` : '';
+      return [sumInsured, members].filter(Boolean).join(' • ') || 'Health Policy';
+    case 'Life Insurance':
+      const sumAssured = policy.sum_assured ? `₹${policy.sum_assured.toLocaleString('en-IN')}` : '';
+      const term = policy.policy_term ? `${policy.policy_term} years` : '';
+      return [sumAssured, term].filter(Boolean).join(' • ') || 'Life Policy';
+    case 'Vehicle Insurance':
+    default:
+      const vehicleInfo = [policy.vehicle_number, policy.vehicle_make, policy.vehicle_model].filter(Boolean).join(' - ');
+      return vehicleInfo || 'Vehicle Policy';
+  }
+};
+
+// Check for missing required fields - context-aware
 const getMissingFields = (policy: Policy): string[] => {
   const missing: string[] = [];
   if (!policy.policy_number?.trim()) missing.push("Policy Number");
   if (!policy.client_name?.trim()) missing.push("Client Name");
-  if (!policy.vehicle_number?.trim()) missing.push("Vehicle Number");
+  // Vehicle number only required for Vehicle Insurance
+  if (policy.insurance_type === 'Vehicle Insurance' && !policy.vehicle_number?.trim()) {
+    missing.push("Vehicle Number");
+  }
   if (!policy.policy_active_date) missing.push("Risk Start Date");
   if (!policy.policy_expiry_date) missing.push("Risk End Date");
   return missing;
@@ -74,8 +108,8 @@ const PolicyCard = ({ policy, daysToExpiry, statusColor, onViewPolicy, onEditPol
           </div>
           
           <div className="flex items-center text-xs sm:text-sm">
-            <Car className="h-4 w-4 mr-2 sm:mr-3 text-gray-500 flex-shrink-0" />
-            <span className="truncate">{policy.vehicle_number} - {policy.vehicle_make} {policy.vehicle_model}</span>
+            {getInsuranceIcon(policy.insurance_type)}
+            <span className="truncate">{getInsuranceDetailText(policy)}</span>
           </div>
           
           <div className="flex items-center text-xs sm:text-sm">

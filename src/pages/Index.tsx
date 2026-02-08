@@ -39,7 +39,7 @@ const Index = () => {
 
   const quickAccessButtons = [
     { name: 'Add Policy', path: '/add-policy', icon: Plus, color: 'bg-sky-400 hover:bg-sky-500' },
-    { name: 'Policies', path: '/policies', icon: FileText, color: 'bg-slate-800 hover:bg-slate-900' },
+    { name: 'Policies', path: '/policies', icon: FileText, color: 'bg-slate-400 hover:bg-slate-500' },
     { name: 'Due Policies', path: '/due-policies', icon: AlertTriangle, color: 'bg-amber-500 hover:bg-amber-600' },
     { name: 'Reports', path: '/reports', icon: BarChart3, color: 'bg-emerald-500 hover:bg-emerald-600' },
   ];

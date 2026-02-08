@@ -189,7 +189,28 @@ serve(async (req) => {
     const userContent: any[] = [
       {
         type: "text",
-        text: "Extract insurance policy details from this document. Return ONLY a valid JSON object with these fields: policy_number, client_name, vehicle_number, vehicle_make, vehicle_model, company_name, contact_number (10 digits), policy_active_date (YYYY-MM-DD), policy_expiry_date (YYYY-MM-DD), net_premium (number only - MUST be the base premium BEFORE GST/taxes, NOT the total premium), insurance_type (must be one of: 'Vehicle Insurance', 'Health Insurance', 'Life Insurance', 'Other'). IMPORTANT: For net_premium, look for 'Net Premium', 'Basic Premium', 'Base Premium', or 'Premium (Before Tax)'. EXCLUDE any GST components (CGST, SGST, IGST, Service Tax). If only Total Premium is shown with GST breakup, calculate: Net Premium = Total Premium - All GST amounts. If a field cannot be found, use empty string for text or 0 for net_premium."
+        text: `Extract insurance policy details from this document. Return ONLY a valid JSON object with these fields:
+- policy_number: The policy number/ID
+- client_name: The policyholder's name
+- vehicle_number: The vehicle registration number (for motor insurance only)
+- vehicle_make: The vehicle manufacturer (for motor insurance only)
+- vehicle_model: The vehicle model name (for motor insurance only)
+- company_name: The insurance company name
+- contact_number: Contact phone number (10 digits only)
+- policy_active_date: Policy start date in YYYY-MM-DD format
+- policy_expiry_date: Policy end date in YYYY-MM-DD format
+- net_premium: The BASE premium BEFORE GST/taxes (number only)
+- insurance_type: Must be one of: 'Vehicle Insurance', 'Health Insurance', 'Life Insurance', 'Other'
+- idv: Insured Declared Value for motor insurance (number only)
+- sum_insured: Sum Insured amount for health insurance (number only)
+- members_covered: Number of members covered for health insurance (number only)
+- plan_type: Plan type for health insurance (e.g., Individual, Family Floater)
+- sum_assured: Sum Assured amount for life insurance (number only)
+- policy_term: Policy term in years for life insurance (number only)
+- premium_payment_term: Premium payment term in years for life insurance (number only)
+
+IMPORTANT: For net_premium, look for 'Net Premium', 'Basic Premium', 'Base Premium', or 'Premium (Before Tax)'. EXCLUDE GST components.
+If a field cannot be found or is not applicable, use empty string for text or 0 for numbers.`
       },
       {
         type: "image_url",
@@ -214,29 +235,34 @@ serve(async (req) => {
             content: `You are an expert at extracting insurance policy information from Indian insurance documents.
 
 CRITICAL INSTRUCTIONS FOR NET PREMIUM:
-The net_premium field MUST contain the base premium amount BEFORE any GST/taxes are added. This is essential for accurate reporting.
+The net_premium field MUST contain the base premium amount BEFORE any GST/taxes are added.
 
 How to find Net Premium:
-1. Look for fields labeled: "Net Premium", "Basic Premium", "Base Premium", "Premium (Before Tax)", "Own Damage Premium + Third Party Premium"
-2. EXCLUDE these from net_premium: CGST, SGST, IGST, GST, Service Tax, Cess, any tax component
-3. If only "Total Premium" or "Gross Premium" is shown WITH a GST breakup, calculate: Net Premium = Total Premium - (CGST + SGST + IGST + any other taxes)
-4. Common pattern: Look for premium breakdown table - the net premium is typically shown before the GST line items
+1. Look for fields labeled: "Net Premium", "Basic Premium", "Base Premium", "Premium (Before Tax)"
+2. EXCLUDE these from net_premium: CGST, SGST, IGST, GST, Service Tax, Cess
+3. If only "Total Premium" is shown WITH GST breakup, calculate: Net Premium = Total Premium - (all taxes)
 
-Extract these fields:
-- policy_number: The policy number/ID
-- client_name: The policyholder's name  
-- vehicle_number: The vehicle registration number (if applicable)
-- vehicle_make: The vehicle manufacturer/make (e.g., Maruti, Honda, Toyota) - if applicable
-- vehicle_model: The vehicle model name - if applicable
-- company_name: The insurance company name
-- contact_number: The contact phone number (10 digits only)
-- policy_active_date: The policy start date in YYYY-MM-DD format
-- policy_expiry_date: The policy end date in YYYY-MM-DD format
-- net_premium: The BASE premium amount BEFORE GST (numeric value only, no currency symbols or commas)
-- insurance_type: Determine the type from keywords - "Vehicle Insurance", "Health Insurance", "Life Insurance", or "Other"
+FOR HEALTH INSURANCE:
+- sum_insured: Look for "Sum Insured", "SI", "Cover Amount" - this is the maximum coverage amount
+- members_covered: Count of members/lives covered in the policy
+- plan_type: "Individual", "Family Floater", "Group", etc.
 
-Return ONLY a valid JSON object. If a field cannot be found, use empty string for text or 0 for net_premium. Default insurance_type to "Vehicle Insurance" if unclear.
-Do not include any explanation or markdown formatting.`
+FOR LIFE INSURANCE:
+- sum_assured: Look for "Sum Assured", "SA", "Death Benefit" - the amount payable on death
+- policy_term: The total duration of the policy in years
+- premium_payment_term: How many years premiums need to be paid (may differ from policy_term)
+
+FOR MOTOR/VEHICLE INSURANCE:
+- idv: Insured Declared Value - the maximum claim amount for the vehicle
+- vehicle_number, vehicle_make, vehicle_model
+
+Determine insurance_type from document keywords:
+- Motor/Vehicle/Car/Two-Wheeler/Commercial Vehicle → "Vehicle Insurance"
+- Health/Mediclaim/Medical/Hospital → "Health Insurance"
+- Life/Term/Endowment/ULIP/Pension → "Life Insurance"
+- Otherwise → "Other"
+
+Return ONLY a valid JSON object. If a field cannot be found or is not applicable, use empty string for text or 0 for numbers.`
           },
           {
             role: "user",
@@ -297,6 +323,13 @@ Do not include any explanation or markdown formatting.`
         policy_expiry_date: "",
         net_premium: 0,
         insurance_type: "Vehicle Insurance",
+        idv: 0,
+        sum_insured: 0,
+        members_covered: 0,
+        plan_type: "",
+        sum_assured: 0,
+        policy_term: 0,
+        premium_payment_term: 0,
       };
     }
 
