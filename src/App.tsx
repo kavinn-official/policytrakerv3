@@ -38,6 +38,7 @@ const BlogPage = lazy(() => import("./pages/BlogPage"));
 const BlogArticlePage = lazy(() => import("./pages/BlogArticlePage"));
 const PremiumCalculatorPage = lazy(() => import("./pages/PremiumCalculatorPage"));
 const DemoRequestPage = lazy(() => import("./pages/DemoRequestPage"));
+const BulkUploadPage = lazy(() => import("./pages/BulkUploadPage"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -120,6 +121,13 @@ const App = () => (
                 <ProtectedRoute>
                   <Layout>
                     <AddPolicy />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/bulk-upload" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <BulkUploadPage />
                   </Layout>
                 </ProtectedRoute>
               } />

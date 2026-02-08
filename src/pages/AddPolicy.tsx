@@ -68,6 +68,7 @@ const AddPolicy = () => {
       reference: "",
       status: "Active",
       net_premium: "",
+      commission_percentage: "",
       insurance_type: "Vehicle Insurance",
     };
   });
@@ -727,6 +728,7 @@ const AddPolicy = () => {
           data: {
             ...formData,
             net_premium: formData.net_premium ? parseFloat(formData.net_premium) : 0,
+            commission_percentage: formData.commission_percentage ? parseFloat(formData.commission_percentage) : 0,
             policy_active_date: format(policyActiveDate, "yyyy-MM-dd"),
             policy_expiry_date: format(policyExpiryDate, "yyyy-MM-dd"),
             document_url: documentUrl,
@@ -825,6 +827,7 @@ const AddPolicy = () => {
       reference: "",
       status: "Active",
       net_premium: "",
+      commission_percentage: "",
       insurance_type: "Vehicle Insurance",
     });
     setPolicyActiveDate(undefined);
@@ -1170,6 +1173,30 @@ const AddPolicy = () => {
                     step="0.01"
                   />
                   <p className="text-xs text-gray-500">Auto-extracted from PDF (optional)</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="commission_percentage" className="text-sm font-medium">
+                    Commission (%)
+                  </Label>
+                  <Input
+                    id="commission_percentage"
+                    name="commission_percentage"
+                    type="number"
+                    inputMode="decimal"
+                    value={formData.commission_percentage}
+                    onChange={handleInputChange}
+                    className="h-10 text-sm"
+                    placeholder="e.g., 15"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                  />
+                  {formData.net_premium && formData.commission_percentage && (
+                    <p className="text-xs text-green-600 font-medium">
+                      Commission: ₹{((parseFloat(formData.net_premium) * parseFloat(formData.commission_percentage)) / 100).toFixed(2)}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
