@@ -31,7 +31,6 @@ const TermsConditions = lazy(() => import("./pages/TermsConditions"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Contact = lazy(() => import("./pages/Contact"));
 const EnquiryPage = lazy(() => import("./pages/EnquiryPage"));
-const DemoPage = lazy(() => import("./pages/DemoPage"));
 const FeaturesPage = lazy(() => import("./pages/FeaturesPage"));
 const PricingPage = lazy(() => import("./pages/PricingPage"));
 const BlogPage = lazy(() => import("./pages/BlogPage"));
@@ -50,6 +49,10 @@ const AdminAuditLogs = lazy(() => import("./pages/admin/AdminAuditLogs"));
 const AdminSubscriptions = lazy(() => import("./pages/admin/AdminSubscriptions"));
 const AdminSupport = lazy(() => import("./pages/admin/AdminSupport"));
 const AdminAnalytics = lazy(() => import("./pages/admin/AdminAnalytics"));
+const AdminEmailLogs = lazy(() => import("./pages/admin/AdminEmailLogs"));
+const AdminStorageMonitoring = lazy(() => import("./pages/admin/AdminStorageMonitoring"));
+const AdminOcrUsage = lazy(() => import("./pages/admin/AdminOcrUsage"));
+const AdminDemoRequests = lazy(() => import("./pages/admin/AdminDemoRequests"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -73,95 +76,46 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/dashboard" element={
-                <ProtectedRoute>
-                  <Layout>
-                    <Index />
-                  </Layout>
-                </ProtectedRoute>
+                <ProtectedRoute><Layout><Index /></Layout></ProtectedRoute>
               } />
               <Route path="/policies" element={
-                <ProtectedRoute>
-                  <Layout>
-                    <Policies />
-                  </Layout>
-                </ProtectedRoute>
+                <ProtectedRoute><Layout><Policies /></Layout></ProtectedRoute>
               } />
               <Route path="/due-policies" element={
-                <ProtectedRoute>
-                  <Layout>
-                    <DuePoliciesPage />
-                  </Layout>
-                </ProtectedRoute>
+                <ProtectedRoute><Layout><DuePoliciesPage /></Layout></ProtectedRoute>
               } />
               <Route path="/expired-policies" element={
-                <ProtectedRoute>
-                  <Layout>
-                    <ExpiredPoliciesPage />
-                  </Layout>
-                </ProtectedRoute>
+                <ProtectedRoute><Layout><ExpiredPoliciesPage /></Layout></ProtectedRoute>
               } />
               <Route path="/subscription" element={
-                <ProtectedRoute>
-                  <Layout>
-                    <SubscriptionPage />
-                  </Layout>
-                </ProtectedRoute>
+                <ProtectedRoute><Layout><SubscriptionPage /></Layout></ProtectedRoute>
               } />
               <Route path="/profile" element={
-                <ProtectedRoute>
-                  <Layout>
-                    <ProfilePage />
-                  </Layout>
-                </ProtectedRoute>
+                <ProtectedRoute><Layout><ProfilePage /></Layout></ProtectedRoute>
               } />
               <Route path="/settings" element={
-                <ProtectedRoute>
-                  <Layout>
-                    <SettingsPage />
-                  </Layout>
-                </ProtectedRoute>
+                <ProtectedRoute><Layout><SettingsPage /></Layout></ProtectedRoute>
               } />
               <Route path="/add-client" element={
-                <ProtectedRoute>
-                  <Layout>
-                    <AddClient />
-                  </Layout>
-                </ProtectedRoute>
+                <ProtectedRoute><Layout><AddClient /></Layout></ProtectedRoute>
               } />
               <Route path="/add-policy" element={
-                <ProtectedRoute>
-                  <Layout>
-                    <AddPolicy />
-                  </Layout>
-                </ProtectedRoute>
+                <ProtectedRoute><Layout><AddPolicy /></Layout></ProtectedRoute>
               } />
               <Route path="/bulk-upload" element={
-                <ProtectedRoute>
-                  <Layout>
-                    <BulkUploadPage />
-                  </Layout>
-                </ProtectedRoute>
+                <ProtectedRoute><Layout><BulkUploadPage /></Layout></ProtectedRoute>
               } />
               <Route path="/reports" element={
-                <ProtectedRoute>
-                  <Layout>
-                    <ReportsPage />
-                  </Layout>
-                </ProtectedRoute>
+                <ProtectedRoute><Layout><ReportsPage /></Layout></ProtectedRoute>
               } />
               <Route path="/edit-policy/:policyId" element={
-                <ProtectedRoute>
-                  <Layout>
-                    <EditPolicy />
-                  </Layout>
-                </ProtectedRoute>
+                <ProtectedRoute><Layout><EditPolicy /></Layout></ProtectedRoute>
               } />
               <Route path="/cancellation-refunds" element={<CancellationRefunds />} />
               <Route path="/terms-conditions" element={<TermsConditions />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/enquiry" element={<EnquiryPage />} />
-              <Route path="/demo" element={<DemoPage />} />
               <Route path="/features" element={<FeaturesPage />} />
               <Route path="/pricing" element={<PricingPage />} />
               <Route path="/blog" element={<BlogPage />} />
@@ -171,9 +125,7 @@ const App = () => (
               
               {/* Admin Panel Routes */}
               <Route path="/admin" element={
-                <ProtectedRoute>
-                  <AdminLayout />
-                </ProtectedRoute>
+                <ProtectedRoute><AdminLayout /></ProtectedRoute>
               }>
                 <Route index element={<AdminDashboard />} />
                 <Route path="users" element={<AdminUsers />} />
@@ -183,6 +135,10 @@ const App = () => (
                 <Route path="analytics" element={<AdminAnalytics />} />
                 <Route path="settings" element={<AdminSettings />} />
                 <Route path="audit" element={<AdminAuditLogs />} />
+                <Route path="emails" element={<AdminEmailLogs />} />
+                <Route path="storage" element={<AdminStorageMonitoring />} />
+                <Route path="ocr" element={<AdminOcrUsage />} />
+                <Route path="demo-requests" element={<AdminDemoRequests />} />
               </Route>
               
               <Route path="*" element={<NotFound />} />

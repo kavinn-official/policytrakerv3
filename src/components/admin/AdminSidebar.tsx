@@ -8,7 +8,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
 import {
@@ -22,8 +21,8 @@ import {
   Mail,
   HardDrive,
   ScanLine,
-  Shield,
   ScrollText,
+  CalendarCheck,
 } from "lucide-react";
 
 const menuItems = [
@@ -40,6 +39,7 @@ const menuItems = [
       { title: "Users", url: "/admin/users", icon: Users },
       { title: "Subscriptions", url: "/admin/subscriptions", icon: CreditCard },
       { title: "Support Tickets", url: "/admin/support", icon: MessageSquare },
+      { title: "Demo Requests", url: "/admin/demo-requests", icon: CalendarCheck },
     ],
   },
   {
@@ -71,9 +71,7 @@ export function AdminSidebar() {
   const isCollapsed = state === "collapsed";
 
   const isActive = (path: string) => {
-    if (path === "/admin") {
-      return location.pathname === "/admin";
-    }
+    if (path === "/admin") return location.pathname === "/admin";
     return location.pathname.startsWith(path);
   };
 

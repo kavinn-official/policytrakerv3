@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, CheckCircle, Play, Star, Users, Shield, TrendingUp } from "lucide-react";
+import { ArrowRight, CheckCircle, Star, Users, Shield, TrendingUp } from "lucide-react";
 
 const HeroSection = () => {
   return (
@@ -58,10 +58,9 @@ const HeroSection = () => {
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-              <Link to="/demo">
+              <Link to="/demo-request">
                 <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg px-8 py-6 border-2 border-gray-300 hover:border-teal-500 hover:bg-teal-50 group">
-                  <Play className="mr-2 h-5 w-5 text-teal-600 group-hover:scale-110 transition-transform" />
-                  Watch Demo
+                  Request a Demo
                 </Button>
               </Link>
             </div>
