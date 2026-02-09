@@ -143,6 +143,39 @@ export type Database = {
         }
         Relationships: []
       }
+      demo_requests: {
+        Row: {
+          company_type: string | null
+          created_at: string
+          email: string
+          id: string
+          name: string
+          phone: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          company_type?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          phone: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          company_type?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          phone?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       email_logs: {
         Row: {
           created_at: string

@@ -29,7 +29,7 @@ const PolicyTableRow = ({ policy, daysToExpiry, statusColor, onViewPolicy, onEdi
       </td>
       <td className="p-3 sm:p-4">
         <div className="font-medium text-sm sm:text-base">{policy.client_name}</div>
-        <div className="text-xs sm:text-sm text-gray-500">Agent: {policy.agent_code}</div>
+        <div className="text-xs sm:text-sm text-gray-500">Agent: {policy.agent_code || '—'}</div>
       </td>
       <td className="p-3 sm:p-4">
         <div className="font-medium text-sm sm:text-base">{policy.vehicle_number}</div>

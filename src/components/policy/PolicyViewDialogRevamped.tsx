@@ -315,7 +315,7 @@ const PolicyViewDialogRevamped = ({ policy, open, onOpenChange }: PolicyViewDial
                 <h3 className="font-semibold text-foreground">Additional Information</h3>
               </div>
               <div className="bg-gray-50 rounded-xl p-4 space-y-1">
-                <InfoRow icon={Hash} label="Agent Code" value={policy.agent_code} iconColor="text-gray-600" />
+                <InfoRow icon={Hash} label="Agent Name" value={policy.agent_code} iconColor="text-gray-600" />
                 <Separator className="my-1" />
                 <InfoRow icon={FileText} label="Reference" value={policy.reference} iconColor="text-gray-600" />
                 <Separator className="my-1" />
