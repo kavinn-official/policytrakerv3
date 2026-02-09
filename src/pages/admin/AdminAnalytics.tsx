@@ -87,13 +87,19 @@ const AdminAnalytics = () => {
       });
       const revenueData = Object.entries(revenueByMonth).map(([month, revenue]) => ({ month, revenue }));
 
-      // Subscription trend (mock data for now)
-      const subscriptionTrend = [
-        { month: 'Jan', pro: 12, free: 45 },
-        { month: 'Feb', pro: 18, free: 52 },
-        { month: 'Mar', pro: 25, free: 60 },
-        { month: 'Apr', pro: 32, free: 75 },
-      ];
+      // Calculate subscription trend from actual data
+      const { data: subscribers } = await supabase
+        .from('subscribers')
+        .select('is_active, subscription_tier, created_at');
+
+      const subTrendMap: Record<string, { pro: number; free: number }> = {};
+      subscribers?.forEach(s => {
+        const month = format(new Date(s.created_at), 'MMM yyyy');
+        if (!subTrendMap[month]) subTrendMap[month] = { pro: 0, free: 0 };
+        if (s.subscription_tier === 'pro' && s.is_active) subTrendMap[month].pro++;
+        else subTrendMap[month].free++;
+      });
+      const subscriptionTrend = Object.entries(subTrendMap).map(([month, data]) => ({ month, ...data }));
 
       setData({
         userGrowth,
