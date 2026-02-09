@@ -23,7 +23,7 @@ const SubscriptionPageRevamped = () => {
   const { subscribed, subscription_tier, subscription_end, loading, checkSubscription } = useSubscription();
   const { session, user } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly');
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const { toast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);

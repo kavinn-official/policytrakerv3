@@ -1,22 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { MessageSquare, Phone, AlertTriangle, Calendar, Bell, Download, Send, Search, ChevronLeft, ChevronRight, RefreshCw, Edit, Trash2, Clock } from "lucide-react";
+import { MessageSquare, Phone, AlertTriangle, Calendar, Bell, Download, Send, Search, ChevronLeft, ChevronRight, RefreshCw, Edit, Trash2, Clock, Filter } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -37,13 +31,13 @@ interface PolicyData {
   reference: string;
   company_name?: string;
   agent_code?: string;
+  insurance_type?: string;
   whatsapp_reminder_count: number;
 }
 
 interface DuePolicy extends PolicyData {
   daysLeft: number;
   urgency: string;
-  selected?: boolean;
 }
 
 const POLICIES_PER_PAGE = 10;
@@ -55,7 +49,8 @@ const DuePolicies = () => {
   const [isRenewing, setIsRenewing] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [weekFilter, setWeekFilter] = useState<number | null>(null);
+  const [urgencyFilter, setUrgencyFilter] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<string>("daysLeft");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [policyToDelete, setPolicyToDelete] = useState<DuePolicy | null>(null);
   const { toast } = useToast();
@@ -65,732 +60,390 @@ const DuePolicies = () => {
   useEffect(() => {
     if (user) {
       fetchDuePolicies();
-
       const channel = supabase
         .channel('due-policy-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'policies',
-            filter: `user_id=eq.${user.id}`
-          },
-          () => {
-            fetchDuePolicies();
-          }
-        )
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'policies', filter: `user_id=eq.${user.id}` }, () => fetchDuePolicies())
         .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
+      return () => { supabase.removeChannel(channel); };
     }
   }, [user]);
 
   const fetchDuePolicies = async () => {
     if (!user) return;
-
     try {
       const { data, error } = await supabase
         .from('policies')
-        .select('id, policy_number, client_name, vehicle_number, vehicle_make, vehicle_model, policy_expiry_date, contact_number, status, reference, company_name, agent_code, whatsapp_reminder_count')
+        .select('id, policy_number, client_name, vehicle_number, vehicle_make, vehicle_model, policy_expiry_date, contact_number, status, reference, company_name, agent_code, insurance_type, whatsapp_reminder_count')
         .eq('user_id', user.id)
         .order('policy_expiry_date', { ascending: true });
 
-      if (error) {
-        console.error('Error fetching policies:', error);
-        throw error;
-      }
+      if (error) throw error;
 
       const today = new Date();
       const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
 
-      const duePoliciesData = (data || [])
-        .filter((policy: PolicyData) => {
-          const expiryDate = new Date(policy.policy_expiry_date);
-          return expiryDate >= today && expiryDate <= thirtyDaysFromNow;
+      const mapped = (data || [])
+        .filter((p: PolicyData) => {
+          const exp = new Date(p.policy_expiry_date);
+          return exp >= today && exp <= thirtyDaysFromNow;
         })
-        .map((policy: PolicyData) => {
-          const expiryDate = new Date(policy.policy_expiry_date);
-          const daysLeft = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-          
+        .map((p: PolicyData) => {
+          const daysLeft = Math.ceil((new Date(p.policy_expiry_date).getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
           let urgency = "low";
-          if (daysLeft <= 7) urgency = "critical";
-          else if (daysLeft <= 15) urgency = "high";
-          else if (daysLeft <= 21) urgency = "medium";
-
-          return {
-            ...policy,
-            company_name: policy.company_name || "Not specified",
-            agent_code: policy.agent_code || "",
-            whatsapp_reminder_count: policy.whatsapp_reminder_count || 0,
-            daysLeft,
-            urgency
-          } as DuePolicy;
+          if (daysLeft <= 3) urgency = "critical";
+          else if (daysLeft <= 7) urgency = "high";
+          else if (daysLeft <= 15) urgency = "medium";
+          return { ...p, company_name: p.company_name || "", agent_code: p.agent_code || "", whatsapp_reminder_count: p.whatsapp_reminder_count || 0, daysLeft, urgency } as DuePolicy;
         });
 
-      setDuePolicies(duePoliciesData);
+      setDuePolicies(mapped);
     } catch (error) {
-      console.error('Error fetching due policies:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load due policies. Please try again.",
-        variant: "destructive",
-      });
+      console.error('Error:', error);
+      toast({ title: "Error", description: "Failed to load due policies.", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Filter policies based on search term and week filter
-  const filteredPolicies = duePolicies.filter((policy) => {
-    const searchLower = searchTerm.toLowerCase();
-    const matchesSearch = (
-      policy.policy_number.toLowerCase().includes(searchLower) ||
-      policy.client_name.toLowerCase().includes(searchLower) ||
-      policy.vehicle_number.toLowerCase().includes(searchLower) ||
-      (policy.company_name?.toLowerCase().includes(searchLower) || false) ||
-      (policy.agent_code?.toLowerCase().includes(searchLower) || false)
-    );
-    
-    // Apply week filter
-    if (weekFilter !== null) {
-      const maxDays = weekFilter * 7;
-      const minDays = (weekFilter - 1) * 7;
-      return matchesSearch && policy.daysLeft <= maxDays && policy.daysLeft > minDays;
-    }
-    
-    return matchesSearch;
-  });
+  const filteredPolicies = useMemo(() => {
+    let result = duePolicies.filter((p) => {
+      const s = searchTerm.toLowerCase();
+      const matchesSearch = !s || p.policy_number.toLowerCase().includes(s) || p.client_name.toLowerCase().includes(s) || p.vehicle_number.toLowerCase().includes(s) || (p.company_name?.toLowerCase().includes(s));
+      const matchesUrgency = urgencyFilter === "all" || p.urgency === urgencyFilter;
+      return matchesSearch && matchesUrgency;
+    });
 
-  // Pagination logic
+    result.sort((a, b) => {
+      if (sortBy === "daysLeft") return a.daysLeft - b.daysLeft;
+      if (sortBy === "name") return a.client_name.localeCompare(b.client_name);
+      if (sortBy === "company") return (a.company_name || "").localeCompare(b.company_name || "");
+      return 0;
+    });
+
+    return result;
+  }, [duePolicies, searchTerm, urgencyFilter, sortBy]);
+
   const totalPages = Math.ceil(filteredPolicies.length / POLICIES_PER_PAGE);
   const startIndex = (currentPage - 1) * POLICIES_PER_PAGE;
   const paginatedPolicies = filteredPolicies.slice(startIndex, startIndex + POLICIES_PER_PAGE);
 
-  // Reset page when search or filter changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, weekFilter]);
+  useEffect(() => { setCurrentPage(1); }, [searchTerm, urgencyFilter, sortBy]);
 
-  const getUrgencyColor = (urgency: string) => {
+  const urgencyCounts = useMemo(() => ({
+    all: duePolicies.length,
+    critical: duePolicies.filter(p => p.urgency === "critical").length,
+    high: duePolicies.filter(p => p.urgency === "high").length,
+    medium: duePolicies.filter(p => p.urgency === "medium").length,
+    low: duePolicies.filter(p => p.urgency === "low").length,
+  }), [duePolicies]);
+
+  const getUrgencyStyles = (urgency: string) => {
     switch (urgency) {
-      case "critical":
-        return "bg-red-100 text-red-800 border-red-200";
-      case "high":
-        return "bg-orange-100 text-orange-800 border-orange-200";
-      case "medium":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
-      case "low":
-        return "bg-blue-100 text-blue-800 border-blue-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
+      case "critical": return { card: "border-l-4 border-l-red-500 bg-red-50/80", badge: "bg-red-100 text-red-800", text: "text-red-700" };
+      case "high": return { card: "border-l-4 border-l-orange-500 bg-orange-50/80", badge: "bg-orange-100 text-orange-800", text: "text-orange-700" };
+      case "medium": return { card: "border-l-4 border-l-amber-500 bg-amber-50/80", badge: "bg-amber-100 text-amber-800", text: "text-amber-700" };
+      default: return { card: "border-l-4 border-l-blue-500 bg-blue-50/80", badge: "bg-blue-100 text-blue-800", text: "text-blue-700" };
     }
   };
 
-  const getUrgencyIcon = (urgency: string) => {
-    if (urgency === "critical") return <AlertTriangle className="h-4 w-4" />;
-    if (urgency === "high") return <Bell className="h-4 w-4" />;
-    return <Calendar className="h-4 w-4" />;
-  };
-
   const generateWhatsAppMessage = (policy: DuePolicy) => {
-    const expiryDate = new Date(policy.policy_expiry_date);
-    const formattedExpiry = expiryDate.toLocaleDateString('en-IN', { 
-      day: '2-digit', 
-      month: '2-digit', 
-      year: 'numeric' 
-    });
-    
-    const vehicleDetails = policy.vehicle_make && policy.vehicle_model 
-      ? `${policy.vehicle_make} - ${policy.vehicle_model}`
-      : policy.vehicle_make || 'N/A';
-    
-    return `Hi ${policy.client_name},
-your policy ${policy.policy_number} is expiring in ${policy.daysLeft} days.
-Vehicle Details : ${vehicleDetails}
-Registration Number : ${policy.vehicle_number}
-Expires : ${formattedExpiry}
-
-Please contact us for renewal.`;
+    const formattedExpiry = new Date(policy.policy_expiry_date).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const vehicle = policy.vehicle_make && policy.vehicle_model ? `${policy.vehicle_make} - ${policy.vehicle_model}` : policy.vehicle_make || 'N/A';
+    return `Hi ${policy.client_name},\nyour policy ${policy.policy_number} is expiring in ${policy.daysLeft} days.\nVehicle: ${vehicle}\nReg: ${policy.vehicle_number}\nExpires: ${formattedExpiry}\n\nPlease contact us for renewal.`;
   };
 
   const handleWhatsApp = async (policy: DuePolicy) => {
     const message = generateWhatsAppMessage(policy);
-    const phoneNumber = policy.contact_number?.replace(/\D/g, '') || '';
-    
-    const whatsappUrl = phoneNumber 
-      ? `https://wa.me/91${phoneNumber}?text=${encodeURIComponent(message)}`
-      : `https://wa.me/?text=${encodeURIComponent(message)}`;
-    
-    window.open(whatsappUrl, '_blank');
-
-    // Increment the WhatsApp reminder count
+    const phone = policy.contact_number?.replace(/\D/g, '') || '';
+    window.open(phone ? `https://wa.me/91${phone}?text=${encodeURIComponent(message)}` : `https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
     try {
-      const { error } = await supabase
-        .from('policies')
-        .update({ whatsapp_reminder_count: (policy.whatsapp_reminder_count || 0) + 1 })
-        .eq('id', policy.id);
-
-      if (error) {
-        console.error('Error updating WhatsApp count:', error);
-      } else {
-        // Update local state
-        setDuePolicies(prev => prev.map(p => 
-          p.id === policy.id 
-            ? { ...p, whatsapp_reminder_count: (p.whatsapp_reminder_count || 0) + 1 }
-            : p
-        ));
-      }
-    } catch (error) {
-      console.error('Error incrementing WhatsApp count:', error);
-    }
-    
-    toast({
-      title: "WhatsApp Message",
-      description: phoneNumber 
-        ? `Opening WhatsApp for ${policy.client_name}`
-        : `Opening WhatsApp - please select a contact`,
-    });
+      await supabase.from('policies').update({ whatsapp_reminder_count: (policy.whatsapp_reminder_count || 0) + 1 }).eq('id', policy.id);
+      setDuePolicies(prev => prev.map(p => p.id === policy.id ? { ...p, whatsapp_reminder_count: (p.whatsapp_reminder_count || 0) + 1 } : p));
+    } catch {}
+    toast({ title: "WhatsApp", description: `Opening WhatsApp for ${policy.client_name}` });
   };
 
   const handleCall = (policy: DuePolicy) => {
-    if (policy.contact_number) {
-      window.open(`tel:${policy.contact_number}`);
-      toast({
-        title: "Calling",
-        description: `Calling ${policy.client_name} at ${policy.contact_number}`,
-      });
-    } else {
-      toast({
-        title: "No Contact Number",
-        description: `No contact number available for ${policy.client_name}`,
-        variant: "destructive",
-      });
-    }
+    if (policy.contact_number) { window.open(`tel:${policy.contact_number}`); }
+    else { toast({ title: "No Contact", description: `No number for ${policy.client_name}`, variant: "destructive" }); }
   };
 
-  // Handle policy renewal - redirect to Edit Policy page for proper renewal flow
-  const handleRenewPolicy = (policy: DuePolicy) => {
-    navigate(`/edit-policy/${policy.id}?renewal=true`);
-  };
+  const handleRenewPolicy = (policy: DuePolicy) => navigate(`/edit-policy/${policy.id}?renewal=true`);
+  const handleEditPolicy = (policy: DuePolicy) => navigate(`/edit-policy/${policy.id}`);
+  const handleDeleteClick = (policy: DuePolicy) => { setPolicyToDelete(policy); setDeleteDialogOpen(true); };
 
-  // Handle edit policy
-  const handleEditPolicy = (policy: DuePolicy) => {
-    navigate(`/edit-policy/${policy.id}`);
-  };
-
-  // Handle delete click - show confirmation dialog
-  const handleDeleteClick = (policy: DuePolicy) => {
-    setPolicyToDelete(policy);
-    setDeleteDialogOpen(true);
-  };
-
-  // Handle confirm delete
   const handleConfirmDelete = async () => {
     if (!policyToDelete) return;
-
     try {
-      const { error } = await supabase
-        .from('policies')
-        .delete()
-        .eq('id', policyToDelete.id);
-
+      const { error } = await supabase.from('policies').delete().eq('id', policyToDelete.id);
       if (error) throw error;
-
       setDuePolicies(prev => prev.filter(p => p.id !== policyToDelete.id));
-      setSelectedPolicies(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(policyToDelete.id);
-        return newSet;
-      });
-
-      toast({
-        title: "Policy Deleted",
-        description: `Policy ${policyToDelete.policy_number} has been deleted successfully.`,
-      });
-    } catch (error) {
-      console.error('Error deleting policy:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete policy. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setDeleteDialogOpen(false);
-      setPolicyToDelete(null);
-    }
+      selectedPolicies.delete(policyToDelete.id);
+      setSelectedPolicies(new Set(selectedPolicies));
+      toast({ title: "Deleted", description: `Policy ${policyToDelete.policy_number} deleted.` });
+    } catch {
+      toast({ title: "Error", description: "Failed to delete policy.", variant: "destructive" });
+    } finally { setDeleteDialogOpen(false); setPolicyToDelete(null); }
   };
 
-  // Handle bulk renewal - redirect to first selected policy for renewal
-  const handleBulkRenewal = async () => {
-    const selectedIds = Array.from(selectedPolicies);
-    if (selectedIds.length === 0) {
-      toast({
-        title: "No Policies Selected",
-        description: "Please select at least one policy to renew.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (selectedIds.length === 1) {
-      // Single policy - navigate directly
-      navigate(`/edit-policy/${selectedIds[0]}?renewal=true`);
-    } else {
-      // Multiple policies - show confirmation and process sequentially
-      setIsRenewing(selectedIds[0]);
-      toast({
-        title: "Bulk Renewal",
-        description: `Starting renewal for ${selectedIds.length} policies. Opening first policy...`,
-      });
-      
-      // Store remaining policy IDs in session storage for sequential renewal
-      sessionStorage.setItem('bulkRenewalQueue', JSON.stringify(selectedIds.slice(1)));
-      navigate(`/edit-policy/${selectedIds[0]}?renewal=true&bulk=true`);
-    }
-  };
-
-  const togglePolicySelection = (policyId: string) => {
-    setSelectedPolicies(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(policyId)) {
-        newSet.delete(policyId);
-      } else {
-        newSet.add(policyId);
-      }
-      return newSet;
-    });
+  const togglePolicySelection = (id: string) => {
+    const s = new Set(selectedPolicies);
+    s.has(id) ? s.delete(id) : s.add(id);
+    setSelectedPolicies(s);
   };
 
   const toggleSelectAll = () => {
-    if (selectedPolicies.size === filteredPolicies.length) {
-      setSelectedPolicies(new Set());
-    } else {
-      setSelectedPolicies(new Set(filteredPolicies.map(p => p.id)));
-    }
+    setSelectedPolicies(selectedPolicies.size === filteredPolicies.length ? new Set() : new Set(filteredPolicies.map(p => p.id)));
+  };
+
+  const handleBulkRenewal = () => {
+    const ids = Array.from(selectedPolicies);
+    if (ids.length === 0) { toast({ title: "None Selected", variant: "destructive" }); return; }
+    if (ids.length === 1) { navigate(`/edit-policy/${ids[0]}?renewal=true`); return; }
+    sessionStorage.setItem('bulkRenewalQueue', JSON.stringify(ids.slice(1)));
+    navigate(`/edit-policy/${ids[0]}?renewal=true&bulk=true`);
   };
 
   const handleBulkWhatsApp = () => {
     const selected = filteredPolicies.filter(p => selectedPolicies.has(p.id));
-    
-    if (selected.length === 0) {
-      toast({
-        title: "No Policies Selected",
-        description: "Please select at least one policy to send WhatsApp messages.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    selected.forEach((policy, index) => {
-      setTimeout(() => {
-        const message = generateWhatsAppMessage(policy);
-        const phoneNumber = policy.contact_number?.replace(/\D/g, '') || '';
-        const whatsappUrl = phoneNumber 
-          ? `https://wa.me/91${phoneNumber}?text=${encodeURIComponent(message)}`
-          : `https://wa.me/?text=${encodeURIComponent(message)}`;
-        window.open(whatsappUrl, '_blank');
-      }, index * 1000);
-    });
-
-    toast({
-      title: "Bulk WhatsApp",
-      description: `Opening WhatsApp for ${selected.length} policies`,
-    });
+    if (selected.length === 0) return;
+    selected.forEach((p, i) => setTimeout(() => {
+      const phone = p.contact_number?.replace(/\D/g, '') || '';
+      window.open(phone ? `https://wa.me/91${phone}?text=${encodeURIComponent(generateWhatsAppMessage(p))}` : `https://wa.me/?text=${encodeURIComponent(generateWhatsAppMessage(p))}`, '_blank');
+    }, i * 1000));
+    toast({ title: "Bulk WhatsApp", description: `Opening for ${selected.length} policies` });
   };
 
   const downloadExpiringPolicies = () => {
-    if (filteredPolicies.length === 0) {
-      toast({
-        title: "No Expiring Policies",
-        description: "There are no policies expiring in the next 30 days.",
-      });
-      return;
-    }
-
-    const worksheet = XLSX.utils.json_to_sheet(filteredPolicies.map(policy => ({
-      'Policy Number': policy.policy_number,
-      'Client Name': policy.client_name,
-      'Vehicle Number': policy.vehicle_number,
-      'Vehicle Make': policy.vehicle_make,
-      'Vehicle Model': policy.vehicle_model,
-      'Expiry Date': formatDateDDMMYYYY(policy.policy_expiry_date),
-      'Days to Expiry': policy.daysLeft,
-      'Urgency': policy.urgency,
-      'Company Name': policy.company_name,
-      'Agent Code': policy.agent_code,
-      'Status': policy.status,
-      'Contact Number': policy.contact_number || '',
-      'Reference': policy.reference
+    if (filteredPolicies.length === 0) return;
+    const ws = XLSX.utils.json_to_sheet(filteredPolicies.map(p => ({
+      'Policy Number': p.policy_number, 'Client Name': p.client_name, 'Vehicle Number': p.vehicle_number,
+      'Expiry Date': formatDateDDMMYYYY(p.policy_expiry_date), 'Days Left': p.daysLeft, 'Urgency': p.urgency,
+      'Company': p.company_name, 'Agent': p.agent_code, 'Contact': p.contact_number || '',
     })));
-
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Expiring Policies');
-    
-    const fileName = `expiring_policies_${new Date().toISOString().split('T')[0]}.xlsx`;
-    XLSX.writeFile(workbook, fileName);
-    
-    toast({
-      title: "Download Complete",
-      description: `Downloaded ${filteredPolicies.length} expiring policies to ${fileName}`,
-    });
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Due Policies');
+    XLSX.writeFile(wb, `due_policies_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
   if (isLoading) {
     return (
-      <div className="space-y-4 sm:space-y-6">
-        <Card className="shadow-lg border-0">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-center h-32">
-              <div className="text-gray-500">Loading due policies...</div>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="flex items-center justify-center h-40">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      <Card className="shadow-lg border-0">
-        <CardHeader className="px-4 sm:px-6">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-3 sm:space-y-0">
-            <CardTitle className="text-lg sm:text-xl font-semibold text-gray-900">Due Policies Management</CardTitle>
-            <Button
-              variant="outline"
-              onClick={() => navigate('/expired-policies')}
-              className="bg-red-50 border-red-200 text-red-700 hover:bg-red-100 hover:text-red-800"
-            >
-              <Clock className="h-4 w-4 mr-2" />
-              Expired Policies
-            </Button>
+    <div className="space-y-4">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <button onClick={() => setUrgencyFilter("critical")} className={`p-3 rounded-xl border-2 text-left transition-all ${urgencyFilter === "critical" ? "border-red-500 bg-red-50 ring-2 ring-red-200" : "border-red-200 bg-red-50/50 hover:border-red-300"}`}>
+          <div className="flex items-center gap-2 mb-1">
+            <AlertTriangle className="h-4 w-4 text-red-600" />
+            <span className="text-xs font-semibold text-red-700">Critical</span>
           </div>
-        </CardHeader>
-        <CardContent className="px-4 sm:px-6">
-          {/* Search Input */}
-          <div className="mb-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder="Search by policy number, customer name, vehicle, company, or agent..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 min-h-[44px]"
-              />
-            </div>
+          <p className="text-2xl font-bold text-red-800">{urgencyCounts.critical}</p>
+          <p className="text-xs text-red-600">≤ 3 days</p>
+        </button>
+        <button onClick={() => setUrgencyFilter("high")} className={`p-3 rounded-xl border-2 text-left transition-all ${urgencyFilter === "high" ? "border-orange-500 bg-orange-50 ring-2 ring-orange-200" : "border-orange-200 bg-orange-50/50 hover:border-orange-300"}`}>
+          <div className="flex items-center gap-2 mb-1">
+            <Bell className="h-4 w-4 text-orange-600" />
+            <span className="text-xs font-semibold text-orange-700">High</span>
           </div>
+          <p className="text-2xl font-bold text-orange-800">{urgencyCounts.high}</p>
+          <p className="text-xs text-orange-600">4-7 days</p>
+        </button>
+        <button onClick={() => setUrgencyFilter("medium")} className={`p-3 rounded-xl border-2 text-left transition-all ${urgencyFilter === "medium" ? "border-amber-500 bg-amber-50 ring-2 ring-amber-200" : "border-amber-200 bg-amber-50/50 hover:border-amber-300"}`}>
+          <div className="flex items-center gap-2 mb-1">
+            <Calendar className="h-4 w-4 text-amber-600" />
+            <span className="text-xs font-semibold text-amber-700">Medium</span>
+          </div>
+          <p className="text-2xl font-bold text-amber-800">{urgencyCounts.medium}</p>
+          <p className="text-xs text-amber-600">8-15 days</p>
+        </button>
+        <button onClick={() => setUrgencyFilter(urgencyFilter === "all" ? "low" : "all")} className={`p-3 rounded-xl border-2 text-left transition-all ${urgencyFilter === "all" || urgencyFilter === "low" ? "border-blue-500 bg-blue-50 ring-2 ring-blue-200" : "border-blue-200 bg-blue-50/50 hover:border-blue-300"}`}>
+          <div className="flex items-center gap-2 mb-1">
+            <Clock className="h-4 w-4 text-blue-600" />
+            <span className="text-xs font-semibold text-blue-700">{urgencyFilter === "low" ? "Low" : "All"}</span>
+          </div>
+          <p className="text-2xl font-bold text-blue-800">{urgencyFilter === "low" ? urgencyCounts.low : urgencyCounts.all}</p>
+          <p className="text-xs text-blue-600">{urgencyFilter === "low" ? "16-30 days" : "Total due"}</p>
+        </button>
+      </div>
 
-          {/* Due In Dropdown Filter */}
-          <div className="mb-4 flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-            <Select
-              value={weekFilter === null ? "all" : weekFilter.toString()}
-              onValueChange={(value) => setWeekFilter(value === "all" ? null : parseInt(value))}
-            >
-              <SelectTrigger className="w-full sm:w-[200px] min-h-[44px] bg-background">
-                <SelectValue placeholder="Due In" />
-              </SelectTrigger>
-              <SelectContent className="bg-background z-50">
-                <SelectItem value="all">All ({duePolicies.length})</SelectItem>
-                <SelectItem value="1">Due in 1st Week ({duePolicies.filter(p => p.daysLeft <= 7 && p.daysLeft > 0).length})</SelectItem>
-                <SelectItem value="2">Due in 2nd Week ({duePolicies.filter(p => p.daysLeft <= 14 && p.daysLeft > 7).length})</SelectItem>
-                <SelectItem value="3">Due in 3rd Week ({duePolicies.filter(p => p.daysLeft <= 21 && p.daysLeft > 14).length})</SelectItem>
-                <SelectItem value="4">Due in 4th Week ({duePolicies.filter(p => p.daysLeft <= 28 && p.daysLeft > 21).length})</SelectItem>
+      {/* Sticky Search/Filter Bar */}
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm pb-3 pt-1 -mx-2 px-2 sm:-mx-0 sm:px-0">
+        <div className="flex flex-col sm:flex-row gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input placeholder="Search name, policy, vehicle..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10 h-11" />
+          </div>
+          <div className="flex gap-2">
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-[140px] h-11"><Filter className="h-4 w-4 mr-1" /><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="daysLeft">Days Left</SelectItem>
+                <SelectItem value="name">Client Name</SelectItem>
+                <SelectItem value="company">Company</SelectItem>
               </SelectContent>
             </Select>
-            
-            {/* Quick Filter Buttons for Desktop */}
-            <div className="hidden lg:flex flex-wrap gap-2">
-              <Button
-                variant={weekFilter === null ? "default" : "outline"}
-                size="sm"
-                onClick={() => setWeekFilter(null)}
-                className="min-h-[36px]"
-              >
-                All
-              </Button>
-              <Button
-                variant={weekFilter === 1 ? "default" : "outline"}
-                size="sm"
-                onClick={() => setWeekFilter(1)}
-                className="min-h-[36px]"
-              >
-                1st Week
-              </Button>
-              <Button
-                variant={weekFilter === 2 ? "default" : "outline"}
-                size="sm"
-                onClick={() => setWeekFilter(2)}
-                className="min-h-[36px]"
-              >
-                2nd Week
-              </Button>
-              <Button
-                variant={weekFilter === 3 ? "default" : "outline"}
-                size="sm"
-                onClick={() => setWeekFilter(3)}
-                className="min-h-[36px]"
-              >
-                3rd Week
-              </Button>
-              <Button
-                variant={weekFilter === 4 ? "default" : "outline"}
-                size="sm"
-                onClick={() => setWeekFilter(4)}
-                className="min-h-[36px]"
-              >
-                4th Week
-              </Button>
-            </div>
+            <Button variant="outline" className="h-11" onClick={() => navigate('/expired-policies')}>
+              <Clock className="h-4 w-4 mr-1 sm:mr-2" /><span className="hidden sm:inline">Expired</span>
+            </Button>
           </div>
+        </div>
 
-          {filteredPolicies.length > 0 && (
-            <div className="flex items-center gap-3 mb-4">
-              <Checkbox
-                checked={selectedPolicies.size === filteredPolicies.length && filteredPolicies.length > 0}
-                onCheckedChange={toggleSelectAll}
-                id="selectAll"
-              />
-              <label htmlFor="selectAll" className="text-sm text-muted-foreground cursor-pointer">
-                Select All ({selectedPolicies.size}/{filteredPolicies.length} selected)
-              </label>
-            </div>
-          )}
-          
-          {filteredPolicies.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              {searchTerm || weekFilter !== null ? "No policies match your filters." : "No policies are due for renewal in the next 30 days."}
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {paginatedPolicies.map((policy) => (
-                <Card key={policy.id} className={`border rounded-lg hover:shadow-md transition-all duration-200 ${
-                  policy.urgency === "critical" ? "border-red-200 bg-red-50" :
-                  policy.urgency === "high" ? "border-orange-200 bg-orange-50" :
-                  policy.urgency === "medium" ? "border-yellow-200 bg-yellow-50" :
-                  "border-blue-200 bg-blue-50"
-                }`}>
-                  <CardContent className="p-4 sm:p-6">
-                    <div className="space-y-4">
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
-                        <div className="flex items-center space-x-3">
-                          <Checkbox
-                            checked={selectedPolicies.has(policy.id)}
-                            onCheckedChange={() => togglePolicySelection(policy.id)}
-                          />
-                          <Badge className={getUrgencyColor(policy.urgency)}>
-                            {getUrgencyIcon(policy.urgency)}
-                            <span className="ml-1 capitalize">{policy.urgency}</span>
-                          </Badge>
-                          <span className="text-sm font-medium text-gray-900">
-                            {policy.daysLeft} days left
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleEditPolicy(policy)}
-                            className="h-8 w-8 p-0 hover:bg-blue-100"
-                            title="Edit Policy"
-                          >
-                            <Edit className="h-4 w-4 text-blue-600" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleDeleteClick(policy)}
-                            className="h-8 w-8 p-0 hover:bg-red-100"
-                            title="Delete Policy"
-                          >
-                            <Trash2 className="h-4 w-4 text-red-600" />
-                          </Button>
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div className="space-y-1">
-                          <h3 className="font-semibold text-gray-900 text-sm sm:text-base">{policy.client_name}</h3>
-                          <p className="text-xs sm:text-sm text-gray-600 break-all">{policy.contact_number || 'No contact number'}</p>
-                          <p className="text-xs sm:text-sm text-gray-600 break-all">Policy: {policy.policy_number}</p>
-                        </div>
-                        
-                        <div className="space-y-1">
-                          <p className="text-xs sm:text-sm font-medium text-gray-900">Vehicle Insurance</p>
-                          <p className="text-xs sm:text-sm text-gray-600">{policy.vehicle_make} {policy.vehicle_model}</p>
-                          <p className="text-xs sm:text-sm text-gray-600">{policy.vehicle_number}</p>
-                        </div>
-                        
-                        <div className="space-y-1">
-                          <p className="text-xs sm:text-sm font-medium text-gray-900">Company & Agent</p>
-                          <p className="text-xs sm:text-sm text-gray-600">{policy.company_name || 'Not specified'}</p>
-                          <p className="text-xs sm:text-sm text-gray-600">Agent: {policy.agent_code || 'N/A'}</p>
-                          <p className="text-xs sm:text-sm text-gray-600">Ref: {policy.reference || 'N/A'}</p>
-                        </div>
-                        
-                        <div className="space-y-1">
-                          <p className="text-xs sm:text-sm text-gray-600">Expires: {formatDateDDMMYYYY(policy.policy_expiry_date)}</p>
-                          <p className="text-xs sm:text-sm text-gray-600">Status: {policy.status}</p>
-                          <div className="flex items-center">
-                            <Calendar className="h-3 w-3 text-gray-400 mr-1" />
-                            <span className="text-xs text-gray-500">
-                              {policy.daysLeft} days remaining
-                            </span>
-                          </div>
-                          {policy.whatsapp_reminder_count > 0 && (
-                            <div className="flex items-center">
-                              <MessageSquare className="h-3 w-3 text-green-500 mr-1" />
-                              <span className="text-xs text-green-600 font-medium">
-                                {policy.whatsapp_reminder_count} reminder{policy.whatsapp_reminder_count !== 1 ? 's' : ''} sent
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
+        {/* Bulk Actions */}
+        {filteredPolicies.length > 0 && (
+          <div className="flex items-center gap-2 mt-3 flex-wrap">
+            <Checkbox checked={selectedPolicies.size === filteredPolicies.length && filteredPolicies.length > 0} onCheckedChange={toggleSelectAll} />
+            <span className="text-xs text-muted-foreground">{selectedPolicies.size}/{filteredPolicies.length}</span>
+            {selectedPolicies.size > 0 && (
+              <div className="flex gap-2 ml-auto">
+                <Button size="sm" variant="default" onClick={handleBulkRenewal} className="h-8 bg-blue-600 hover:bg-blue-700 text-white text-xs">
+                  <RefreshCw className="h-3 w-3 mr-1" />Renew ({selectedPolicies.size})
+                </Button>
+                <Button size="sm" variant="default" onClick={handleBulkWhatsApp} className="h-8 bg-green-600 hover:bg-green-700 text-white text-xs">
+                  <Send className="h-3 w-3 mr-1" />WhatsApp
+                </Button>
+                <Button size="sm" variant="outline" onClick={downloadExpiringPolicies} className="h-8 text-xs">
+                  <Download className="h-3 w-3 mr-1" />Export
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
-                      <div className="flex flex-row gap-2 pt-2">
-                        <Button 
-                          size="sm" 
-                          className="bg-blue-600 hover:bg-blue-700 text-white min-h-[40px] flex-1"
-                          onClick={() => handleRenewPolicy(policy)}
-                          disabled={isRenewing === policy.id}
-                        >
-                          <Edit className="h-4 w-4 mr-1" />
-                          <span className="hidden xs:inline">{isRenewing === policy.id ? "Opening..." : "Renew"}</span>
-                          <span className="xs:hidden">{isRenewing === policy.id ? "..." : "Renew"}</span>
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          className="bg-green-600 hover:bg-green-700 text-white min-h-[40px] flex-1"
-                          onClick={() => handleWhatsApp(policy)}
-                        >
-                          <MessageSquare className="h-4 w-4 mr-1" />
-                          <span>WhatsApp</span>
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          className="hover:bg-blue-50 hover:border-blue-200 min-h-[40px] w-10 sm:flex-1 sm:w-auto p-0 sm:px-3"
-                          onClick={() => handleCall(policy)}
-                        >
-                          <Phone className="h-4 w-4" />
-                          <span className="hidden sm:inline sm:ml-1">Call</span>
-                        </Button>
-                      </div>
+      {/* Policy Cards */}
+      {filteredPolicies.length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground">
+          <Calendar className="h-12 w-12 mx-auto mb-3 opacity-40" />
+          <p className="font-medium">{searchTerm || urgencyFilter !== "all" ? "No policies match your filters" : "No policies due in the next 30 days"}</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {paginatedPolicies.map((policy) => {
+            const styles = getUrgencyStyles(policy.urgency);
+            return (
+              <Card key={policy.id} className={`${styles.card} shadow-sm hover:shadow-md transition-all overflow-hidden`}>
+                <CardContent className="p-0">
+                  {/* Header Row */}
+                  <div className="flex items-center justify-between px-4 pt-3 pb-2">
+                    <div className="flex items-center gap-2">
+                      <Checkbox checked={selectedPolicies.has(policy.id)} onCheckedChange={() => togglePolicySelection(policy.id)} />
+                      <Badge className={`${styles.badge} text-xs font-semibold`}>
+                        {policy.urgency === "critical" && <AlertTriangle className="h-3 w-3 mr-1" />}
+                        {policy.urgency.charAt(0).toUpperCase() + policy.urgency.slice(1)}
+                      </Badge>
+                      <span className={`text-sm font-bold ${styles.text}`}>{policy.daysLeft} days left</span>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    <div className="flex gap-1">
+                      <Button size="icon" variant="ghost" onClick={() => handleEditPolicy(policy)} className="h-8 w-8 hover:bg-blue-100">
+                        <Edit className="h-4 w-4 text-blue-600" />
+                      </Button>
+                      <Button size="icon" variant="ghost" onClick={() => handleDeleteClick(policy)} className="h-8 w-8 hover:bg-red-100">
+                        <Trash2 className="h-4 w-4 text-red-600" />
+                      </Button>
+                    </div>
+                  </div>
 
-              {/* Pagination Controls */}
-              {totalPages > 1 && (
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-4 border-t">
-                  <p className="text-sm text-muted-foreground text-center sm:text-left">
-                    Showing {startIndex + 1}-{Math.min(startIndex + POLICIES_PER_PAGE, filteredPolicies.length)} of {filteredPolicies.length} policies
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                      disabled={currentPage === 1}
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                      Previous
+                  {/* Details Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 px-4 pb-3">
+                    <div>
+                      <h3 className="font-bold text-foreground text-base">{policy.client_name}</h3>
+                      <p className="text-sm text-muted-foreground">{policy.contact_number || 'No contact'}</p>
+                      <p className="text-sm text-muted-foreground">Policy: {policy.policy_number}</p>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground text-sm">{policy.insurance_type || "Vehicle Insurance"}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {policy.vehicle_make ? `${policy.vehicle_make}${policy.vehicle_model ? ` - ${policy.vehicle_model}` : ''}` : ''}
+                      </p>
+                      <p className="text-sm text-muted-foreground">{policy.vehicle_number}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">Company & Agent</p>
+                      <p className="text-sm text-muted-foreground">{policy.company_name || 'Not specified'}</p>
+                      <p className="text-sm text-muted-foreground">Agent: {policy.agent_code || 'N/A'}</p>
+                      <p className="text-sm text-muted-foreground">Ref: {policy.reference || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Expires: {format(new Date(policy.policy_expiry_date), "dd-MMM-yyyy")}</p>
+                      <p className="text-sm text-muted-foreground">Status: {policy.status}</p>
+                      <div className="flex items-center gap-1 mt-1">
+                        <Calendar className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">{policy.daysLeft} days remaining</span>
+                      </div>
+                      {policy.whatsapp_reminder_count > 0 && (
+                        <div className="flex items-center gap-1 mt-1">
+                          <MessageSquare className="h-3 w-3 text-green-500" />
+                          <span className="text-xs text-green-600 font-medium">{policy.whatsapp_reminder_count} reminder{policy.whatsapp_reminder_count !== 1 ? 's' : ''} sent</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-2 px-4 pb-4">
+                    <Button size="sm" className="flex-1 bg-blue-600 hover:bg-blue-700 text-white h-10" onClick={() => handleRenewPolicy(policy)} disabled={isRenewing === policy.id}>
+                      <Edit className="h-4 w-4 mr-1.5" />
+                      <span className="hidden xs:inline">{isRenewing === policy.id ? "Opening..." : "Renew"}</span>
                     </Button>
-                    <div className="flex items-center gap-1">
-                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                        let pageNum;
-                        if (totalPages <= 5) {
-                          pageNum = i + 1;
-                        } else if (currentPage <= 3) {
-                          pageNum = i + 1;
-                        } else if (currentPage >= totalPages - 2) {
-                          pageNum = totalPages - 4 + i;
-                        } else {
-                          pageNum = currentPage - 2 + i;
-                        }
-                        return (
-                          <Button
-                            key={pageNum}
-                            variant={currentPage === pageNum ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setCurrentPage(pageNum)}
-                            className="w-8 h-8 p-0"
-                          >
-                            {pageNum}
-                          </Button>
-                        );
-                      })}
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                      disabled={currentPage === totalPages}
-                    >
-                      Next
-                      <ChevronRight className="h-4 w-4" />
+                    <Button size="sm" className="flex-1 bg-green-600 hover:bg-green-700 text-white h-10" onClick={() => handleWhatsApp(policy)}>
+                      <MessageSquare className="h-4 w-4 mr-1.5" />
+                      WhatsApp
+                    </Button>
+                    <Button size="sm" variant="outline" className="w-12 sm:flex-1 sm:w-auto h-10" onClick={() => handleCall(policy)}>
+                      <Phone className="h-4 w-4" />
+                      <span className="hidden sm:inline sm:ml-1.5">Call</span>
                     </Button>
                   </div>
-                </div>
-              )}
+                </CardContent>
+              </Card>
+            );
+          })}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between pt-4 border-t">
+              <p className="text-sm text-muted-foreground">{startIndex + 1}-{Math.min(startIndex + POLICIES_PER_PAGE, filteredPolicies.length)} of {filteredPolicies.length}</p>
+              <div className="flex gap-1">
+                <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let n;
+                  if (totalPages <= 5) n = i + 1;
+                  else if (currentPage <= 3) n = i + 1;
+                  else if (currentPage >= totalPages - 2) n = totalPages - 4 + i;
+                  else n = currentPage - 2 + i;
+                  return (
+                    <Button key={n} variant={currentPage === n ? "default" : "outline"} size="sm" onClick={() => setCurrentPage(n)} className="w-8 h-8 p-0">{n}</Button>
+                  );
+                })}
+                <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           )}
-        </CardContent>
-      </Card>
-
-      {/* Action Buttons at Bottom */}
-      {filteredPolicies.length > 0 && (
-        <div className="flex flex-col sm:flex-row justify-center space-y-2 sm:space-y-0 sm:space-x-4 px-4 sm:px-0">
-          <Button 
-            variant="default"
-            onClick={handleBulkRenewal}
-            disabled={selectedPolicies.size === 0}
-            className="bg-blue-600 hover:bg-blue-700 text-white min-h-[44px] w-full sm:w-auto"
-          >
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Renew Selected ({selectedPolicies.size})
-          </Button>
-          <Button 
-            variant="default"
-            onClick={handleBulkWhatsApp}
-            disabled={selectedPolicies.size === 0}
-            className="bg-green-600 hover:bg-green-700 text-white min-h-[44px] w-full sm:w-auto"
-          >
-            <Send className="h-4 w-4 mr-2" />
-            Send WhatsApp ({selectedPolicies.size})
-          </Button>
-          <Button 
-            variant="outline"
-            onClick={downloadExpiringPolicies}
-            className="hover:bg-blue-50 border-blue-200 text-blue-700 hover:text-blue-800 min-h-[44px] w-full sm:w-auto"
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Download
-          </Button>
         </div>
       )}
 
-      {/* Delete Confirmation Dialog */}
+      {/* Delete Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure you want to delete this policy?</AlertDialogTitle>
+            <AlertDialogTitle>Delete this policy?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the policy
-              <strong> {policyToDelete?.policy_number}</strong> for <strong>{policyToDelete?.client_name}</strong>.
+              This will permanently delete <strong>{policyToDelete?.policy_number}</strong> for <strong>{policyToDelete?.client_name}</strong>.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmDelete}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              Delete
-            </AlertDialogAction>
+            <AlertDialogAction onClick={handleConfirmDelete} className="bg-red-600 hover:bg-red-700">Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
