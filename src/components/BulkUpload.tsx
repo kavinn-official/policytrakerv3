@@ -23,16 +23,16 @@ interface UploadResult {
 
 const REQUIRED_COLUMNS = [
   'Customer Name',
-  'Mobile Number',
   'Insurance Type',
   'Insurance Company',
   'Policy Number',
   'Policy Start Date',
   'Policy End Date',
-  'Premium Amount',
 ];
 
 const OPTIONAL_COLUMNS = [
+  'Mobile Number',
+  'Premium Amount',
   'Premium Frequency',
   'Commission Percentage',
   'Policy Status',
@@ -67,13 +67,13 @@ const BulkUpload = () => {
       [''],
       ['Required Fields (Must be filled):'],
       ['- Customer Name: Full name of the policyholder'],
-      ['- Mobile Number: 10-digit mobile number'],
+      ['- Mobile Number: 10-digit mobile number (optional)'],
       ['- Insurance Type: Vehicle Insurance, Health Insurance, Life Insurance, or Other'],
       ['- Insurance Company: Name of the insurance company'],
       ['- Policy Number: Unique policy number'],
       ['- Policy Start Date: Format DD/MM/YYYY'],
       ['- Policy End Date: Format DD/MM/YYYY'],
-      ['- Premium Amount: Numeric value in INR'],
+      ['- Premium Amount: Numeric value in INR (optional)'],
       [''],
       ['Optional Fields:'],
       ['- Premium Frequency: yearly, half-yearly, quarterly, monthly (default: yearly)'],
@@ -191,8 +191,8 @@ const BulkUpload = () => {
     }
     
     const mobile = String(row['Mobile Number'] || '').replace(/\D/g, '');
-    if (mobile.length !== 10) {
-      errors.push({ row: rowIndex, field: 'Mobile Number', message: 'Must be 10 digits' });
+    if (mobile && mobile.length !== 10) {
+      errors.push({ row: rowIndex, field: 'Mobile Number', message: 'Must be 10 digits if provided' });
     }
     
     const validTypes = ['Vehicle Insurance', 'Health Insurance', 'Life Insurance', 'Other'];
@@ -222,9 +222,12 @@ const BulkUpload = () => {
       errors.push({ row: rowIndex, field: 'Policy End Date', message: 'End date must be after start date' });
     }
     
-    const premium = parseFloat(row['Premium Amount']);
-    if (isNaN(premium) || premium <= 0) {
-      errors.push({ row: rowIndex, field: 'Premium Amount', message: 'Must be a positive number' });
+    const premiumVal = row['Premium Amount'];
+    if (premiumVal !== undefined && premiumVal !== null && String(premiumVal).trim() !== '') {
+      const premium = parseFloat(premiumVal);
+      if (isNaN(premium) || premium < 0) {
+        errors.push({ row: rowIndex, field: 'Premium Amount', message: 'Must be a positive number if provided' });
+      }
     }
     
     return errors;

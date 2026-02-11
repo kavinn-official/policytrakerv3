@@ -45,8 +45,20 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     navigationItems.push({ name: 'Add Policy', path: '/add-policy', icon: Plus });
   }
 
-  const isActivePath = (path: string) => {
-    return location.pathname === path;
+  const isActivePath = (path: string) => location.pathname === path;
+
+  const getCurrentPageName = () => {
+    const allItems = [
+      ...navigationItems,
+      { name: 'Profile', path: '/profile', icon: UserCircle },
+      { name: 'Settings', path: '/settings', icon: Settings },
+      { name: 'Add Client', path: '/add-client', icon: Plus },
+      { name: 'Edit Policy', path: '/edit-policy', icon: FileText },
+      { name: 'Bulk Upload', path: '/bulk-upload', icon: FileText },
+      { name: 'Expired Policies', path: '/expired-policies', icon: AlertTriangle },
+    ];
+    const match = allItems.find(i => location.pathname === i.path || (i.path !== '/dashboard' && location.pathname.startsWith(i.path)));
+    return match?.name || 'Dashboard';
   };
 
   return (
@@ -58,9 +70,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             {/* Logo */}
             <Link to="/dashboard" className="flex items-center space-x-2 sm:space-x-3 min-w-0">
               <img src={logo} alt="Policy Tracker.in" className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0" />
-              <div className="hidden xs:block min-w-0">
-                <h1 className="text-sm sm:text-xl font-bold text-gray-900 truncate">Policy Tracker.in</h1>
-                <p className="text-xs text-gray-600 hidden sm:block">Insurance Management</p>
+              {/* Desktop: show brand name */}
+              <div className="hidden lg:block min-w-0">
+                <h1 className="text-sm sm:text-xl font-bold text-foreground truncate">Policy Tracker.in</h1>
+                <p className="text-xs text-muted-foreground hidden sm:block">Insurance Management</p>
+              </div>
+              {/* Mobile: show current page name */}
+              <div className="lg:hidden min-w-0">
+                <h1 className="text-sm font-bold text-foreground truncate">{getCurrentPageName()}</h1>
               </div>
             </Link>
 

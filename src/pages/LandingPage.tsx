@@ -80,6 +80,37 @@ const localBusinessSchema = {
   "priceRange": "₹0 - ₹1999"
 };
 
+const howToSchema = {
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "How to Use PolicyTracker.in to Manage Insurance Policies",
+  "description": "Step-by-step guide for insurance agents to start managing policies, sending reminders, and tracking commissions with PolicyTracker.in",
+  "totalTime": "PT5M",
+  "step": [
+    {
+      "@type": "HowToStep",
+      "position": 1,
+      "name": "Sign Up for Free",
+      "text": "Create your free PolicyTracker.in account in under 30 seconds. No credit card required. Access the dashboard immediately.",
+      "url": "https://policytracker.in/auth"
+    },
+    {
+      "@type": "HowToStep",
+      "position": 2,
+      "name": "Add Your Policies",
+      "text": "Add policies manually or bulk upload via Excel. Supports Motor, Health, Life, and General Insurance. OCR auto-fill from PDF documents.",
+      "url": "https://policytracker.in/add-policy"
+    },
+    {
+      "@type": "HowToStep",
+      "position": 3,
+      "name": "Track Renewals & Earn More",
+      "text": "Get automated WhatsApp renewal reminders, track commissions, generate reports, and never miss a policy renewal again.",
+      "url": "https://policytracker.in/dashboard"
+    }
+  ]
+};
+
 const LandingPage = () => {
   return (
     <>
@@ -104,6 +135,10 @@ const LandingPage = () => {
       <script 
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
+      />
+      <script 
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(howToSchema) }}
       />
 
       <div className="min-h-screen bg-white">
