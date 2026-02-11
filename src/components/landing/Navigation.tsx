@@ -27,8 +27,8 @@ const Navigation = () => {
               alt="PolicyTracker - Insurance Agent CRM" 
               className="h-10 w-10 sm:h-12 sm:w-12 group-hover:scale-105 transition-transform" 
             />
-            <div className="hidden xs:block">
-              <div className="font-bold text-gray-900 text-lg sm:text-xl">PolicyTracker.in</div>
+            <div>
+              <div className="font-bold text-gray-900 text-base sm:text-xl">PolicyTracker.in</div>
               <div className="text-xs text-gray-500 hidden sm:block">Insurance Agent CRM</div>
             </div>
           </Link>
