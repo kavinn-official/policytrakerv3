@@ -146,7 +146,12 @@ const handler = async (req: Request): Promise<Response> => {
 
     const result = await emailResponse.json();
     if (!emailResponse.ok) {
-      console.error("Failed to send welcome email:", result);
+      console.error("Failed to send welcome email:", JSON.stringify(result));
+      const isResendDomainError = result?.message?.includes("verify a domain") || result?.statusCode === 403;
+      if (isResendDomainError) {
+        console.warn("Resend domain not verified - welcome email skipped for:", email);
+        return new Response(JSON.stringify({ success: true, skipped: true, reason: "Email domain not verified in Resend. Welcome email skipped." }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
       return new Response(JSON.stringify({ error: "Failed to send welcome email" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
