@@ -7,17 +7,19 @@ export const generateSampleExcelTemplate = () => {
   const sampleData = [
     {
       'Policy Number': 'POL001',
-      'Client Name': 'John Doe',
-      'Contact Number': '9876543210',
       'Insurance Type': 'Vehicle Insurance',
+      'Client Name': 'John Doe',
+      'Risk Start Date (RSD)': '01-01-2025',
+      'Risk End Date (RED)': '31-12-2025',
+      'Contact Number': '9876543210',
       'Company Name': 'Cholamandalam',
       'Vehicle Number': 'MH01AB1234',
       'Vehicle Make': 'Maruti',
       'Vehicle Model': 'Swift',
-      'Risk Start Date (RSD)': '01-01-2025',
-      'Risk End Date (RED)': '31-12-2025',
       'Net Premium': '5000',
-      'Status': 'Active'
+      'Status': 'Active',
+      'Agent Name': 'AG001',
+      'Reference': 'New customer',
     }
   ];
 
@@ -26,17 +28,19 @@ export const generateSampleExcelTemplate = () => {
   // Set column widths for better readability
   worksheet['!cols'] = [
     { wch: 15 }, // Policy Number
-    { wch: 20 }, // Client Name
-    { wch: 14 }, // Contact Number
     { wch: 18 }, // Insurance Type
+    { wch: 20 }, // Client Name
+    { wch: 18 }, // Risk Start Date (RSD)
+    { wch: 18 }, // Risk End Date (RED)
+    { wch: 14 }, // Contact Number
     { wch: 18 }, // Company Name
     { wch: 14 }, // Vehicle Number
     { wch: 12 }, // Vehicle Make
     { wch: 12 }, // Vehicle Model
-    { wch: 18 }, // Risk Start Date (RSD)
-    { wch: 18 }, // Risk End Date (RED)
     { wch: 12 }, // Net Premium
     { wch: 10 }, // Status
+    { wch: 15 }, // Agent Name
+    { wch: 20 }, // Reference
   ];
   
   const workbook = XLSX.utils.book_new();
@@ -46,21 +50,23 @@ export const generateSampleExcelTemplate = () => {
   const instructions = [
     ['Policy Upload Template Instructions'],
     [''],
-    ['Required Fields:'],
+    ['Mandatory Fields (must be filled):'],
     ['- Policy Number: Unique policy identifier'],
+    ['- Insurance Type: Vehicle Insurance, Health Insurance, Life Insurance, Other Insurance'],
     ['- Client Name: Full name of the policyholder'],
     ['- Risk Start Date (RSD): Policy start date (DD-MM-YYYY or YYYY-MM-DD)'],
-    ['- Risk End Date (RED): Policy end date (DD-MM-YYYY or YYYY-MM-DD)'],
     [''],
     ['Optional Fields:'],
+    ['- Risk End Date (RED): Policy end date (auto-calculated as 1 year from RSD if empty)'],
     ['- Contact Number: Mobile number (10 digits)'],
-    ['- Insurance Type: Vehicle Insurance, Health Insurance, Life Insurance, Other Insurance'],
     ['- Company Name: Insurance company (auto-normalized, e.g., "CHOLA" becomes "Cholamandalam")'],
     ['- Vehicle Number: Registration number (for vehicle insurance)'],
     ['- Vehicle Make: Manufacturer (e.g., Maruti, Honda)'],
     ['- Vehicle Model: Model name'],
     ['- Net Premium: Premium amount in INR'],
-    ['- Status: Active or Expired'],
+    ['- Status: Active or Expired (default: Active)'],
+    ['- Agent Name: Your agent name/code'],
+    ['- Reference: Any reference notes'],
     [''],
     ['Company Name Shortcuts (auto-converted):'],
     ['- CHOLA, CHOLAMANDALAM MS → Cholamandalam'],
@@ -74,6 +80,8 @@ export const generateSampleExcelTemplate = () => {
     ['Notes:'],
     ['- Date formats supported: DD-MM-YYYY, YYYY-MM-DD, or Excel date format'],
     ['- First row must contain column headers exactly as shown'],
+    ['- If Risk End Date is left empty, it will be auto-calculated as 1 year from Risk Start Date'],
+    ['- Free users can upload up to 200 policies total'],
     ['- Delete this instructions sheet before uploading (optional)'],
   ];
   const instructionsSheet = XLSX.utils.aoa_to_sheet(instructions);
@@ -115,23 +123,33 @@ export const validatePolicyData = (data: any, rowIndex: number): { valid: boolea
   const errors: string[] = [];
   const rowNum = rowIndex + 2; // +2 for 1-indexed and header row
   
+  // Only 4 mandatory fields: Policy Number, Insurance Type, Client Name, Risk Start Date
   if (!data['Policy Number']) {
     errors.push(`Row ${rowNum}: Policy Number is required`);
   }
+  
+  const insuranceType = data['Insurance Type'] || data['Type of Insurance'];
+  if (!insuranceType) {
+    errors.push(`Row ${rowNum}: Insurance Type is required`);
+  } else {
+    const validTypes = ['Vehicle Insurance', 'Health Insurance', 'Life Insurance', 'Other Insurance', 'Other'];
+    if (!validTypes.includes(insuranceType)) {
+      errors.push(`Row ${rowNum}: Insurance Type must be one of: ${validTypes.join(', ')}`);
+    }
+  }
+  
   if (!data['Client Name']) {
     errors.push(`Row ${rowNum}: Client Name is required`);
   }
   
   // Support both old and new field names for backward compatibility
   const activeDate = data['Risk Start Date (RSD)'] || data['Risk Start Date (PSD)'] || data['Active Date'] || data['Policy Active Date'];
-  const expiryDate = data['Risk End Date (RED)'] || data['Risk End Date (PED)'] || data['Expiry Date'] || data['Policy Expiry Date'];
   
   if (!activeDate) {
     errors.push(`Row ${rowNum}: Risk Start Date (RSD) is required`);
   }
-  if (!expiryDate) {
-    errors.push(`Row ${rowNum}: Risk End Date (RED) is required`);
-  }
+  
+  // Risk End Date is now optional - will be auto-calculated if empty
   
   // Validate date formats
   if (activeDate) {
@@ -140,6 +158,8 @@ export const validatePolicyData = (data: any, rowIndex: number): { valid: boolea
       errors.push(`Row ${rowNum}: Invalid Risk Start Date format`);
     }
   }
+  
+  const expiryDate = data['Risk End Date (RED)'] || data['Risk End Date (PED)'] || data['Expiry Date'] || data['Policy Expiry Date'];
   if (expiryDate) {
     const parsedDate = parseExcelDate(expiryDate);
     if (!parsedDate) {
@@ -224,10 +244,25 @@ const parseExcelDate = (value: any): string => {
   return '';
 };
 
+// Auto-calculate Risk End Date as 1 year from Risk Start Date
+const calculateEndDate = (startDateStr: string): string => {
+  const [year, month, day] = startDateStr.split('-').map(Number);
+  const endYear = year + 1;
+  return `${endYear}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+};
+
 export const convertExcelRowToPolicy = (row: any, userId: string): any => {
   // Support both old and new field names for backward compatibility
   const activeDate = row['Risk Start Date (RSD)'] || row['Risk Start Date (PSD)'] || row['Active Date'] || row['Policy Active Date'];
   const expiryDate = row['Risk End Date (RED)'] || row['Risk End Date (PED)'] || row['Expiry Date'] || row['Policy Expiry Date'];
+  
+  const parsedStartDate = parseExcelDate(activeDate);
+  let parsedEndDate = parseExcelDate(expiryDate);
+  
+  // Auto-calculate end date if empty (1 year from start date)
+  if (!parsedEndDate && parsedStartDate) {
+    parsedEndDate = calculateEndDate(parsedStartDate);
+  }
   
   // Normalize company name - automatically standardize variations
   let companyName = row['Company Name'] || '';
@@ -255,13 +290,13 @@ export const convertExcelRowToPolicy = (row: any, userId: string): any => {
     vehicle_number: String(row['Vehicle Number'] || '').trim().toUpperCase(),
     vehicle_make: String(row['Vehicle Make'] || '').trim(),
     vehicle_model: String(row['Vehicle Model'] || '').trim(),
-    policy_active_date: parseExcelDate(activeDate),
-    policy_expiry_date: parseExcelDate(expiryDate),
+    policy_active_date: parsedStartDate,
+    policy_expiry_date: parsedEndDate,
     status: String(row['Status'] || 'Active').trim(),
     reference: String(row['Reference'] || '').trim(),
     contact_number: contactNumber,
     net_premium: netPremium,
-    insurance_type: row['Insurance Type'] || 'Vehicle Insurance',
+    insurance_type: row['Insurance Type'] || row['Type of Insurance'] || 'Vehicle Insurance',
     user_id: userId
   };
 };

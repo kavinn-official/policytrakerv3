@@ -291,6 +291,40 @@ const PolicyList = () => {
       const validPolicies: any[] = [];
       const errors: string[] = [];
 
+      // Free user bulk upload limit: 200 total policies
+      const FREE_USER_TOTAL_LIMIT = 200;
+      const currentPolicyCount = policies.length;
+      
+      if (!subscribed) {
+        const remainingSlots = FREE_USER_TOTAL_LIMIT - currentPolicyCount;
+        if (remainingSlots <= 0) {
+          toast({
+            title: "Upload Limit Reached",
+            description: `Free plan allows up to ${FREE_USER_TOTAL_LIMIT} policies total. You have ${currentPolicyCount} policies. Please upgrade to Premium for unlimited uploads.`,
+            variant: "destructive",
+            duration: 5000,
+          });
+          setIsUploading(false);
+          if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+          }
+          return;
+        }
+        if (data.length > remainingSlots) {
+          toast({
+            title: "Upload Limit Exceeded",
+            description: `You can only upload ${remainingSlots} more policies (${currentPolicyCount}/${FREE_USER_TOTAL_LIMIT} used). Please reduce the number of rows or upgrade to Premium.`,
+            variant: "destructive",
+            duration: 5000,
+          });
+          setIsUploading(false);
+          if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+          }
+          return;
+        }
+      }
+
       for (let i = 0; i < data.length; i++) {
         const validation = validatePolicyData(data[i], i);
         if (validation.valid) {
@@ -301,22 +335,6 @@ const PolicyList = () => {
       }
 
       if (validPolicies.length > 0) {
-        const currentPolicyCount = policies.length;
-        const newTotalCount = currentPolicyCount + validPolicies.length;
-        
-        if (!subscribed && newTotalCount > 50) {
-          toast({
-            title: "Policy Limit Reached",
-            description: "Free plan allows up to 50 policies only. Please upgrade to Premium for unlimited uploads.",
-            variant: "destructive",
-            duration: 5000,
-          });
-          setIsUploading(false);
-          if (fileInputRef.current) {
-            fileInputRef.current.value = '';
-          }
-          return;
-        }
 
         const { error } = await supabase
           .from('policies')
@@ -473,6 +491,7 @@ const PolicyList = () => {
                       <tr className="border-b border-gray-200 bg-gray-50">
                         <th className="text-left p-4 font-semibold text-gray-900">Policy Number</th>
                         <th className="text-left p-4 font-semibold text-gray-900">Client Name</th>
+                        <th className="text-left p-4 font-semibold text-gray-900">Agent / Reference</th>
                         <th className="text-left p-4 font-semibold text-gray-900">Vehicle</th>
                         <th className="text-left p-4 font-semibold text-gray-900">Risk Start Date</th>
                         <th className="text-left p-4 font-semibold text-gray-900">Risk End Date</th>

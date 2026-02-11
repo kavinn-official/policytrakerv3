@@ -61,14 +61,43 @@ const ProfilePage = () => {
       setProfile(profileInfo);
       setMobileNumber(profileInfo.mobile_number || '');
 
-      // Fetch transactions
-      const { data: transactionsData } = await supabase
-        .from('subscriptions')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+      // Fetch transactions from both subscriptions and payment_requests
+      const [{ data: subscriptionData }, { data: paymentData }] = await Promise.all([
+        supabase
+          .from('subscriptions')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('payment_requests')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false }),
+      ]);
 
-      setTransactions(transactionsData || []);
+      // Merge both sources into transactions
+      const allTransactions: Transaction[] = [
+        ...(subscriptionData || []).map(s => ({
+          id: s.id,
+          amount: s.amount,
+          currency: s.currency,
+          plan_name: s.plan_name,
+          status: s.status,
+          created_at: s.created_at,
+        })),
+        ...(paymentData || [])
+          .filter(p => !subscriptionData?.some(s => s.razorpay_order_id === p.order_id))
+          .map(p => ({
+            id: p.id,
+            amount: p.amount,
+            currency: p.currency,
+            plan_name: p.plan_type || 'Payment',
+            status: p.status,
+            created_at: p.created_at,
+          })),
+      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      setTransactions(allTransactions);
     } catch (error) {
       console.error('Error fetching profile data:', error);
     } finally {
