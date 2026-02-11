@@ -104,7 +104,7 @@ const PolicyCard = ({ policy, daysToExpiry, statusColor, onViewPolicy, onEditPol
           
           <div className="flex items-center text-xs sm:text-sm">
             <Building className="h-4 w-4 mr-2 sm:mr-3 text-gray-500 flex-shrink-0" />
-            <span className="text-gray-600 truncate">Agent: {policy.agent_code || '—'}</span>
+            <span className="text-gray-600 truncate">Agent: {policy.agent_code || '—'}{policy.reference ? ` • Ref: ${policy.reference}` : ''}</span>
           </div>
           
           <div className="flex items-center text-xs sm:text-sm">

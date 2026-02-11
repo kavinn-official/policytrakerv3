@@ -26,20 +26,26 @@ const AdminDashboard = () => {
   const fetchStats = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
     try {
+      const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+      
       const [
         { count: totalUsers },
         { count: proUsers },
         { count: totalPolicies },
         { data: usageData },
-        newUsersResult,
+        { count: newUsersThisMonth },
         { data: revenueData },
+        { count: totalSupportTickets },
+        { count: openTickets },
       ] = await Promise.all([
         supabase.from('profiles').select('*', { count: 'exact', head: true }),
         supabase.from('subscribers').select('*', { count: 'exact', head: true }).eq('subscription_tier', 'pro').eq('is_active', true),
         supabase.from('policies').select('*', { count: 'exact', head: true }),
         supabase.from('usage_tracking').select('storage_used_bytes, ocr_scans_used'),
-        supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()),
+        supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', monthStart),
         supabase.from('subscriptions').select('amount').eq('status', 'active'),
+        supabase.from('support_tickets').select('*', { count: 'exact', head: true }),
+        supabase.from('support_tickets').select('*', { count: 'exact', head: true }).eq('status', 'open'),
       ]);
 
       const totalStorageBytes = usageData?.reduce((sum, u) => sum + (u.storage_used_bytes || 0), 0) || 0;
@@ -53,7 +59,7 @@ const AdminDashboard = () => {
         totalPolicies: totalPolicies || 0,
         totalStorageBytes,
         totalOcrScans,
-        newUsersThisMonth: newUsersResult.count || 0,
+        newUsersThisMonth: newUsersThisMonth || 0,
         totalRevenue,
       });
     } catch (error) {

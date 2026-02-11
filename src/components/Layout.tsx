@@ -85,7 +85,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             {/* Mobile and Desktop User Menu */}
             <div className="flex items-center space-x-2">
               {/* Desktop User Menu */}
-              <div className="hidden md:flex items-center space-x-3">
+              <div className="hidden lg:flex items-center space-x-3">
                 {user && (
                   <>
                     <div className="text-right hidden lg:block">
@@ -125,7 +125,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               </div>
 
               {/* Mobile Menu */}
-              <div className="md:hidden">
+              <div className="lg:hidden">
                 {user && (
                   <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
                     <SheetTrigger asChild>
@@ -133,7 +133,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                         <Menu className="h-4 w-4" />
                       </Button>
                     </SheetTrigger>
-                    <SheetContent side="right" className="w-72 sm:w-80 z-50 bg-white">
+                    <SheetContent side="right" className="w-72 sm:w-80 z-50 bg-white overflow-y-auto">
                       <div className="py-6">
                         <div className="space-y-6">
                           <div className="text-center border-b pb-6">
@@ -162,7 +162,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                             ))}
                           </div>
                           
-                          <div className="border-t pt-4 mt-2 space-y-2">
+                          <div className="border-t pt-4 mt-2 space-y-2 px-2">
                             <Link
                               to="/profile"
                               onClick={() => setIsMobileMenuOpen(false)}
@@ -191,8 +191,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                           
                           <div className="border-t pt-6 px-2">
                             <Button 
-                              onClick={handleSignOut}
-                              variant="outline" 
+                              onClick={() => {
+                                setIsMobileMenuOpen(false);
+                                handleSignOut();
+                              }}
+                              variant="destructive" 
                               className="w-full justify-start min-h-[48px]"
                             >
                               <LogOut className="h-4 w-4 mr-3" />
