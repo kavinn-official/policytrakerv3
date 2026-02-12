@@ -147,7 +147,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Starting policy report generation...");
 
-    const { manual_trigger, user_id, report_type, month } = await req.json().catch(() => ({}));
+    const { manual_trigger, user_id, report_type, month, selected_month, selected_year } = await req.json().catch(() => ({}));
     
     let profiles;
     
@@ -263,26 +263,32 @@ const handler = async (req: Request): Promise<Response> => {
         let endDate: Date | null = null;
         let isMonthlyReport = report_type === 'monthly_premium';
 
-        if (isMonthlyReport && month) {
-          const now = new Date();
-          let targetMonth: Date;
-          
-          switch (month) {
-            case "previous":
-              targetMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-              break;
-            case "2months":
-              targetMonth = new Date(now.getFullYear(), now.getMonth() - 2, 1);
-              break;
-            case "3months":
-              targetMonth = new Date(now.getFullYear(), now.getMonth() - 3, 1);
-              break;
-            default:
-              targetMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        if (isMonthlyReport) {
+          // Use selected_month/selected_year if provided (from Reports page filters)
+          if (typeof selected_month === 'number' && typeof selected_year === 'number') {
+            startDate = new Date(selected_year, selected_month, 1);
+            endDate = new Date(selected_year, selected_month + 1, 0);
+          } else if (month) {
+            const now = new Date();
+            let targetMonth: Date;
+            
+            switch (month) {
+              case "previous":
+                targetMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                break;
+              case "2months":
+                targetMonth = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+                break;
+              case "3months":
+                targetMonth = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+                break;
+              default:
+                targetMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            }
+            
+            startDate = new Date(targetMonth.getFullYear(), targetMonth.getMonth(), 1);
+            endDate = new Date(targetMonth.getFullYear(), targetMonth.getMonth() + 1, 0);
           }
-          
-          startDate = new Date(targetMonth.getFullYear(), targetMonth.getMonth(), 1);
-          endDate = new Date(targetMonth.getFullYear(), targetMonth.getMonth() + 1, 0);
         }
 
         // Build query based on report type
@@ -293,9 +299,12 @@ const handler = async (req: Request): Promise<Response> => {
           .order('policy_expiry_date', { ascending: true });
 
         if (isMonthlyReport && startDate && endDate) {
+          // Use policy_active_date (Risk Start Date) instead of created_at
+          const startStr = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}-${String(startDate.getDate()).padStart(2, '0')}`;
+          const endStr = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, '0')}-${String(endDate.getDate()).padStart(2, '0')}`;
           query = query
-            .gte('created_at', startDate.toISOString())
-            .lte('created_at', endDate.toISOString());
+            .gte('policy_active_date', startStr)
+            .lte('policy_active_date', endStr);
         }
 
         const { data: policies, error: policiesError } = await query;
@@ -469,22 +478,31 @@ async function generateExcelFile(policies: Policy[], isMonthly: boolean, startDa
 
   const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
 
-  const worksheet = XLSX.utils.json_to_sheet(policies.map((policy, index) => ({
+  const worksheet = XLSX.utils.json_to_sheet(policies.map((policy: any, index: number) => ({
     'S.No': index + 1,
     'Policy Number': policy.policy_number,
     'Client Name': policy.client_name,
     'Insurance Type': policy.insurance_type || 'Vehicle Insurance',
+    'Company Name': policy.company_name || '',
     'Vehicle Number': policy.vehicle_number || '',
     'Vehicle Make': policy.vehicle_make || '',
     'Vehicle Model': policy.vehicle_model || '',
-    'Active Date': new Date(policy.policy_active_date).toLocaleDateString(),
-    'Expiry Date': new Date(policy.policy_expiry_date).toLocaleDateString(),
+    'Risk Start Date': new Date(policy.policy_active_date).toLocaleDateString(),
+    'Risk End Date': new Date(policy.policy_expiry_date).toLocaleDateString(),
     'Days to Expiry': getDaysToExpiry(policy.policy_expiry_date),
     'Net Premium': Number(policy.net_premium) || 0,
+    'Commission %': Number(policy.commission_percentage) || 0,
+    'Commission Amount': Number(policy.first_year_commission) || ((Number(policy.net_premium) || 0) * (Number(policy.commission_percentage) || 0) / 100),
+    'IDV': Number(policy.idv) || '',
+    'Sum Insured': Number(policy.sum_insured) || '',
+    'Sum Assured': Number(policy.sum_assured) || '',
+    'Members Covered': policy.members_covered || '',
+    'Plan Type': policy.plan_type || '',
+    'Policy Term': policy.policy_term || '',
+    'Premium Frequency': policy.premium_frequency || '',
     'Status': policy.status,
     'Agent Code': policy.agent_code || '',
     'Contact Number': policy.contact_number || '',
-    'Company Name': policy.company_name || '',
     'Reference': policy.reference || ''
   })));
 

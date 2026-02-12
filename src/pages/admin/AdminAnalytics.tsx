@@ -11,7 +11,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, RefreshCw, TrendingUp, Users, FileText, DollarSign } from "lucide-react";
 import { toast } from "sonner";
-import { format, subDays, startOfMonth, endOfMonth } from "date-fns";
+import { format, subDays } from "date-fns";
 import {
   LineChart,
   Line,
@@ -32,6 +32,7 @@ interface AnalyticsData {
   policyDistribution: { type: string; count: number }[];
   subscriptionTrend: { month: string; pro: number; free: number }[];
   revenueData: { month: string; revenue: number }[];
+  summary: { totalUsers: number; totalPolicies: number; proUsers: number; totalRevenue: number };
 }
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
@@ -47,57 +48,58 @@ const AdminAnalytics = () => {
       const daysAgo = parseInt(dateRange);
       const startDate = subDays(new Date(), daysAgo);
 
-      // Fetch user signups over time
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('created_at')
-        .gte('created_at', startDate.toISOString())
-        .order('created_at');
+      // Fetch all data in parallel
+      const [profilesRes, policiesRes, subscriptionsRes, subscribersRes] = await Promise.all([
+        supabase.from('profiles').select('created_at').gte('created_at', startDate.toISOString()).order('created_at'),
+        supabase.from('policies').select('insurance_type'),
+        supabase.from('subscriptions').select('amount, status, created_at'),
+        supabase.from('subscribers').select('is_active, subscription_tier, created_at'),
+      ]);
 
-      // Group by date
+      const profiles = profilesRes.data || [];
+      const policies = policiesRes.data || [];
+      const subscriptions = subscriptionsRes.data || [];
+      const subscribers = subscribersRes.data || [];
+
+      // User growth
       const userGrowthMap: Record<string, number> = {};
-      profiles?.forEach(p => {
+      profiles.forEach(p => {
         const date = format(new Date(p.created_at), 'MMM dd');
         userGrowthMap[date] = (userGrowthMap[date] || 0) + 1;
       });
       const userGrowth = Object.entries(userGrowthMap).map(([date, users]) => ({ date, users }));
 
-      // Fetch policy distribution by type
-      const { data: policies } = await supabase
-        .from('policies')
-        .select('insurance_type');
-
+      // Policy distribution
       const policyTypeMap: Record<string, number> = {};
-      policies?.forEach(p => {
+      policies.forEach(p => {
         policyTypeMap[p.insurance_type] = (policyTypeMap[p.insurance_type] || 0) + 1;
       });
       const policyDistribution = Object.entries(policyTypeMap).map(([type, count]) => ({ type, count }));
 
-      // Fetch subscription data
-      const { data: subscriptions } = await supabase
-        .from('subscriptions')
-        .select('amount, status, created_at');
-
+      // Revenue
       const revenueByMonth: Record<string, number> = {};
-      subscriptions?.forEach(s => {
+      let totalRevenue = 0;
+      subscriptions.forEach(s => {
         if (s.status === 'active') {
           const month = format(new Date(s.created_at), 'MMM yyyy');
           revenueByMonth[month] = (revenueByMonth[month] || 0) + s.amount;
+          totalRevenue += s.amount;
         }
       });
       const revenueData = Object.entries(revenueByMonth).map(([month, revenue]) => ({ month, revenue }));
 
-      // Calculate subscription trend from actual data
-      const { data: subscribers } = await supabase
-        .from('subscribers')
-        .select('is_active, subscription_tier, created_at');
-
+      // Subscription trend
       const subTrendMap: Record<string, { pro: number; free: number }> = {};
-      subscribers?.forEach(s => {
+      let proUsers = 0;
+      subscribers.forEach(s => {
         const month = format(new Date(s.created_at), 'MMM yyyy');
         if (!subTrendMap[month]) subTrendMap[month] = { pro: 0, free: 0 };
-        if (s.subscription_tier === 'pro' && s.is_active) subTrendMap[month].pro++;
-        else subTrendMap[month].free++;
+        if (s.subscription_tier === 'pro' && s.is_active) {
+          subTrendMap[month].pro++;
+          proUsers++;
+        } else {
+          subTrendMap[month].free++;
+        }
       });
       const subscriptionTrend = Object.entries(subTrendMap).map(([month, data]) => ({ month, ...data }));
 
@@ -106,6 +108,12 @@ const AdminAnalytics = () => {
         policyDistribution,
         subscriptionTrend,
         revenueData,
+        summary: {
+          totalUsers: profiles.length,
+          totalPolicies: policies.length,
+          proUsers,
+          totalRevenue,
+        },
       });
     } catch (error) {
       console.error("Error fetching analytics:", error);
@@ -131,7 +139,7 @@ const AdminAnalytics = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Platform Analytics</h1>
+          <h1 className="text-2xl font-bold text-foreground">Platform Analytics</h1>
           <p className="text-muted-foreground">Insights into platform performance and growth</p>
         </div>
         <div className="flex gap-2">
@@ -143,6 +151,7 @@ const AdminAnalytics = () => {
               <SelectItem value="7">Last 7 days</SelectItem>
               <SelectItem value="30">Last 30 days</SelectItem>
               <SelectItem value="90">Last 90 days</SelectItem>
+              <SelectItem value="365">Last 1 year</SelectItem>
             </SelectContent>
           </Select>
           <Button onClick={fetchAnalytics} variant="outline" size="sm">
@@ -151,6 +160,56 @@ const AdminAnalytics = () => {
           </Button>
         </div>
       </div>
+
+      {/* Summary Cards */}
+      {data?.summary && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <Users className="h-8 w-8 text-blue-500" />
+                <div>
+                  <p className="text-2xl font-bold">{data.summary.totalUsers}</p>
+                  <p className="text-sm text-muted-foreground">New Users</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <FileText className="h-8 w-8 text-green-500" />
+                <div>
+                  <p className="text-2xl font-bold">{data.summary.totalPolicies}</p>
+                  <p className="text-sm text-muted-foreground">Total Policies</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <TrendingUp className="h-8 w-8 text-purple-500" />
+                <div>
+                  <p className="text-2xl font-bold">{data.summary.proUsers}</p>
+                  <p className="text-sm text-muted-foreground">Pro Users</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <DollarSign className="h-8 w-8 text-emerald-500" />
+                <div>
+                  <p className="text-2xl font-bold">₹{data.summary.totalRevenue.toLocaleString('en-IN')}</p>
+                  <p className="text-sm text-muted-foreground">Revenue</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* User Growth Chart */}
@@ -171,13 +230,7 @@ const AdminAnalytics = () => {
                     <XAxis dataKey="date" fontSize={12} />
                     <YAxis fontSize={12} />
                     <Tooltip />
-                    <Line 
-                      type="monotone" 
-                      dataKey="users" 
-                      stroke="#0891b2" 
-                      strokeWidth={2}
-                      dot={{ fill: '#0891b2' }}
-                    />
+                    <Line type="monotone" dataKey="users" stroke="#0891b2" strokeWidth={2} dot={{ fill: '#0891b2' }} />
                   </LineChart>
                 </ResponsiveContainer>
               ) : (
@@ -213,7 +266,7 @@ const AdminAnalytics = () => {
                       fill="#8884d8"
                       dataKey="count"
                     >
-                      {data.policyDistribution.map((entry, index) => (
+                      {data.policyDistribution.map((_, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
@@ -240,16 +293,22 @@ const AdminAnalytics = () => {
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data?.subscriptionTrend || []}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" fontSize={12} />
-                  <YAxis fontSize={12} />
-                  <Tooltip />
-                  <Bar dataKey="pro" fill="#0891b2" name="Pro" />
-                  <Bar dataKey="free" fill="#94a3b8" name="Free" />
-                </BarChart>
-              </ResponsiveContainer>
+              {data?.subscriptionTrend && data.subscriptionTrend.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={data.subscriptionTrend}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" fontSize={12} />
+                    <YAxis fontSize={12} />
+                    <Tooltip />
+                    <Bar dataKey="pro" fill="#0891b2" name="Pro" />
+                    <Bar dataKey="free" fill="#94a3b8" name="Free" />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground">
+                  No subscription data available
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
