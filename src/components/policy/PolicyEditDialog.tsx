@@ -11,6 +11,7 @@ import { Policy } from "@/utils/policyUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { vehicleMakes, vehicleModels, insuranceCompanies } from "@/data/vehicleData";
+import { compressDocument } from "@/utils/documentCompression";
 
 interface PolicyEditDialogProps {
   policy: Policy | null;
@@ -159,10 +160,12 @@ const PolicyEditDialog = ({ policy, open, onOpenChange, onPolicyUpdated }: Polic
   const uploadDocument = async (policyId: string): Promise<string | null> => {
     if (!documentFile) return null;
 
+    const compressedFile = await compressDocument(documentFile);
+
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("User not authenticated");
 
-    const fileExt = documentFile.name.split('.').pop();
+    const fileExt = compressedFile.name.split('.').pop();
     const fileName = `${user.id}/${policyId}/${Date.now()}.${fileExt}`;
 
     // Delete old document if exists
@@ -174,7 +177,7 @@ const PolicyEditDialog = ({ policy, open, onOpenChange, onPolicyUpdated }: Polic
 
     const { error: uploadError } = await supabase.storage
       .from('policy-documents')
-      .upload(fileName, documentFile, { contentType: 'application/pdf' });
+      .upload(fileName, compressedFile, { contentType: compressedFile.type });
 
     if (uploadError) throw uploadError;
     return fileName;

@@ -14,6 +14,7 @@ import { format, addDays, parse } from "date-fns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useUsageTracking } from "@/hooks/useUsageTracking";
+import { compressDocument } from "@/utils/documentCompression";
 
 const INSURANCE_TYPES = [
   "Vehicle Insurance",
@@ -724,15 +725,16 @@ const AddPolicy = () => {
         }
       }
 
-      // Upload PDF to storage if file is available
+      // Upload PDF to storage if file is available (with compression)
       let documentUrl: string | null = null;
       if (uploadedFile && uploadedFile.type === 'application/pdf') {
+        const compressedFile = await compressDocument(uploadedFile);
         const fileExt = 'pdf';
         const fileName = `${user?.id}/${Date.now()}_${formData.policy_number.replace(/[^a-zA-Z0-9]/g, '_')}.${fileExt}`;
         
         const { error: uploadError } = await supabase.storage
           .from('policy-documents')
-          .upload(fileName, uploadedFile, {
+          .upload(fileName, compressedFile, {
             cacheControl: '3600',
             upsert: false
           });
@@ -746,8 +748,8 @@ const AddPolicy = () => {
           });
         } else {
           documentUrl = fileName;
-          // Track storage usage after successful upload
-          await addStorageUsage(uploadedFile.size);
+          // Track storage usage after successful upload (use compressed size)
+          await addStorageUsage(compressedFile.size);
           await refreshUsage();
         }
       }

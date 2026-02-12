@@ -14,6 +14,7 @@ import { format, addDays, parse } from "date-fns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { compressDocument } from "@/utils/documentCompression";
 
 const INSURANCE_TYPES = [
   "Vehicle Insurance",
@@ -455,6 +456,7 @@ const EditPolicy = () => {
       let documentUrl: string | null = existingDocumentUrl;
       
       if (uploadedFile && uploadedFile.type === 'application/pdf') {
+        const compressedFile = await compressDocument(uploadedFile);
         // Delete old document if exists
         if (existingDocumentUrl) {
           await supabase.storage
@@ -467,7 +469,7 @@ const EditPolicy = () => {
         
         const { error: uploadError } = await supabase.storage
           .from('policy-documents')
-          .upload(fileName, uploadedFile, {
+          .upload(fileName, compressedFile, {
             cacheControl: '3600',
             upsert: false
           });
