@@ -56,6 +56,7 @@ const PolicyList = () => {
   const [dateFromFilter, setDateFromFilter] = useState<Date | undefined>(undefined);
   const [dateToFilter, setDateToFilter] = useState<Date | undefined>(undefined);
   const [insuranceTypeFilter, setInsuranceTypeFilter] = useState<string>('All');
+  const [fyFilter, setFyFilter] = useState<string>('All');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -90,7 +91,7 @@ const PolicyList = () => {
       const { data, error } = await supabase
         .from('policies')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('policy_active_date', { ascending: true });
 
       if (error) throw error;
       setPolicies(data || []);
@@ -106,7 +107,23 @@ const PolicyList = () => {
     }
   };
 
-  // Filter policies based on search term, date range (by policy start date), and insurance type
+  // Generate FY options from available policies
+  const fyOptions = (() => {
+    const years = new Set<number>();
+    policies.forEach(p => {
+      const d = new Date(p.policy_active_date);
+      const y = d.getFullYear();
+      const m = d.getMonth(); // 0-indexed
+      // FY starts April: if month >= 3 (April), FY = y, else FY = y-1
+      years.add(m >= 3 ? y : y - 1);
+    });
+    return Array.from(years).sort((a, b) => b - a).map(y => ({
+      value: `${y}`,
+      label: `FY ${y} - FY ${y + 1}`,
+    }));
+  })();
+
+  // Filter policies based on search term, date range (by policy start date), insurance type, and FY
   const filteredPolicies = filterPolicies(policies, searchTerm).filter((policy) => {
     // Date filter - now based on policy_active_date (Risk Start Date) instead of created_at
     const policyStartDate = new Date(policy.policy_active_date);
@@ -121,6 +138,12 @@ const PolicyList = () => {
       const policyType = (policy as any).insurance_type || 'Vehicle Insurance';
       if (policyType !== insuranceTypeFilter) return false;
     }
+    // Financial Year filter
+    if (fyFilter !== 'All') {
+      const fyStart = new Date(parseInt(fyFilter), 3, 1); // April 1
+      const fyEnd = new Date(parseInt(fyFilter) + 1, 2, 31, 23, 59, 59, 999); // March 31
+      if (policyStartDate < fyStart || policyStartDate > fyEnd) return false;
+    }
     return true;
   });
   
@@ -132,7 +155,7 @@ const PolicyList = () => {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, dateFromFilter, dateToFilter, insuranceTypeFilter]);
+  }, [searchTerm, dateFromFilter, dateToFilter, insuranceTypeFilter, fyFilter]);
 
   const handleClearDateFilter = () => {
     setDateFromFilter(undefined);
@@ -448,6 +471,23 @@ const PolicyList = () => {
                     </SelectContent>
                   </Select>
                 </div>
+                {fyOptions.length > 0 && (
+                  <div className="w-full sm:w-56">
+                    <Select value={fyFilter} onValueChange={setFyFilter}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Financial Year" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="All">All Years</SelectItem>
+                        {fyOptions.map((fy) => (
+                          <SelectItem key={fy.value} value={fy.value}>
+                            {fy.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 <PolicyDateFilter
                   fromDate={dateFromFilter}
                   toDate={dateToFilter}
