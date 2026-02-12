@@ -98,21 +98,40 @@ export const downloadPoliciesAsExcel = (policies: Policy[], filename: string) =>
     return null;
   }
 
-  const worksheet = XLSX.utils.json_to_sheet(policies.map(policy => ({
-    'Policy Number': policy.policy_number,
-    'Client Name': policy.client_name,
-    'Agent Name': policy.agent_code,
-    'Company Name': policy.company_name || '',
-    'Vehicle Number': policy.vehicle_number,
-    'Vehicle Make': policy.vehicle_make,
-    'Vehicle Model': policy.vehicle_model,
-    'Risk Start Date (RSD)': formatDateDDMMYYYY(policy.policy_active_date),
-    'Risk End Date (RED)': formatDateDDMMYYYY(policy.policy_expiry_date),
-    'Status': policy.status,
-    'Reference': policy.reference,
-    'Contact Number': policy.contact_number || '',
-    'Created At': formatDateDDMMYYYY(policy.created_at)
-  })));
+  const worksheet = XLSX.utils.json_to_sheet(policies.map((policy, index) => {
+    const premium = Number(policy.net_premium) || 0;
+    const commissionRate = Number(policy.commission_percentage) || 0;
+    const commission = Number(policy.first_year_commission) || ((premium * commissionRate) / 100);
+    
+    return {
+      'S.No': index + 1,
+      'Policy Number': policy.policy_number,
+      'Client Name': policy.client_name,
+      'Insurance Type': policy.insurance_type || 'Vehicle Insurance',
+      'Company Name': policy.company_name || '',
+      'Agent Name': policy.agent_code || '',
+      'Reference': policy.reference || '',
+      'Vehicle Number': policy.vehicle_number || '',
+      'Vehicle Make': policy.vehicle_make || '',
+      'Vehicle Model': policy.vehicle_model || '',
+      'Risk Start Date (RSD)': formatDateDDMMYYYY(policy.policy_active_date),
+      'Risk End Date (RED)': formatDateDDMMYYYY(policy.policy_expiry_date),
+      'Net Premium': premium,
+      'Commission %': commissionRate,
+      'Commission Amount': commission,
+      'IDV': policy.idv || '',
+      'Sum Insured': policy.sum_insured || '',
+      'Sum Assured': policy.sum_assured || '',
+      'Members Covered': policy.members_covered || '',
+      'Plan Type': policy.plan_type || '',
+      'Policy Term': policy.policy_term || '',
+      'Premium Frequency': policy.premium_frequency || '',
+      'Premium Payment Term': policy.premium_payment_term || '',
+      'Status': policy.status,
+      'Contact Number': policy.contact_number || '',
+      'Created At': formatDateDDMMYYYY(policy.created_at),
+    };
+  }));
 
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, 'Policies');

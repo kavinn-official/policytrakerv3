@@ -111,6 +111,63 @@ const howToSchema = {
   ]
 };
 
+const serviceSchema = {
+  "@context": "https://schema.org",
+  "@type": "Service",
+  "name": "PolicyTracker.in Insurance Agent CRM",
+  "serviceType": "Insurance Policy Management Software",
+  "provider": {
+    "@type": "Organization",
+    "name": "PolicyTracker.in",
+    "url": "https://policytracker.in"
+  },
+  "description": "Complete insurance agent CRM with policy tracking, WhatsApp renewal reminders, OCR PDF auto-fill, commission analytics, and bulk upload. Supports motor, health, life and general insurance.",
+  "areaServed": {
+    "@type": "Country",
+    "name": "India"
+  },
+  "hasOfferCatalog": {
+    "@type": "OfferCatalog",
+    "name": "PolicyTracker Plans",
+    "itemListElement": [
+      {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "Free Plan"
+        },
+        "price": "0",
+        "priceCurrency": "INR",
+        "description": "200 policies, 50 OCR scans, 2GB storage"
+      },
+      {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "Pro Plan"
+        },
+        "price": "199",
+        "priceCurrency": "INR",
+        "description": "Unlimited policies, automated WhatsApp reminders, 10GB storage"
+      }
+    ]
+  }
+};
+
+const webApplicationSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "PolicyTracker.in",
+  "url": "https://policytracker.in",
+  "applicationCategory": "BusinessApplication",
+  "browserRequirements": "Requires JavaScript. Works on Chrome, Firefox, Safari, Edge.",
+  "softwareVersion": "2.0",
+  "operatingSystem": "Web, Android, iOS (PWA)",
+  "availableOnDevice": "Desktop, Mobile, Tablet",
+  "countriesSupported": "IN",
+  "inLanguage": "en-IN"
+};
+
 const LandingPage = () => {
   return (
     <>
@@ -139,6 +196,14 @@ const LandingPage = () => {
       <script 
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(howToSchema) }}
+      />
+      <script 
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceSchema) }}
+      />
+      <script 
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(webApplicationSchema) }}
       />
 
       <div className="min-h-screen bg-white">

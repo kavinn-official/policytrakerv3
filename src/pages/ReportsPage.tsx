@@ -699,6 +699,10 @@ const ReportsPage = () => {
         body: {
           manual_trigger: true,
           user_id: user?.id,
+          report_type: reportType === 'monthly' ? 'monthly_premium' : undefined,
+          month: reportType === 'monthly' ? 'current' : undefined,
+          selected_month: parseInt(selectedMonth),
+          selected_year: parseInt(selectedYear),
         }
       });
 
