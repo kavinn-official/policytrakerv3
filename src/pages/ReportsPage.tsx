@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { format, startOfMonth, endOfMonth, getYear, getMonth, setMonth, setYear, subMonths, startOfYear, endOfYear } from "date-fns";
+import { format, startOfMonth, endOfMonth, getYear, getMonth, setMonth, setYear, subMonths, startOfYear, endOfYear, startOfDay, endOfDay } from "date-fns";
 import { 
   ArrowLeft, 
   Download, 
@@ -45,6 +45,7 @@ import autoTable from 'jspdf-autotable';
 import { TrendCharts, DistributionCharts } from "@/components/reports/ReportCharts";
 import { ReportFilters } from "@/components/reports/ReportFilters";
 import CommissionAnalytics from "@/components/reports/CommissionAnalytics";
+import { MaterialDatePicker } from "@/components/ui/material-date-picker";
 
 interface PolicyStats {
   totalPolicies: number;
@@ -94,9 +95,11 @@ const ReportsPage = () => {
   const { toast } = useToast();
   
   const now = new Date();
-  const [reportType, setReportType] = useState<'monthly' | 'yearly'>('monthly');
+  const [reportType, setReportType] = useState<'today' | 'monthly' | 'yearly' | 'custom'>('today');
   const [selectedMonth, setSelectedMonth] = useState<string>(String(getMonth(now)));
   const [selectedYear, setSelectedYear] = useState<string>(String(getYear(now)));
+  const [customStartDate, setCustomStartDate] = useState<Date | undefined>(undefined);
+  const [customEndDate, setCustomEndDate] = useState<Date | undefined>(undefined);
   const [loading, setLoading] = useState(false);
   const [emailing, setEmailing] = useState(false);
   const [stats, setStats] = useState<PolicyStats | null>(null);
@@ -263,7 +266,17 @@ const ReportsPage = () => {
       
       let startDate: Date, endDate: Date;
       
-      if (reportType === 'yearly') {
+      if (reportType === 'today') {
+        startDate = startOfDay(now);
+        endDate = endOfDay(now);
+      } else if (reportType === 'custom') {
+        if (!customStartDate || !customEndDate) {
+          setLoading(false);
+          return;
+        }
+        startDate = startOfDay(customStartDate);
+        endDate = endOfDay(customEndDate);
+      } else if (reportType === 'yearly') {
         const range = getYearRange(year);
         startDate = range.startDate;
         endDate = range.endDate;
@@ -279,7 +292,15 @@ const ReportsPage = () => {
       setAllPolicies(currentStats?.policies || []);
 
       // Fetch previous period stats for comparison
-      if (reportType === 'yearly') {
+      if (reportType === 'today') {
+        // Compare with yesterday
+        const yesterday = new Date(now);
+        yesterday.setDate(yesterday.getDate() - 1);
+        const prevStats = await fetchStatsForPeriod(startOfDay(yesterday), endOfDay(yesterday));
+        setPreviousStats(prevStats);
+      } else if (reportType === 'custom') {
+        setPreviousStats(null); // No comparison for custom range
+      } else if (reportType === 'yearly') {
         const prevYear = getYearRange(year - 1);
         const prevStats = await fetchStatsForPeriod(prevYear.startDate, prevYear.endDate);
         setPreviousStats(prevStats);
@@ -290,21 +311,26 @@ const ReportsPage = () => {
         setPreviousStats(prevStats);
       }
 
-      // Fetch trend data (last 6 months for monthly, last 12 months for yearly)
-      const trends: MonthlyTrend[] = [];
-      const trendCount = reportType === 'yearly' ? 12 : 6;
-      
-      for (let i = trendCount - 1; i >= 0; i--) {
-        const trendMonth = subMonths(startDate, i);
-        const trendRange = getDateRange(getMonth(trendMonth), getYear(trendMonth));
-        const trendStats = await fetchStatsForPeriod(trendRange.startDate, trendRange.endDate);
-        trends.push({
-          month: format(trendMonth, 'MMM yy'),
-          policies: trendStats?.totalPolicies || 0,
-          premium: trendStats?.totalNetPremium || 0,
-        });
+      // Fetch trend data (last 6 months for monthly/today, last 12 months for yearly, skip for custom)
+      if (reportType !== 'custom') {
+        const trends: MonthlyTrend[] = [];
+        const trendCount = reportType === 'yearly' ? 12 : 6;
+        const baseDate = reportType === 'today' ? now : startDate;
+        
+        for (let i = trendCount - 1; i >= 0; i--) {
+          const trendMonth = subMonths(baseDate, i);
+          const trendRange = getDateRange(getMonth(trendMonth), getYear(trendMonth));
+          const trendStats = await fetchStatsForPeriod(trendRange.startDate, trendRange.endDate);
+          trends.push({
+            month: format(trendMonth, 'MMM yy'),
+            policies: trendStats?.totalPolicies || 0,
+            premium: trendStats?.totalNetPremium || 0,
+          });
+        }
+        setMonthlyTrends(trends);
+      } else {
+        setMonthlyTrends([]);
       }
-      setMonthlyTrends(trends);
 
     } catch (error: any) {
       console.error('Error fetching stats:', error);
@@ -320,7 +346,7 @@ const ReportsPage = () => {
 
   useEffect(() => {
     fetchStats();
-  }, [selectedMonth, selectedYear, reportType, user?.id]);
+  }, [selectedMonth, selectedYear, reportType, user?.id, customStartDate, customEndDate]);
 
   // Reset filters when period changes
   useEffect(() => {
@@ -343,6 +369,15 @@ const ReportsPage = () => {
   };
 
   const getPeriodLabel = () => {
+    if (reportType === 'today') {
+      return format(now, 'dd-MMM-yyyy');
+    }
+    if (reportType === 'custom') {
+      if (customStartDate && customEndDate) {
+        return `${format(customStartDate, 'dd-MMM-yyyy')} to ${format(customEndDate, 'dd-MMM-yyyy')}`;
+      }
+      return 'Custom Range';
+    }
     if (reportType === 'yearly') {
       return selectedYear;
     }
@@ -793,11 +828,17 @@ const ReportsPage = () => {
           <div className="flex flex-col sm:flex-row gap-4 items-end flex-wrap">
             <div className="w-full sm:w-40 space-y-2">
               <Label>Report Type</Label>
-              <Select value={reportType} onValueChange={(v: 'monthly' | 'yearly') => setReportType(v)}>
+              <Select value={reportType} onValueChange={(v: 'today' | 'monthly' | 'yearly' | 'custom') => setReportType(v)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="today">
+                    <span className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      Today
+                    </span>
+                  </SelectItem>
                   <SelectItem value="monthly">
                     <span className="flex items-center gap-2">
                       <Calendar className="h-4 w-4" />
@@ -810,21 +851,27 @@ const ReportsPage = () => {
                       Yearly
                     </span>
                   </SelectItem>
+                  <SelectItem value="custom">
+                    <span className="flex items-center gap-2">
+                      <CalendarRange className="h-4 w-4" />
+                      Custom Range
+                    </span>
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
             
             {reportType === 'monthly' && (
-              <div className="w-full sm:w-48 space-y-2">
-                <Label>Month</Label>
-                <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+              <div className="w-full sm:w-32 space-y-2">
+                <Label>Year</Label>
+                <Select value={selectedYear} onValueChange={setSelectedYear}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select month" />
+                    <SelectValue placeholder="Select year" />
                   </SelectTrigger>
                   <SelectContent>
-                    {MONTHS.map((month) => (
-                      <SelectItem key={month.value} value={month.value}>
-                        {month.label}
+                    {YEARS.map((year) => (
+                      <SelectItem key={year.value} value={year.value}>
+                        {year.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -832,21 +879,44 @@ const ReportsPage = () => {
               </div>
             )}
             
-            <div className="w-full sm:w-32 space-y-2">
-              <Label>Year</Label>
-              <Select value={selectedYear} onValueChange={setSelectedYear}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select year" />
-                </SelectTrigger>
-                <SelectContent>
-                  {YEARS.map((year) => (
-                    <SelectItem key={year.value} value={year.value}>
-                      {year.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {reportType === 'yearly' && (
+              <div className="w-full sm:w-32 space-y-2">
+                <Label>Year</Label>
+                <Select value={selectedYear} onValueChange={setSelectedYear}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {YEARS.map((year) => (
+                      <SelectItem key={year.value} value={year.value}>
+                        {year.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {reportType === 'custom' && (
+              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                <div className="w-full sm:w-48 space-y-2">
+                  <Label>Start Date</Label>
+                  <MaterialDatePicker
+                    date={customStartDate}
+                    onDateChange={setCustomStartDate}
+                    placeholder="Select start date"
+                  />
+                </div>
+                <div className="w-full sm:w-48 space-y-2">
+                  <Label>End Date</Label>
+                  <MaterialDatePicker
+                    date={customEndDate}
+                    onDateChange={setCustomEndDate}
+                    placeholder="Select end date"
+                  />
+                </div>
+              </div>
+            )}
             
             <div className="flex gap-2 w-full sm:w-auto flex-wrap">
               <DropdownMenu>

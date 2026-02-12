@@ -1,6 +1,7 @@
 import * as XLSX from "@e965/xlsx";
 import { Policy } from "./policyUtils";
 import { normalizeCompanyName } from "./companyNormalization";
+import { normalizeName } from "./nameNormalization";
 
 export const generateSampleExcelTemplate = () => {
   // Template matches Add New Policy page fields - simplified and essential only
@@ -285,7 +286,7 @@ export const convertExcelRowToPolicy = (row: any, userId: string): any => {
   return {
     policy_number: String(row['Policy Number'] || '').trim(),
     client_name: String(row['Client Name'] || '').trim(),
-    agent_code: String(row['Agent Name'] || row['Agent Code'] || '').trim(),
+    agent_code: normalizeName(String(row['Agent Name'] || row['Agent Code'] || '')),
     company_name: companyName,
     vehicle_number: String(row['Vehicle Number'] || '').trim().toUpperCase(),
     vehicle_make: String(row['Vehicle Make'] || '').trim(),
@@ -293,7 +294,7 @@ export const convertExcelRowToPolicy = (row: any, userId: string): any => {
     policy_active_date: parsedStartDate,
     policy_expiry_date: parsedEndDate,
     status: String(row['Status'] || 'Active').trim(),
-    reference: String(row['Reference'] || '').trim(),
+    reference: normalizeName(String(row['Reference'] || '')),
     contact_number: contactNumber,
     net_premium: netPremium,
     insurance_type: row['Insurance Type'] || row['Type of Insurance'] || 'Vehicle Insurance',

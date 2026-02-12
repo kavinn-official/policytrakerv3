@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Upload, Download, FileSpreadsheet, AlertCircle, CheckCircle2, X, Loader2 } from "lucide-react";
 import { format, parse, isValid } from "date-fns";
 import * as XLSX from '@e965/xlsx';
+import { normalizeName } from "@/utils/nameNormalization";
 
 interface ValidationError {
   row: number;
@@ -37,6 +38,7 @@ const OPTIONAL_COLUMNS = [
   'Commission Percentage',
   'Policy Status',
   'Vehicle Number',
+  'Vehicle Make',
   'Vehicle Model',
   'IDV',
   'Sum Insured',
@@ -103,7 +105,7 @@ const BulkUpload = () => {
 
     // Data sheet with headers
     const headers = [...REQUIRED_COLUMNS, ...OPTIONAL_COLUMNS];
-    const sampleData = [
+      const sampleData = [
       headers,
       [
         'Rajesh Kumar',
@@ -118,7 +120,8 @@ const BulkUpload = () => {
         '15',
         'Active',
         'MH12AB1234',
-        'Honda City',
+        'Maruti',
+        'Swift',
         '500000',
         '',
         '',
@@ -296,6 +299,7 @@ const BulkUpload = () => {
           commission_percentage: parseFloat(row['Commission Percentage']) || 0,
           status: row['Policy Status'] || 'Active',
           vehicle_number: row['Vehicle Number']?.toUpperCase().replace(/[^A-Z0-9]/g, '') || null,
+          vehicle_make: row['Vehicle Make'] || null,
           vehicle_model: row['Vehicle Model'] || null,
           idv: parseFloat(row['IDV']) || 0,
           sum_insured: parseFloat(row['Sum Insured']) || 0,
@@ -304,8 +308,8 @@ const BulkUpload = () => {
           sum_assured: parseFloat(row['Sum Assured']) || 0,
           policy_term: parseInt(row['Policy Term']) || null,
           premium_payment_term: parseInt(row['Premium Payment Term']) || null,
-          agent_code: row['Agent Code'] || null,
-          reference: row['Reference'] || null,
+          agent_code: normalizeName(row['Agent Code']) || null,
+          reference: normalizeName(row['Reference']) || null,
         });
       });
       
