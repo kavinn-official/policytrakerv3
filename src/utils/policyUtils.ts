@@ -32,6 +32,7 @@ export interface Policy {
   commission_percentage?: number;
   first_year_commission?: number;
   whatsapp_reminder_count?: number;
+  product_name?: string;
 }
 
 export const getStatusColor = (status: string) => {

@@ -15,6 +15,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { compressDocument } from "@/utils/documentCompression";
+import { productNamesByInsuranceType } from "@/data/productNameData";
 
 const INSURANCE_TYPES = [
   "Vehicle Insurance",
@@ -76,6 +77,7 @@ const EditPolicy = () => {
     status: "Active",
     net_premium: "",
     insurance_type: "Vehicle Insurance",
+    product_name: "",
   });
 
   const [policyActiveDate, setPolicyActiveDate] = useState<Date | undefined>(undefined);
@@ -119,6 +121,7 @@ const EditPolicy = () => {
           status: data.status || "Active",
           net_premium: data.net_premium ? String(data.net_premium) : "",
           insurance_type: data.insurance_type || "Vehicle Insurance",
+          product_name: data.product_name || "",
         });
 
         if (data.policy_active_date) {
@@ -235,6 +238,7 @@ const EditPolicy = () => {
           insurance_type: INSURANCE_TYPES.includes(extracted.insurance_type) 
             ? extracted.insurance_type 
             : prev.insurance_type,
+          product_name: extracted.product_name || prev.product_name,
         }));
 
         if (extracted.policy_active_date) {
@@ -497,6 +501,7 @@ const EditPolicy = () => {
             policy_active_date: format(policyActiveDate, "yyyy-MM-dd"),
             policy_expiry_date: format(policyExpiryDate, "yyyy-MM-dd"),
             document_url: documentUrl,
+            product_name: formData.product_name || null,
           }
         }
       });
@@ -793,15 +798,36 @@ const EditPolicy = () => {
                   </Label>
                   <Select
                     value={formData.insurance_type}
-                    onValueChange={(value) => setFormData({ ...formData, insurance_type: value })}
+                    onValueChange={(value) => setFormData({ ...formData, insurance_type: value, product_name: "" })}
                   >
                     <SelectTrigger className="h-10 text-sm">
                       <SelectValue placeholder="Select insurance type" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white z-50">
                       {INSURANCE_TYPES.map((type) => (
                         <SelectItem key={type} value={type}>
                           {type}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="product_name" className="text-sm font-medium">
+                    Product Name
+                  </Label>
+                  <Select
+                    value={formData.product_name}
+                    onValueChange={(value) => setFormData({ ...formData, product_name: value })}
+                  >
+                    <SelectTrigger className="h-10 text-sm">
+                      <SelectValue placeholder="Select product name" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white z-50">
+                      {(productNamesByInsuranceType[formData.insurance_type] || []).map((name) => (
+                        <SelectItem key={name} value={name}>
+                          {name}
                         </SelectItem>
                       ))}
                     </SelectContent>

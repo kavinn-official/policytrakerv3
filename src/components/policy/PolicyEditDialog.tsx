@@ -12,6 +12,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { vehicleMakes, vehicleModels, insuranceCompanies } from "@/data/vehicleData";
 import { compressDocument } from "@/utils/documentCompression";
+import { productNamesByInsuranceType } from "@/data/productNameData";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface PolicyEditDialogProps {
   policy: Policy | null;
@@ -234,6 +236,7 @@ const PolicyEditDialog = ({ policy, open, onOpenChange, onPolicyUpdated }: Polic
             contact_number: formData.contact_number,
             company_name: formData.company_name,
             document_url: documentUrl,
+            product_name: formData.product_name || null,
           }
         }
       });
@@ -422,6 +425,27 @@ const PolicyEditDialog = ({ policy, open, onOpenChange, onPolicyUpdated }: Polic
             </h3>
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-xs sm:text-sm font-medium">
+                    Product Name
+                  </Label>
+                  <Select
+                    value={formData.product_name || ""}
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, product_name: value }))}
+                  >
+                    <SelectTrigger className="h-9 sm:h-10 text-xs sm:text-sm">
+                      <SelectValue placeholder="Select product name" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white z-50">
+                      {(productNamesByInsuranceType[formData.insurance_type || "Vehicle Insurance"] || []).map((name) => (
+                        <SelectItem key={name} value={name}>
+                          {name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div className="space-y-2">
                   <Label className="text-xs sm:text-sm font-medium">
                     Agent Name
