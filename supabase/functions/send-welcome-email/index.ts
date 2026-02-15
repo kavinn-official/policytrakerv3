@@ -23,24 +23,40 @@ const handler = async (req: Request): Promise<Response> => {
       return new Response(JSON.stringify({ error: "Email is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Validate the request comes from an authenticated user or is the signup user
-    const authHeader = req.headers.get('Authorization');
-    if (authHeader?.startsWith('Bearer ')) {
-      const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, { global: { headers: { Authorization: authHeader } } });
-      try {
-        const token = authHeader.replace('Bearer ', '');
-        const { data: userData } = await supabase.auth.getUser(token);
-        // If authenticated, verify email matches
-        if (userData?.user && userData.user.email !== email) {
-          console.warn("Email mismatch - authenticated user email differs from request email");
-          // Still allow - the user just signed up and is sending their own welcome email
-        }
-      } catch (authErr) {
-        // Auth validation failed - this is expected during signup when email isn't confirmed yet
-        console.log("Auth validation skipped - likely a new signup:", authErr);
-      }
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email) || email.length > 255) {
+      return new Response(JSON.stringify({ error: "Invalid email" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-    // Allow the request to proceed - welcome emails are low-risk and triggered client-side during signup
+
+    // Use service role to verify this email belongs to a recently created user
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
+
+    // Check that this email exists in profiles and was created in the last 10 minutes
+    const { data: profile, error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .select('id, created_at')
+      .eq('email', email)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (profileError || !profile) {
+      console.warn("Welcome email rejected - no matching profile for:", email);
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    const createdAt = new Date(profile.created_at);
+    const now = new Date();
+    const minutesSinceCreation = (now.getTime() - createdAt.getTime()) / (1000 * 60);
+
+    if (minutesSinceCreation > 10) {
+      console.warn("Welcome email rejected - profile too old:", email, "created", minutesSinceCreation.toFixed(1), "minutes ago");
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
 
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
     if (!resendApiKey) {
