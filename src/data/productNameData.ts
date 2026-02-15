@@ -1,0 +1,43 @@
+// Product Name options grouped by insurance type
+export const productNamesByInsuranceType: Record<string, string[]> = {
+  "Vehicle Insurance": [
+    "Private Car Package",
+    "Private Car TP",
+    "Two Wheeler Package",
+    "Two Wheeler TP",
+    "Goods Carrying Package",
+    "Goods Carrying TP",
+    "Passenger Carrying Package",
+    "Passenger Carrying TP",
+    "Tractor Policy",
+    "Misc Vehicle Policy",
+  ],
+  "Health Insurance": [
+    "Individual Health",
+    "Family Floater",
+    "Senior Citizen Health",
+    "Top-Up / Super Top-Up",
+    "Critical Illness",
+    "Personal Accident",
+    "Group Health",
+  ],
+  "Life Insurance": [
+    "Term Plan",
+    "Endowment Plan",
+    "Money Back Plan",
+    "ULIP Plan",
+    "Pension Plan",
+    "Child Plan",
+  ],
+  "Other": [
+    "Travel Insurance",
+    "Home Insurance",
+    "Shop Insurance",
+    "Fire Insurance",
+    "Marine Insurance",
+    "Liability Insurance",
+    "Gadget Insurance",
+    "Crop Insurance",
+    "Other",
+  ],
+};

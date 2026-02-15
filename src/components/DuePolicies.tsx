@@ -50,6 +50,7 @@ const DuePolicies = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [urgencyFilter, setUrgencyFilter] = useState<string>("all");
+  const [weekFilter, setWeekFilter] = useState<number>(0); // 0 = all, 1-4 = weeks
   const [sortBy, setSortBy] = useState<string>("daysLeft");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [policyToDelete, setPolicyToDelete] = useState<DuePolicy | null>(null);
@@ -110,7 +111,8 @@ const DuePolicies = () => {
       const s = searchTerm.toLowerCase();
       const matchesSearch = !s || p.policy_number.toLowerCase().includes(s) || p.client_name.toLowerCase().includes(s) || p.vehicle_number.toLowerCase().includes(s) || (p.company_name?.toLowerCase().includes(s));
       const matchesUrgency = urgencyFilter === "all" || p.urgency === urgencyFilter;
-      return matchesSearch && matchesUrgency;
+      const matchesWeek = weekFilter === 0 || p.daysLeft <= weekFilter * 7;
+      return matchesSearch && matchesUrgency && matchesWeek;
     });
 
     result.sort((a, b) => {
@@ -121,13 +123,13 @@ const DuePolicies = () => {
     });
 
     return result;
-  }, [duePolicies, searchTerm, urgencyFilter, sortBy]);
+  }, [duePolicies, searchTerm, urgencyFilter, weekFilter, sortBy]);
 
   const totalPages = Math.ceil(filteredPolicies.length / POLICIES_PER_PAGE);
   const startIndex = (currentPage - 1) * POLICIES_PER_PAGE;
   const paginatedPolicies = filteredPolicies.slice(startIndex, startIndex + POLICIES_PER_PAGE);
 
-  useEffect(() => { setCurrentPage(1); }, [searchTerm, urgencyFilter, sortBy]);
+  useEffect(() => { setCurrentPage(1); }, [searchTerm, urgencyFilter, weekFilter, sortBy]);
 
   const urgencyCounts = useMemo(() => ({
     all: duePolicies.length,
@@ -270,6 +272,29 @@ const DuePolicies = () => {
           <p className="text-2xl font-bold text-blue-800">{urgencyFilter === "low" ? urgencyCounts.low : urgencyCounts.all}</p>
           <p className="text-xs text-blue-600">{urgencyFilter === "low" ? "16-30 days" : "Total due"}</p>
         </button>
+      </div>
+
+      {/* Week Quick Filters */}
+      <div className="flex flex-wrap gap-2">
+        {[
+          { label: "All", value: 0 },
+          { label: "1 Week", value: 1 },
+          { label: "2 Weeks", value: 2 },
+          { label: "3 Weeks", value: 3 },
+          { label: "4 Weeks", value: 4 },
+        ].map((wf) => (
+          <button
+            key={wf.value}
+            onClick={() => setWeekFilter(wf.value)}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+              weekFilter === wf.value
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "bg-muted text-muted-foreground hover:bg-muted/80"
+            }`}
+          >
+            {wf.label}
+          </button>
+        ))}
       </div>
 
       {/* Sticky Search/Filter Bar */}

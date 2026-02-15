@@ -15,6 +15,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useUsageTracking } from "@/hooks/useUsageTracking";
 import { compressDocument } from "@/utils/documentCompression";
+import { productNamesByInsuranceType } from "@/data/productNameData";
 
 const INSURANCE_TYPES = [
   "Vehicle Insurance",
@@ -73,6 +74,7 @@ const AddPolicy = () => {
       net_premium: "",
       commission_percentage: "",
       insurance_type: "Vehicle Insurance",
+      product_name: "",
       premium_frequency: "yearly",
       // Motor specific
       idv: "",
@@ -298,6 +300,7 @@ const AddPolicy = () => {
           insurance_type: INSURANCE_TYPES.includes(extracted.insurance_type) 
             ? extracted.insurance_type 
             : formData.insurance_type,
+          product_name: extracted.product_name || formData.product_name,
           // Motor specific
           idv: extracted.idv ? String(extracted.idv) : formData.idv,
           // Health specific
@@ -771,6 +774,7 @@ const AddPolicy = () => {
             policy_active_date: format(policyActiveDate, "yyyy-MM-dd"),
             policy_expiry_date: format(policyExpiryDate, "yyyy-MM-dd"),
             document_url: documentUrl,
+            product_name: formData.product_name || null,
           }
         }
       });
@@ -868,6 +872,7 @@ const AddPolicy = () => {
       net_premium: "",
       commission_percentage: "",
       insurance_type: "Vehicle Insurance",
+      product_name: "",
       premium_frequency: "yearly",
       idv: "",
       sum_insured: "",
@@ -1081,6 +1086,31 @@ const AddPolicy = () => {
                   </Select>
                   <p className="text-xs text-gray-500">Auto-detected from document (editable)</p>
                 </div>
+
+                {/* Product Name - Dynamic based on insurance type */}
+                {productNamesByInsuranceType[formData.insurance_type] && (
+                  <div className="space-y-2">
+                    <Label htmlFor="product_name" className="text-sm font-medium">
+                      Product Name
+                    </Label>
+                    <Select
+                      value={formData.product_name}
+                      onValueChange={(value) => setFormData({ ...formData, product_name: value })}
+                    >
+                      <SelectTrigger className="h-10 text-sm">
+                        <SelectValue placeholder="Select product name" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {productNamesByInsuranceType[formData.insurance_type].map((product) => (
+                          <SelectItem key={product} value={product}>
+                            {product}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-gray-500">Auto-detected from document (optional)</p>
+                  </div>
+                )}
 
                 <div className="space-y-2">
                   <Label htmlFor="client_name" className="text-sm font-medium">

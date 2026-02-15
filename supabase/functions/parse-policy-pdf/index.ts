@@ -201,6 +201,7 @@ serve(async (req) => {
 - policy_expiry_date: Policy end date in YYYY-MM-DD format
 - net_premium: The BASE premium BEFORE GST/taxes (number only)
 - insurance_type: Must be one of: 'Vehicle Insurance', 'Health Insurance', 'Life Insurance', 'Other'
+- product_name: The specific product/plan name. For Vehicle Insurance use one of: 'Private Car Package', 'Private Car TP', 'Two Wheeler Package', 'Two Wheeler TP', 'Goods Carrying Package', 'Goods Carrying TP', 'Passenger Carrying Package', 'Passenger Carrying TP', 'Tractor Policy', 'Misc Vehicle Policy'. For Health Insurance use one of: 'Individual Health', 'Family Floater', 'Senior Citizen Health', 'Top-Up / Super Top-Up', 'Critical Illness', 'Personal Accident', 'Group Health'. For Life Insurance use one of: 'Term Plan', 'Endowment Plan', 'Money Back Plan', 'ULIP Plan', 'Pension Plan', 'Child Plan'. For Other use one of: 'Travel Insurance', 'Home Insurance', 'Shop Insurance', 'Fire Insurance', 'Marine Insurance', 'Liability Insurance', 'Gadget Insurance', 'Crop Insurance', 'Other'.
 - idv: Insured Declared Value for motor insurance (number only)
 - sum_insured: Sum Insured amount for health insurance (number only)
 - members_covered: Number of members covered for health insurance (number only)
@@ -241,6 +242,13 @@ How to find Net Premium:
 1. Look for fields labeled: "Net Premium", "Basic Premium", "Base Premium", "Premium (Before Tax)"
 2. EXCLUDE these from net_premium: CGST, SGST, IGST, GST, Service Tax, Cess
 3. If only "Total Premium" is shown WITH GST breakup, calculate: Net Premium = Total Premium - (all taxes)
+
+FOR PRODUCT NAME:
+- Determine the specific product type from the document
+- For Vehicle Insurance: Look for keywords like "Private Car", "Two Wheeler", "Commercial Vehicle", "Goods Carrying", "Passenger", "Tractor", "Third Party", "TP", "Package/Comprehensive"
+- For Health Insurance: "Individual", "Family Floater", "Senior Citizen", "Top-Up", "Super Top-Up", "Critical Illness", "Personal Accident", "Group"
+- For Life Insurance: "Term", "Endowment", "Money Back", "ULIP", "Pension", "Child Plan"
+- For Other: "Travel", "Home", "Shop", "Fire", "Marine", "Liability", "Gadget", "Crop"
 
 FOR HEALTH INSURANCE:
 - sum_insured: Look for "Sum Insured", "SI", "Cover Amount" - this is the maximum coverage amount
@@ -323,6 +331,7 @@ Return ONLY a valid JSON object. If a field cannot be found or is not applicable
         policy_expiry_date: "",
         net_premium: 0,
         insurance_type: "Vehicle Insurance",
+        product_name: "",
         idv: 0,
         sum_insured: 0,
         members_covered: 0,
