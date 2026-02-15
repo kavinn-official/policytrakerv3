@@ -1,9 +1,5 @@
 import { Link } from "react-router-dom";
 import { 
-  Facebook, 
-  Twitter, 
-  Linkedin, 
-  Youtube, 
   Mail, 
   Phone, 
   MapPin 
@@ -133,22 +129,14 @@ const Footer = () => {
           </div>
         </div>
 
-        {/* Social Links */}
+        {/* Essential Links & Trust Badges */}
         <div className="mt-12 pt-8 border-t border-gray-800">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div className="flex gap-4">
-              <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-teal-600 transition-colors" aria-label="Facebook">
-                <Facebook className="h-5 w-5" />
-              </a>
-              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-teal-600 transition-colors" aria-label="Twitter">
-                <Twitter className="h-5 w-5" />
-              </a>
-              <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-teal-600 transition-colors" aria-label="LinkedIn">
-                <Linkedin className="h-5 w-5" />
-              </a>
-              <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-teal-600 transition-colors" aria-label="YouTube">
-                <Youtube className="h-5 w-5" />
-              </a>
+            <div className="flex flex-wrap gap-4 text-sm">
+              <Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+              <Link to="/terms-conditions" className="hover:text-white transition-colors">Terms & Conditions</Link>
+              <Link to="/contact" className="hover:text-white transition-colors">Contact</Link>
+              <a href="/sitemap.xml" className="hover:text-white transition-colors">Sitemap</a>
             </div>
             
             {/* Trust Badges */}

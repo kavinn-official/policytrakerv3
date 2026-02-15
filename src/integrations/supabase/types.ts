@@ -303,6 +303,7 @@ export type Database = {
           policy_term: number | null
           premium_frequency: string | null
           premium_payment_term: number | null
+          product_name: string | null
           reference: string | null
           status: string
           sum_assured: number | null
@@ -335,6 +336,7 @@ export type Database = {
           policy_term?: number | null
           premium_frequency?: string | null
           premium_payment_term?: number | null
+          product_name?: string | null
           reference?: string | null
           status?: string
           sum_assured?: number | null
@@ -367,6 +369,7 @@ export type Database = {
           policy_term?: number | null
           premium_frequency?: string | null
           premium_payment_term?: number | null
+          product_name?: string | null
           reference?: string | null
           status?: string
           sum_assured?: number | null
