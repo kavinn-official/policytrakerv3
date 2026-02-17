@@ -192,7 +192,7 @@ const FeaturesPage = () => {
               <Link to="/pricing" className="text-gray-600 hover:text-gray-900 font-medium hidden sm:block">
                 Pricing
               </Link>
-              <Link to="/demo" className="text-gray-600 hover:text-gray-900 font-medium hidden sm:block">
+              <Link to="/demo-request" className="text-gray-600 hover:text-gray-900 font-medium hidden sm:block">
                 Demo
               </Link>
               <Link to="/auth">
@@ -232,7 +232,7 @@ const FeaturesPage = () => {
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
-            <Link to="/demo">
+            <Link to="/demo-request">
               <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg px-8">
                 Try Live Demo
               </Button>
@@ -281,9 +281,6 @@ const FeaturesPage = () => {
                       </li>
                     ))}
                   </ul>
-                  <p className="text-xs text-gray-400 italic">
-                    Keywords: {feature.keywords}
-                  </p>
                 </div>
               </article>
             ))}
@@ -392,7 +389,7 @@ const FeaturesPage = () => {
               <ul className="space-y-2 text-sm">
                 <li><Link to="/features" className="hover:text-white transition-colors">Features</Link></li>
                 <li><Link to="/pricing" className="hover:text-white transition-colors">Pricing</Link></li>
-                <li><Link to="/demo" className="hover:text-white transition-colors">Demo</Link></li>
+                <li><Link to="/demo-request" className="hover:text-white transition-colors">Demo</Link></li>
               </ul>
             </div>
             <div>

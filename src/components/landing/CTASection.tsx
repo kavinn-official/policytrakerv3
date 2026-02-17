@@ -14,12 +14,12 @@ const CTASection = () => {
 
         {/* Heading */}
         <h2 id="cta-heading" className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight">
-          Ready to Transform Your Insurance Business?
+          Get Free Policy Reminder Setup — Start Tracking Today
         </h2>
         
         <p className="text-xl text-cyan-100 mb-8 max-w-2xl mx-auto">
-          Join 1,500+ insurance agents who've streamlined their workflow, 
-          increased renewals, and grown their business with PolicyTracker.
+          Join 1,500+ insurance agents who've streamlined their workflow 
+          and increased renewals by 25%. Talk to an insurance expert now.
         </p>
 
         {/* Benefits */}
@@ -46,13 +46,13 @@ const CTASection = () => {
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link to="/auth">
             <Button size="lg" className="w-full sm:w-auto bg-white text-teal-700 hover:bg-gray-100 text-lg px-10 py-7 shadow-xl">
-              Start Free Now
+              Start Tracking Your Policies Today
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </Link>
-          <Link to="/demo-request">
+          <Link to="/enquiry">
             <Button size="lg" variant="outline" className="w-full sm:w-auto border-2 border-white bg-white/10 text-white hover:bg-white hover:text-teal-700 text-lg px-10 py-7 backdrop-blur-sm">
-              Request a Demo
+              Talk to an Expert
             </Button>
           </Link>
         </div>

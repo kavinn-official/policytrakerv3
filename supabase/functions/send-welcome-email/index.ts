@@ -69,7 +69,7 @@ const handler = async (req: Request): Promise<Response> => {
       method: "POST",
       headers: { Authorization: `Bearer ${resendApiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        from: "Policy Tracker <onboarding@resend.dev>",
+        from: "PolicyTracker <support@policytracker.in>",
         to: [email],
         subject: "🎉 Welcome to PolicyTracker.in — Let's Get You Started!",
         html: `<!DOCTYPE html>

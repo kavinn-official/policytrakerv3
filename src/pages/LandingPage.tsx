@@ -11,6 +11,8 @@ import FAQSection from "@/components/landing/FAQSection";
 import CTASection from "@/components/landing/CTASection";
 import Footer from "@/components/landing/Footer";
 import WhatsAppFloatingButton from '@/components/WhatsAppFloatingButton';
+import StickyMobileCTA from "@/components/landing/StickyMobileCTA";
+import ExitIntentPopup from "@/components/landing/ExitIntentPopup";
 
 // JSON-LD Structured Data for SEO
 const organizationSchema = {
@@ -47,6 +49,94 @@ const organizationSchema = {
     "Secure Document Storage",
     "Mobile Access PWA",
     "Business Reports and Analytics"
+  ]
+};
+
+// Single FAQ schema - only place where FAQPage JSON-LD is defined
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is PolicyTracker.in?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "PolicyTracker.in is India's leading insurance agent CRM and policy management software. It helps insurance agents track motor, health, life, and general insurance policies, send WhatsApp renewal reminders to clients, manage commissions, store policy documents, and grow their insurance business. Trusted by 1,500+ agents across India."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does PolicyTracker help insurance agents manage renewals?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "PolicyTracker automatically tracks all policy expiry dates and sends you alerts 30, 15, and 7 days before renewal. You can send personalized WhatsApp reminders to clients with one click, including policy details and expiry date. This automated system helps agents achieve 98% renewal rates."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is PolicyTracker free to use?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes! PolicyTracker offers a Free Forever plan that includes up to 200 policies, basic renewal alerts, 50 OCR scans per month, and 2GB document storage. For agents managing larger portfolios, the Pro plan at ₹199/month offers unlimited policies, automated WhatsApp reminders, and advanced commission analytics."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Which types of insurance policies can I track?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "PolicyTracker supports all insurance types: Motor Insurance (car, two-wheeler, commercial vehicles), Health Insurance (individual, family floater, group health), Life Insurance (term, ULIP, endowment, whole life), and General Insurance (fire, marine, liability, property)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I import my existing policy data?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "You can import policies in multiple ways: Upload policy PDFs and let our OCR technology auto-fill details, import from Excel or CSV files using our bulk upload feature, or manually add policies."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does the OCR PDF auto-fill feature work?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Simply upload a policy PDF document, and our AI-powered OCR technology automatically extracts policy details like policy number, client name, premium, dates, vehicle information, and more. This saves 80% of manual data entry time."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I track my insurance commission income?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes! PolicyTracker includes comprehensive commission tracking. You can set commission percentages for each policy, track first-year vs renewal commissions, view commission reports by company or time period, and export earnings data."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is my client data secure on PolicyTracker?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Absolutely. PolicyTracker uses industry-standard 256-bit SSL encryption for all data transmission. Your policy and client data is stored securely in the cloud with automatic daily backups. Only you can access your account data."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do WhatsApp reminders work?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "With one click, you can send personalized renewal reminders to clients via WhatsApp. The message includes the client's name, policy details, expiry date, and your contact information. On the Pro plan, you can set up automated reminders."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I use PolicyTracker on my mobile phone?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes! PolicyTracker is fully responsive and works on any device. You can also install it as a PWA (Progressive Web App) on your phone for quick access like a native mobile app, without needing to download from app stores."
+      }
+    }
   ]
 };
 
@@ -205,6 +295,10 @@ const LandingPage = () => {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(webApplicationSchema) }}
       />
+      <script 
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
 
       <div className="min-h-screen bg-white">
         {/* Navigation */}
@@ -240,8 +334,16 @@ const LandingPage = () => {
         {/* Footer */}
         <Footer />
 
-        {/* WhatsApp Floating Button */}
-        <WhatsAppFloatingButton />
+        {/* WhatsApp Floating Button - hidden on mobile where sticky CTA shows */}
+        <div className="hidden sm:block">
+          <WhatsAppFloatingButton />
+        </div>
+
+        {/* Sticky Mobile CTA Bar */}
+        <StickyMobileCTA />
+
+        {/* Exit Intent Popup */}
+        <ExitIntentPopup />
       </div>
     </>
   );

@@ -198,7 +198,7 @@ const PricingPage = () => {
               <Link to="/features" className="text-gray-600 hover:text-gray-900 font-medium hidden sm:block">
                 Features
               </Link>
-              <Link to="/demo" className="text-gray-600 hover:text-gray-900 font-medium hidden sm:block">
+              <Link to="/demo-request" className="text-gray-600 hover:text-gray-900 font-medium hidden sm:block">
                 Demo
               </Link>
               <Link to="/auth">
@@ -445,7 +445,7 @@ const PricingPage = () => {
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
-            <Link to="/demo">
+            <Link to="/demo-request">
               <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg px-8 border-white text-white hover:bg-white/10">
                 Try Live Demo
               </Button>
@@ -470,7 +470,7 @@ const PricingPage = () => {
               <ul className="space-y-2 text-sm">
                 <li><Link to="/features" className="hover:text-white transition-colors">Features</Link></li>
                 <li><Link to="/pricing" className="hover:text-white transition-colors">Pricing</Link></li>
-                <li><Link to="/demo" className="hover:text-white transition-colors">Demo</Link></li>
+                <li><Link to="/demo-request" className="hover:text-white transition-colors">Demo</Link></li>
               </ul>
             </div>
             <div>

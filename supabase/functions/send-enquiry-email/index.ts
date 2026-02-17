@@ -70,7 +70,7 @@ const handler = async (req: Request): Promise<Response> => {
       method: "POST",
       headers: { Authorization: `Bearer ${resendApiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        from: "Policy Tracker <onboarding@resend.dev>",
+        from: "PolicyTracker <support@policytracker.in>",
         to: ["policytracker.in@gmail.com"],
         subject: isDemoRequest ? `🔔 New Demo Request from ${safeName}` : `New Enquiry: ${safeSubject}`,
         html: `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
@@ -126,7 +126,7 @@ const handler = async (req: Request): Promise<Response> => {
       method: "POST",
       headers: { Authorization: `Bearer ${resendApiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        from: "Policy Tracker <onboarding@resend.dev>",
+        from: "PolicyTracker <support@policytracker.in>",
         to: [email],
         subject: isDemoRequest ? "Thank you for requesting a demo! - PolicyTracker.in" : "Thank you for your enquiry - PolicyTracker.in",
         html: `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>

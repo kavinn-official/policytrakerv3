@@ -11,6 +11,7 @@
     
     <!-- Preconnect for performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin />
     
     <!-- DNS Prefetch -->
@@ -63,8 +64,8 @@
     <meta name="application-name" content="Policy Tracker.in" />
     <meta name="format-detection" content="telephone=no" />
     
-    <!-- Google Analytics 4 -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-32DPPHPLZ2"></script>
+    <!-- Google Analytics 4 - Deferred for performance -->
+    <script defer src="https://www.googletagmanager.com/gtag/js?id=G-32DPPHPLZ2"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
@@ -188,79 +189,7 @@
     }
     </script>
     
-    <!-- Structured Data - FAQ (Enhanced for AEO & AI Search) -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "What is the best agent policy tracker for insurance agents in India?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Policy Tracker.in is the best agent policy tracker for insurance agents in India. It helps track motor, health, and life insurance policies, manage client renewals, send WhatsApp reminders, and generate Excel reports. Trusted by 1000+ agents with a 4.8-star rating."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What is Policy Tracker.in?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Policy Tracker.in is a comprehensive insurance policy management software designed for Indian insurance agents. It's an agent policy tracker that helps track policies, manage renewals, send WhatsApp reminders, and handle client relationships efficiently. It's the #1 policy tracking app for insurance agents."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Is Policy Tracker.in free to use?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes, Policy Tracker.in offers a free forever plan with up to 50 policies, basic renewal alerts, and client management. Premium plans start at just ₹199/month for unlimited policies, WhatsApp automation, and advanced features."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "How does the policy renewal reminder app work?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Policy Tracker.in's renewal reminder feature automatically tracks policy expiry dates and sends alerts before policies are due. You can send personalized WhatsApp reminders to clients with one click, including policy details, expiry date, and your contact information."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Can I use this as an insurance agent CRM?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes, Policy Tracker.in works as a complete insurance agent CRM. It helps you manage client information, track policy history, store contact details, send reminders, and maintain relationships with all your insurance clients in one place."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What types of insurance policies can I track?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "You can track all types of insurance policies including Motor Insurance (car, bike, commercial vehicles), Health Insurance, Life Insurance, Term Plans, and general insurance policies. The agent policy tracker supports vehicle details like make, model, and registration number."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Is this insurance policy management software mobile-friendly?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes, Policy Tracker.in is fully responsive and works on mobile phones, tablets, and desktops. You can also install it as a PWA (Progressive Web App) for quick access like a native policy tracking app."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "How is Policy Tracker different from other policy tracking apps?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Policy Tracker.in is specifically designed for Indian insurance agents with features like WhatsApp integration, Hindi support, INR pricing, and Indian insurance types. It's the most affordable agent policy tracker with a generous free tier and premium plans starting at just ₹199/month."
-          }
-        }
-      ]
-    }
-    </script>
+    <!-- FAQ structured data is rendered in LandingPage.tsx to avoid duplication -->
     
     <!-- Structured Data - WebSite with SearchAction -->
     <script type="application/ld+json">
@@ -634,10 +563,6 @@
   
   
   
-  <meta property="og:title" content="PolicyTracker.in | #1 Insurance Agent CRM &amp; Policy Management Software India">
-  <meta name="twitter:title" content="PolicyTracker.in | #1 Insurance Agent CRM &amp; Policy Management Software India">
-  <meta property="og:description" content="Best agent policy tracker for insurance agents in India. Track All types of  policies, send WhatsApp renewal reminders, manage clients with our policy tracking app. Free trial - no credit card required.">
-  <meta name="twitter:description" content="Best agent policy tracker for insurance agents in India. Track All types of  policies, send WhatsApp renewal reminders, manage clients with our policy tracking app. Free trial - no credit card required.">
 </head>
 
   <body>
