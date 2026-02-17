@@ -262,7 +262,7 @@ serve(async (req) => {
         console.log(`Attempting to send email to ${profile.email}...`);
         
         const { data: emailData, error: emailError } = await resend.emails.send({
-          from: "PolicyTracker <notifications@resend.dev>",
+          from: "PolicyTracker <support@policytracker.in>",
           to: [profile.email],
           subject: `⚠️ ${userPolicies.length} ${userPolicies.length === 1 ? 'Policy' : 'Policies'} Expiring Soon - Action Required`,
           html: htmlContent,
