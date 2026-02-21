@@ -78,6 +78,23 @@ const EditPolicy = () => {
     net_premium: "",
     insurance_type: "Vehicle Insurance",
     product_name: "",
+    commission_percentage: "",
+    premium_frequency: "yearly",
+    // Motor specific
+    idv: "",
+    basic_od_premium: "",
+    basic_tp_premium: "",
+    // Health specific
+    sum_insured: "",
+    members_covered: "",
+    plan_type: "",
+    // Life specific
+    sum_assured: "",
+    policy_term: "",
+    premium_payment_term: "",
+    // Commission split
+    od_commission_percentage: "",
+    tp_commission_percentage: "",
   });
 
   const [policyActiveDate, setPolicyActiveDate] = useState<Date | undefined>(undefined);
@@ -122,6 +139,19 @@ const EditPolicy = () => {
           net_premium: data.net_premium ? String(data.net_premium) : "",
           insurance_type: data.insurance_type || "Vehicle Insurance",
           product_name: data.product_name || "",
+          commission_percentage: data.commission_percentage ? String(data.commission_percentage) : "",
+          premium_frequency: data.premium_frequency || "yearly",
+          idv: data.idv ? String(data.idv) : "",
+          basic_od_premium: data.basic_od_premium ? String(data.basic_od_premium) : "",
+          basic_tp_premium: data.basic_tp_premium ? String(data.basic_tp_premium) : "",
+          sum_insured: data.sum_insured ? String(data.sum_insured) : "",
+          members_covered: data.members_covered ? String(data.members_covered) : "",
+          plan_type: data.plan_type || "",
+          sum_assured: data.sum_assured ? String(data.sum_assured) : "",
+          policy_term: data.policy_term ? String(data.policy_term) : "",
+          premium_payment_term: data.premium_payment_term ? String(data.premium_payment_term) : "",
+          od_commission_percentage: data.od_commission_percentage ? String(data.od_commission_percentage) : "",
+          tp_commission_percentage: data.tp_commission_percentage ? String(data.tp_commission_percentage) : "",
         });
 
         if (data.policy_active_date) {
@@ -498,10 +528,23 @@ const EditPolicy = () => {
           data: {
             ...formData,
             net_premium: formData.net_premium ? parseFloat(formData.net_premium) : 0,
+            commission_percentage: formData.commission_percentage ? parseFloat(formData.commission_percentage) : 0,
             policy_active_date: format(policyActiveDate, "yyyy-MM-dd"),
             policy_expiry_date: format(policyExpiryDate, "yyyy-MM-dd"),
             document_url: documentUrl,
             product_name: formData.product_name || null,
+            premium_frequency: formData.premium_frequency || 'yearly',
+            idv: formData.idv ? parseFloat(formData.idv) : 0,
+            basic_od_premium: formData.basic_od_premium ? parseFloat(formData.basic_od_premium) : 0,
+            basic_tp_premium: formData.basic_tp_premium ? parseFloat(formData.basic_tp_premium) : 0,
+            sum_insured: formData.sum_insured ? parseFloat(formData.sum_insured) : 0,
+            members_covered: formData.members_covered ? parseInt(formData.members_covered) : 0,
+            plan_type: formData.plan_type || null,
+            sum_assured: formData.sum_assured ? parseFloat(formData.sum_assured) : 0,
+            policy_term: formData.policy_term ? parseInt(formData.policy_term) : null,
+            premium_payment_term: formData.premium_payment_term ? parseInt(formData.premium_payment_term) : null,
+            od_commission_percentage: formData.od_commission_percentage ? parseFloat(formData.od_commission_percentage) : 0,
+            tp_commission_percentage: formData.tp_commission_percentage ? parseFloat(formData.tp_commission_percentage) : 0,
           }
         }
       });
@@ -955,7 +998,7 @@ const EditPolicy = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="net_premium" className="text-sm font-medium">
-                    Net Premium (₹)
+                    Net Premium (<span className="rupee-symbol">₹</span>)
                   </Label>
                   <Input
                     id="net_premium"
@@ -969,6 +1012,112 @@ const EditPolicy = () => {
                     min="0"
                     step="0.01"
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="premium_frequency" className="text-sm font-medium">
+                    Premium Frequency
+                  </Label>
+                  <Select
+                    value={formData.premium_frequency}
+                    onValueChange={(value) => setFormData({ ...formData, premium_frequency: value })}
+                  >
+                    <SelectTrigger className="h-10 text-sm">
+                      <SelectValue placeholder="Select frequency" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white z-50">
+                      <SelectItem value="yearly">Yearly</SelectItem>
+                      <SelectItem value="half-yearly">Half-Yearly</SelectItem>
+                      <SelectItem value="quarterly">Quarterly</SelectItem>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Motor-specific fields */}
+                {formData.insurance_type === 'Vehicle Insurance' && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="basic_od_premium" className="text-sm font-medium">
+                        Basic OD Premium (<span className="rupee-symbol">₹</span>)
+                      </Label>
+                      <Input id="basic_od_premium" name="basic_od_premium" type="number" inputMode="decimal" value={formData.basic_od_premium} onChange={handleInputChange} className="h-10 text-sm" placeholder="0.00" min="0" step="0.01" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="basic_tp_premium" className="text-sm font-medium">
+                        Basic TP Premium (<span className="rupee-symbol">₹</span>)
+                      </Label>
+                      <Input id="basic_tp_premium" name="basic_tp_premium" type="number" inputMode="decimal" value={formData.basic_tp_premium} onChange={handleInputChange} className="h-10 text-sm" placeholder="0.00" min="0" step="0.01" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="idv" className="text-sm font-medium">IDV (<span className="rupee-symbol">₹</span>)</Label>
+                      <Input id="idv" name="idv" type="number" inputMode="decimal" value={formData.idv} onChange={handleInputChange} className="h-10 text-sm" placeholder="0.00" min="0" step="0.01" />
+                    </div>
+                  </>
+                )}
+
+                {/* Health-specific fields */}
+                {formData.insurance_type === 'Health Insurance' && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="sum_insured" className="text-sm font-medium">Sum Insured (<span className="rupee-symbol">₹</span>)</Label>
+                      <Input id="sum_insured" name="sum_insured" type="number" inputMode="decimal" value={formData.sum_insured} onChange={handleInputChange} className="h-10 text-sm" placeholder="0.00" min="0" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="members_covered" className="text-sm font-medium">Members Covered</Label>
+                      <Input id="members_covered" name="members_covered" type="number" inputMode="numeric" value={formData.members_covered} onChange={handleInputChange} className="h-10 text-sm" placeholder="0" min="0" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="plan_type" className="text-sm font-medium">Plan Type</Label>
+                      <Input id="plan_type" name="plan_type" value={formData.plan_type} onChange={handleInputChange} className="h-10 text-sm" placeholder="e.g., Individual, Family Floater" />
+                    </div>
+                  </>
+                )}
+
+                {/* Life-specific fields */}
+                {formData.insurance_type === 'Life Insurance' && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="sum_assured" className="text-sm font-medium">Sum Assured (<span className="rupee-symbol">₹</span>)</Label>
+                      <Input id="sum_assured" name="sum_assured" type="number" inputMode="decimal" value={formData.sum_assured} onChange={handleInputChange} className="h-10 text-sm" placeholder="0.00" min="0" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="policy_term" className="text-sm font-medium">Policy Term (years)</Label>
+                      <Input id="policy_term" name="policy_term" type="number" inputMode="numeric" value={formData.policy_term} onChange={handleInputChange} className="h-10 text-sm" placeholder="0" min="0" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="premium_payment_term" className="text-sm font-medium">Premium Payment Term (years)</Label>
+                      <Input id="premium_payment_term" name="premium_payment_term" type="number" inputMode="numeric" value={formData.premium_payment_term} onChange={handleInputChange} className="h-10 text-sm" placeholder="0" min="0" />
+                    </div>
+                  </>
+                )}
+
+                {/* Commission Section */}
+                <div className="sm:col-span-2 border-t pt-4 mt-2">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3">Commission Details</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="commission_percentage" className="text-sm font-medium">Total Commission %</Label>
+                      <Input id="commission_percentage" name="commission_percentage" type="number" inputMode="decimal" value={formData.commission_percentage} onChange={handleInputChange} className="h-10 text-sm" placeholder="0" min="0" max="100" step="0.01" />
+                    </div>
+                    {formData.insurance_type === 'Vehicle Insurance' && (
+                      <>
+                        <div className="space-y-2">
+                          <Label htmlFor="od_commission_percentage" className="text-sm font-medium">OD Commission %</Label>
+                          <Input id="od_commission_percentage" name="od_commission_percentage" type="number" inputMode="decimal" value={formData.od_commission_percentage} onChange={handleInputChange} className="h-10 text-sm" placeholder="0" min="0" max="100" step="0.01" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="tp_commission_percentage" className="text-sm font-medium">TP Commission %</Label>
+                          <Input id="tp_commission_percentage" name="tp_commission_percentage" type="number" inputMode="decimal" value={formData.tp_commission_percentage} onChange={handleInputChange} className="h-10 text-sm" placeholder="0" min="0" max="100" step="0.01" />
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  {formData.net_premium && formData.commission_percentage && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Estimated Commission: <span className="rupee-symbol">₹</span>{((parseFloat(formData.net_premium) * parseFloat(formData.commission_percentage)) / 100).toFixed(2)}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
