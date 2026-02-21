@@ -2,9 +2,13 @@ import BulkUpload from "@/components/BulkUpload";
 import BackButton from "@/components/BackButton";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
+import { useUsageTracking } from "@/hooks/useUsageTracking";
+import { useSubscription } from "@/hooks/useSubscription";
 
 const BulkUploadPage = () => {
   const { user, loading } = useAuth();
+  const { usage, limits } = useUsageTracking();
+  const { subscribed } = useSubscription();
 
   if (loading) {
     return (
@@ -33,7 +37,11 @@ const BulkUploadPage = () => {
         </div>
       </div>
 
-      <BulkUpload />
+      <BulkUpload 
+        policyCount={usage.policyCount} 
+        maxPolicies={limits.maxPolicies} 
+        isPro={subscribed} 
+      />
     </div>
   );
 };

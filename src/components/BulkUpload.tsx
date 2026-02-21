@@ -41,6 +41,8 @@ const OPTIONAL_COLUMNS = [
   'Vehicle Make',
   'Vehicle Model',
   'IDV',
+  'Basic OD Premium',
+  'Basic TP Premium',
   'Sum Insured',
   'Members Covered',
   'Plan Type',
@@ -49,9 +51,18 @@ const OPTIONAL_COLUMNS = [
   'Premium Payment Term',
   'Agent Code',
   'Reference',
+  'OD Commission %',
+  'TP Commission %',
+  'Product Name',
 ];
 
-const BulkUpload = () => {
+interface BulkUploadProps {
+  policyCount?: number;
+  maxPolicies?: number;
+  isPro?: boolean;
+}
+
+const BulkUpload = ({ policyCount = 0, maxPolicies = 200, isPro = false }: BulkUploadProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -262,6 +273,17 @@ const BulkUpload = () => {
       if (rows.length > 500) {
         throw new Error('Maximum 500 policies per upload. Please split your file.');
       }
+
+      // Enforce free user policy limit
+      if (!isPro) {
+        const remainingQuota = maxPolicies - policyCount;
+        if (remainingQuota <= 0) {
+          throw new Error(`You have reached the ${maxPolicies}-policy limit on the Free plan. Please upgrade to Pro for unlimited policies.`);
+        }
+        if (rows.length > remainingQuota) {
+          throw new Error(`Free plan limit: You can only upload ${remainingQuota} more policies (${policyCount}/${maxPolicies} used). Please reduce your file or upgrade to Pro.`);
+        }
+      }
       
       setProgress(10);
       
@@ -287,10 +309,10 @@ const BulkUpload = () => {
         
         validPolicies.push({
           user_id: user.id,
-          client_name: String(row['Customer Name']).trim(),
+          client_name: normalizeName(String(row['Customer Name']).trim()) || String(row['Customer Name']).trim(),
           contact_number: String(row['Mobile Number'] || '').replace(/\D/g, '').substring(0, 10),
           insurance_type: row['Insurance Type'],
-          company_name: String(row['Insurance Company']).trim(),
+          company_name: normalizeName(String(row['Insurance Company']).trim()) || String(row['Insurance Company']).trim(),
           policy_number: String(row['Policy Number']).trim().toUpperCase(),
           policy_active_date: format(startDate!, 'yyyy-MM-dd'),
           policy_expiry_date: format(endDate!, 'yyyy-MM-dd'),
@@ -299,17 +321,22 @@ const BulkUpload = () => {
           commission_percentage: parseFloat(row['Commission Percentage']) || 0,
           status: row['Policy Status'] || 'Active',
           vehicle_number: row['Vehicle Number']?.toUpperCase().replace(/[^A-Z0-9]/g, '') || null,
-          vehicle_make: row['Vehicle Make'] || null,
-          vehicle_model: row['Vehicle Model'] || null,
+          vehicle_make: normalizeName(row['Vehicle Make']) || null,
+          vehicle_model: normalizeName(row['Vehicle Model']) || null,
           idv: parseFloat(row['IDV']) || 0,
+          basic_od_premium: parseFloat(row['Basic OD Premium']) || 0,
+          basic_tp_premium: parseFloat(row['Basic TP Premium']) || 0,
           sum_insured: parseFloat(row['Sum Insured']) || 0,
           members_covered: parseInt(row['Members Covered']) || 0,
-          plan_type: row['Plan Type'] || null,
+          plan_type: normalizeName(row['Plan Type']) || null,
           sum_assured: parseFloat(row['Sum Assured']) || 0,
           policy_term: parseInt(row['Policy Term']) || null,
           premium_payment_term: parseInt(row['Premium Payment Term']) || null,
           agent_code: normalizeName(row['Agent Code']) || null,
           reference: normalizeName(row['Reference']) || null,
+          od_commission_percentage: parseFloat(row['OD Commission %']) || 0,
+          tp_commission_percentage: parseFloat(row['TP Commission %']) || 0,
+          product_name: normalizeName(row['Product Name']) || null,
         });
       });
       
