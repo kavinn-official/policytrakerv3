@@ -203,13 +203,26 @@ const ReportsPage = () => {
     if (!user?.id) return null;
     
     try {
-      const { data: policies, error } = await supabase
+      // For 'today' report type, filter by created_at (date added/uploaded)
+      // For other report types, filter by policy_active_date (Risk Start Date)
+      let query = supabase
         .from('policies')
         .select('*')
-        .eq('user_id', user.id)
-        .gte('policy_active_date', format(startDate, 'yyyy-MM-dd'))
-        .lte('policy_active_date', format(endDate, 'yyyy-MM-dd'))
-        .order('policy_active_date', { ascending: false });
+        .eq('user_id', user.id);
+
+      if (reportType === 'today') {
+        query = query
+          .gte('created_at', startDate.toISOString())
+          .lte('created_at', endDate.toISOString())
+          .order('created_at', { ascending: false });
+      } else {
+        query = query
+          .gte('policy_active_date', format(startDate, 'yyyy-MM-dd'))
+          .lte('policy_active_date', format(endDate, 'yyyy-MM-dd'))
+          .order('policy_active_date', { ascending: false });
+      }
+
+      const { data: policies, error } = await query;
 
       if (error) throw error;
 
@@ -458,12 +471,17 @@ const ReportsPage = () => {
       const premium = Number(p.net_premium) || 0;
       const commissionRate = Number(p.commission_percentage) || 0;
       const commission = Number(p.first_year_commission) || ((premium * commissionRate) / 100);
+      const odPremium = Number(p.basic_od_premium) || 0;
+      const tpPremium = Number(p.basic_tp_premium) || 0;
+      const odCommRate = Number(p.od_commission_percentage) || 0;
+      const tpCommRate = Number(p.tp_commission_percentage) || 0;
       
       return {
         'S.No': index + 1,
         'Policy Number': p.policy_number,
         'Client Name': p.client_name,
         'Insurance Type': p.insurance_type || 'Vehicle Insurance',
+        'Product Name': p.product_name || '',
         'Company': normalizeCompanyName(p.company_name),
         'Vehicle Number': p.vehicle_number || '',
         'Vehicle Make': p.vehicle_make || '',
@@ -473,13 +491,18 @@ const ReportsPage = () => {
         'Risk Start Date (RSD)': formatDateDDMMYYYY(p.policy_active_date),
         'Risk End Date (RED)': formatDateDDMMYYYY(p.policy_expiry_date),
         'Net Premium': premium,
+        'Basic OD Premium': odPremium || '',
+        'Basic TP Premium': tpPremium || '',
         'Commission %': commissionRate,
         'Commission Amount': commission,
+        'OD Commission %': odCommRate || '',
+        'TP Commission %': tpCommRate || '',
         'IDV': p.idv || '',
         'Sum Insured': p.sum_insured || '',
         'Sum Assured': p.sum_assured || '',
         'Status': p.status,
         'Contact': p.contact_number || '',
+        'Created Date': formatDateDDMMYYYY(p.created_at),
       };
     });
     const policiesSheet = XLSX.utils.json_to_sheet(policyData);

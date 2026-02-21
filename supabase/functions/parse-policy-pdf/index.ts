@@ -200,6 +200,8 @@ serve(async (req) => {
 - policy_active_date: Policy start date in YYYY-MM-DD format
 - policy_expiry_date: Policy end date in YYYY-MM-DD format
 - net_premium: The BASE premium BEFORE GST/taxes (number only)
+- basic_od_premium: Own Damage premium component (number only, for vehicle insurance)
+- basic_tp_premium: Third Party premium component (number only, for vehicle insurance)
 - insurance_type: Must be one of: 'Vehicle Insurance', 'Health Insurance', 'Life Insurance', 'Other'
 - product_name: The specific product/plan name. For Vehicle Insurance use one of: 'Private Car Package', 'Private Car TP', 'Two Wheeler Package', 'Two Wheeler TP', 'Goods Carrying Package', 'Goods Carrying TP', 'Passenger Carrying Package', 'Passenger Carrying TP', 'Tractor Policy', 'Misc Vehicle Policy'. For Health Insurance use one of: 'Individual Health', 'Family Floater', 'Senior Citizen Health', 'Top-Up / Super Top-Up', 'Critical Illness', 'Personal Accident', 'Group Health'. For Life Insurance use one of: 'Term Plan', 'Endowment Plan', 'Money Back Plan', 'ULIP Plan', 'Pension Plan', 'Child Plan'. For Other use one of: 'Travel Insurance', 'Home Insurance', 'Shop Insurance', 'Fire Insurance', 'Marine Insurance', 'Liability Insurance', 'Gadget Insurance', 'Crop Insurance', 'Other'.
 - idv: Insured Declared Value for motor insurance (number only)
@@ -211,6 +213,8 @@ serve(async (req) => {
 - premium_payment_term: Premium payment term in years for life insurance (number only)
 
 IMPORTANT: For net_premium, look for 'Net Premium', 'Basic Premium', 'Base Premium', or 'Premium (Before Tax)'. EXCLUDE GST components.
+For basic_od_premium, look for 'OD Premium', 'Own Damage Premium', 'Basic OD'.
+For basic_tp_premium, look for 'TP Premium', 'Third Party Premium', 'Basic TP', 'Liability Premium'.
 If a field cannot be found or is not applicable, use empty string for text or 0 for numbers.`
       },
       {

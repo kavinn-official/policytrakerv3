@@ -93,7 +93,13 @@ const PolicyCard = ({ policy, daysToExpiry, statusColor, onViewPolicy, onEditPol
             </div>
             <p className="text-xs sm:text-sm text-gray-600 truncate">{policy.company_name}</p>
           </div>
-          <Badge className={`${statusColor} flex-shrink-0 text-xs`}>{policy.status}</Badge>
+          {(() => {
+            const isExpired = new Date(policy.policy_expiry_date) < new Date();
+            if (isExpired) {
+              return <Badge className="bg-red-100 text-red-800 flex-shrink-0 text-xs">Expired</Badge>;
+            }
+            return <Badge className={`${statusColor} flex-shrink-0 text-xs`}>{policy.status}</Badge>;
+          })()}
         </div>
         
         <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
