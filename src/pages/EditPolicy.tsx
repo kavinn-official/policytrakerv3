@@ -562,6 +562,10 @@ const EditPolicy = () => {
     } else if (name === "agent_code") {
       const cleanedValue = value.replace(/[^a-zA-Z\s]/g, '');
       setFormData({ ...formData, [name]: toCamelCase(cleanedValue) });
+    } else if (name === "reference") {
+      setFormData({ ...formData, [name]: toCamelCase(value) });
+    } else if (name === "vehicle_make" || name === "vehicle_model" || name === "company_name") {
+      setFormData({ ...formData, [name]: toCamelCase(value) });
     } else {
       setFormData({ ...formData, [name]: value });
     }

@@ -284,6 +284,8 @@ export type Database = {
       policies: {
         Row: {
           agent_code: string | null
+          basic_od_premium: number | null
+          basic_tp_premium: number | null
           client_name: string
           commission_percentage: number | null
           company_name: string | null
@@ -296,6 +298,7 @@ export type Database = {
           insurance_type: string
           members_covered: number | null
           net_premium: number | null
+          od_commission_percentage: number | null
           plan_type: string | null
           policy_active_date: string
           policy_expiry_date: string
@@ -308,6 +311,7 @@ export type Database = {
           status: string
           sum_assured: number | null
           sum_insured: number | null
+          tp_commission_percentage: number | null
           updated_at: string
           user_id: string
           vehicle_make: string | null
@@ -317,6 +321,8 @@ export type Database = {
         }
         Insert: {
           agent_code?: string | null
+          basic_od_premium?: number | null
+          basic_tp_premium?: number | null
           client_name: string
           commission_percentage?: number | null
           company_name?: string | null
@@ -329,6 +335,7 @@ export type Database = {
           insurance_type?: string
           members_covered?: number | null
           net_premium?: number | null
+          od_commission_percentage?: number | null
           plan_type?: string | null
           policy_active_date: string
           policy_expiry_date: string
@@ -341,6 +348,7 @@ export type Database = {
           status?: string
           sum_assured?: number | null
           sum_insured?: number | null
+          tp_commission_percentage?: number | null
           updated_at?: string
           user_id: string
           vehicle_make?: string | null
@@ -350,6 +358,8 @@ export type Database = {
         }
         Update: {
           agent_code?: string | null
+          basic_od_premium?: number | null
+          basic_tp_premium?: number | null
           client_name?: string
           commission_percentage?: number | null
           company_name?: string | null
@@ -362,6 +372,7 @@ export type Database = {
           insurance_type?: string
           members_covered?: number | null
           net_premium?: number | null
+          od_commission_percentage?: number | null
           plan_type?: string | null
           policy_active_date?: string
           policy_expiry_date?: string
@@ -374,6 +385,7 @@ export type Database = {
           status?: string
           sum_assured?: number | null
           sum_insured?: number | null
+          tp_commission_percentage?: number | null
           updated_at?: string
           user_id?: string
           vehicle_make?: string | null

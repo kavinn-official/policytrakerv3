@@ -22,6 +22,8 @@ export interface Policy {
   insurance_type?: string;
   net_premium?: number;
   idv?: number;
+  basic_od_premium?: number;
+  basic_tp_premium?: number;
   sum_assured?: number;
   sum_insured?: number;
   members_covered?: number;
@@ -31,6 +33,8 @@ export interface Policy {
   plan_type?: string;
   commission_percentage?: number;
   first_year_commission?: number;
+  od_commission_percentage?: number;
+  tp_commission_percentage?: number;
   whatsapp_reminder_count?: number;
   product_name?: string;
 }
@@ -103,12 +107,19 @@ export const downloadPoliciesAsExcel = (policies: Policy[], filename: string) =>
     const premium = Number(policy.net_premium) || 0;
     const commissionRate = Number(policy.commission_percentage) || 0;
     const commission = Number(policy.first_year_commission) || ((premium * commissionRate) / 100);
+    const odPremium = Number(policy.basic_od_premium) || 0;
+    const tpPremium = Number(policy.basic_tp_premium) || 0;
+    const odCommRate = Number(policy.od_commission_percentage) || 0;
+    const tpCommRate = Number(policy.tp_commission_percentage) || 0;
+    const odCommission = odPremium > 0 && odCommRate > 0 ? (odPremium * odCommRate / 100) : '';
+    const tpCommission = tpPremium > 0 && tpCommRate > 0 ? (tpPremium * tpCommRate / 100) : '';
     
     return {
       'S.No': index + 1,
       'Policy Number': policy.policy_number,
       'Client Name': policy.client_name,
       'Insurance Type': policy.insurance_type || 'Vehicle Insurance',
+      'Product Name': policy.product_name || '',
       'Company Name': policy.company_name || '',
       'Agent Name': policy.agent_code || '',
       'Reference': policy.reference || '',
@@ -118,8 +129,14 @@ export const downloadPoliciesAsExcel = (policies: Policy[], filename: string) =>
       'Risk Start Date (RSD)': formatDateDDMMYYYY(policy.policy_active_date),
       'Risk End Date (RED)': formatDateDDMMYYYY(policy.policy_expiry_date),
       'Net Premium': premium,
+      'Basic OD Premium': odPremium || '',
+      'Basic TP Premium': tpPremium || '',
       'Commission %': commissionRate,
       'Commission Amount': commission,
+      'OD Commission %': odCommRate || '',
+      'OD Commission Amount': odCommission,
+      'TP Commission %': tpCommRate || '',
+      'TP Commission Amount': tpCommission,
       'IDV': policy.idv || '',
       'Sum Insured': policy.sum_insured || '',
       'Sum Assured': policy.sum_assured || '',
@@ -130,7 +147,7 @@ export const downloadPoliciesAsExcel = (policies: Policy[], filename: string) =>
       'Premium Payment Term': policy.premium_payment_term || '',
       'Status': policy.status,
       'Contact Number': policy.contact_number || '',
-      'Created At': formatDateDDMMYYYY(policy.created_at),
+      'Created Date': formatDateDDMMYYYY(policy.created_at),
     };
   }));
 

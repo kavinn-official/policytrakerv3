@@ -9,6 +9,7 @@ export const generateSampleExcelTemplate = () => {
     {
       'Policy Number': 'POL001',
       'Insurance Type': 'Vehicle Insurance',
+      'Product Name': 'Private Car Package',
       'Client Name': 'John Doe',
       'Risk Start Date (RSD)': '01-01-2025',
       'Risk End Date (RED)': '31-12-2025',
@@ -18,9 +19,14 @@ export const generateSampleExcelTemplate = () => {
       'Vehicle Make': 'Maruti',
       'Vehicle Model': 'Swift',
       'Net Premium': '5000',
+      'Basic OD Premium': '3000',
+      'Basic TP Premium': '2000',
       'Status': 'Active',
       'Agent Name': 'AG001',
       'Reference': 'New customer',
+      'Commission %': '15',
+      'OD Commission %': '15',
+      'TP Commission %': '5',
     }
   ];
 
@@ -30,6 +36,7 @@ export const generateSampleExcelTemplate = () => {
   worksheet['!cols'] = [
     { wch: 15 }, // Policy Number
     { wch: 18 }, // Insurance Type
+    { wch: 22 }, // Product Name
     { wch: 20 }, // Client Name
     { wch: 18 }, // Risk Start Date (RSD)
     { wch: 18 }, // Risk End Date (RED)
@@ -39,9 +46,14 @@ export const generateSampleExcelTemplate = () => {
     { wch: 12 }, // Vehicle Make
     { wch: 12 }, // Vehicle Model
     { wch: 12 }, // Net Premium
+    { wch: 16 }, // Basic OD Premium
+    { wch: 16 }, // Basic TP Premium
     { wch: 10 }, // Status
     { wch: 15 }, // Agent Name
     { wch: 20 }, // Reference
+    { wch: 14 }, // Commission %
+    { wch: 16 }, // OD Commission %
+    { wch: 16 }, // TP Commission %
   ];
   
   const workbook = XLSX.utils.book_new();
@@ -285,19 +297,25 @@ export const convertExcelRowToPolicy = (row: any, userId: string): any => {
   
   return {
     policy_number: String(row['Policy Number'] || '').trim(),
-    client_name: String(row['Client Name'] || '').trim(),
+    client_name: normalizeName(String(row['Client Name'] || '')),
     agent_code: normalizeName(String(row['Agent Name'] || row['Agent Code'] || '')),
     company_name: companyName,
     vehicle_number: String(row['Vehicle Number'] || '').trim().toUpperCase(),
-    vehicle_make: String(row['Vehicle Make'] || '').trim(),
-    vehicle_model: String(row['Vehicle Model'] || '').trim(),
+    vehicle_make: normalizeName(String(row['Vehicle Make'] || '')),
+    vehicle_model: normalizeName(String(row['Vehicle Model'] || '')),
     policy_active_date: parsedStartDate,
     policy_expiry_date: parsedEndDate,
     status: String(row['Status'] || 'Active').trim(),
     reference: normalizeName(String(row['Reference'] || '')),
     contact_number: contactNumber,
     net_premium: netPremium,
+    basic_od_premium: row['Basic OD Premium'] ? parseFloat(String(row['Basic OD Premium']).replace(/[^\d.]/g, '')) || 0 : 0,
+    basic_tp_premium: row['Basic TP Premium'] ? parseFloat(String(row['Basic TP Premium']).replace(/[^\d.]/g, '')) || 0 : 0,
+    commission_percentage: row['Commission %'] ? parseFloat(String(row['Commission %']).replace(/[^\d.]/g, '')) || 0 : 0,
+    od_commission_percentage: row['OD Commission %'] ? parseFloat(String(row['OD Commission %']).replace(/[^\d.]/g, '')) || 0 : 0,
+    tp_commission_percentage: row['TP Commission %'] ? parseFloat(String(row['TP Commission %']).replace(/[^\d.]/g, '')) || 0 : 0,
     insurance_type: row['Insurance Type'] || row['Type of Insurance'] || 'Vehicle Insurance',
+    product_name: row['Product Name'] || null,
     user_id: userId
   };
 };

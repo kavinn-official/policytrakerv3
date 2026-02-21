@@ -78,6 +78,8 @@ const AddPolicy = () => {
       premium_frequency: "yearly",
       // Motor specific
       idv: "",
+      basic_od_premium: "",
+      basic_tp_premium: "",
       // Health specific
       sum_insured: "",
       members_covered: "",
@@ -86,6 +88,9 @@ const AddPolicy = () => {
       sum_assured: "",
       policy_term: "",
       premium_payment_term: "",
+      // Commission split
+      od_commission_percentage: "",
+      tp_commission_percentage: "",
     };
   });
 
@@ -303,6 +308,8 @@ const AddPolicy = () => {
           product_name: extracted.product_name || formData.product_name,
           // Motor specific
           idv: extracted.idv ? String(extracted.idv) : formData.idv,
+          basic_od_premium: extracted.basic_od_premium ? String(extracted.basic_od_premium) : formData.basic_od_premium,
+          basic_tp_premium: extracted.basic_tp_premium ? String(extracted.basic_tp_premium) : formData.basic_tp_premium,
           // Health specific
           sum_insured: extracted.sum_insured ? String(extracted.sum_insured) : formData.sum_insured,
           members_covered: extracted.members_covered ? String(extracted.members_covered) : formData.members_covered,
@@ -766,6 +773,10 @@ const AddPolicy = () => {
             net_premium: formData.net_premium ? parseFloat(formData.net_premium) : 0,
             commission_percentage: formData.commission_percentage ? parseFloat(formData.commission_percentage) : 0,
             idv: formData.idv ? parseFloat(formData.idv) : 0,
+            basic_od_premium: formData.basic_od_premium ? parseFloat(formData.basic_od_premium) : 0,
+            basic_tp_premium: formData.basic_tp_premium ? parseFloat(formData.basic_tp_premium) : 0,
+            od_commission_percentage: formData.od_commission_percentage ? parseFloat(formData.od_commission_percentage) : 0,
+            tp_commission_percentage: formData.tp_commission_percentage ? parseFloat(formData.tp_commission_percentage) : 0,
             sum_insured: formData.sum_insured ? parseFloat(formData.sum_insured) : 0,
             sum_assured: formData.sum_assured ? parseFloat(formData.sum_assured) : 0,
             members_covered: formData.members_covered ? parseInt(formData.members_covered) : 0,
@@ -837,6 +848,10 @@ const AddPolicy = () => {
     } else if (name === "agent_code") {
       const cleanedValue = value.replace(/[^a-zA-Z\s]/g, '');
       setFormData({ ...formData, [name]: toCamelCase(cleanedValue) });
+    } else if (name === "reference") {
+      setFormData({ ...formData, [name]: toCamelCase(value) });
+    } else if (name === "vehicle_make" || name === "vehicle_model" || name === "company_name") {
+      setFormData({ ...formData, [name]: toCamelCase(value) });
     } else {
       setFormData({ ...formData, [name]: value });
     }
@@ -875,12 +890,16 @@ const AddPolicy = () => {
       product_name: "",
       premium_frequency: "yearly",
       idv: "",
+      basic_od_premium: "",
+      basic_tp_premium: "",
       sum_insured: "",
       members_covered: "",
       plan_type: "",
       sum_assured: "",
       policy_term: "",
       premium_payment_term: "",
+      od_commission_percentage: "",
+      tp_commission_percentage: "",
     });
     setPolicyActiveDate(undefined);
     setPolicyExpiryDate(undefined);
@@ -1194,6 +1213,42 @@ const AddPolicy = () => {
                       />
                       <p className="text-xs text-gray-500">Insured Declared Value</p>
                     </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="basic_od_premium" className="text-sm font-medium">
+                        Basic OD Premium (&#x20B9;)
+                      </Label>
+                      <Input
+                        id="basic_od_premium"
+                        name="basic_od_premium"
+                        type="number"
+                        inputMode="decimal"
+                        value={formData.basic_od_premium}
+                        onChange={handleInputChange}
+                        className="h-10 text-sm"
+                        placeholder="e.g., 5000"
+                        min="0"
+                        step="0.01"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="basic_tp_premium" className="text-sm font-medium">
+                        Basic TP Premium (&#x20B9;)
+                      </Label>
+                      <Input
+                        id="basic_tp_premium"
+                        name="basic_tp_premium"
+                        type="number"
+                        inputMode="decimal"
+                        value={formData.basic_tp_premium}
+                        onChange={handleInputChange}
+                        className="h-10 text-sm"
+                        placeholder="e.g., 3000"
+                        min="0"
+                        step="0.01"
+                      />
+                    </div>
                   </>
                 )}
 
@@ -1407,7 +1462,7 @@ const AddPolicy = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="commission_percentage" className="text-sm font-medium">
-                    Commission (%)
+                    Total Commission (%)
                   </Label>
                   <Input
                     id="commission_percentage"
@@ -1424,10 +1479,62 @@ const AddPolicy = () => {
                   />
                   {formData.net_premium && formData.commission_percentage && (
                     <p className="text-xs text-emerald-600 font-medium">
-                      Commission: ₹{((parseFloat(formData.net_premium) * parseFloat(formData.commission_percentage)) / 100).toFixed(2)}
+                      Commission: &#x20B9;{((parseFloat(formData.net_premium) * parseFloat(formData.commission_percentage)) / 100).toFixed(2)}
                     </p>
                   )}
                 </div>
+
+                {formData.insurance_type === 'Vehicle Insurance' && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="od_commission_percentage" className="text-sm font-medium">
+                        OD Commission (%)
+                      </Label>
+                      <Input
+                        id="od_commission_percentage"
+                        name="od_commission_percentage"
+                        type="number"
+                        inputMode="decimal"
+                        value={formData.od_commission_percentage}
+                        onChange={handleInputChange}
+                        className="h-10 text-sm"
+                        placeholder="e.g., 15"
+                        min="0"
+                        max="100"
+                        step="0.1"
+                      />
+                      {formData.basic_od_premium && formData.od_commission_percentage && (
+                        <p className="text-xs text-emerald-600 font-medium">
+                          OD Commission: &#x20B9;{((parseFloat(formData.basic_od_premium) * parseFloat(formData.od_commission_percentage)) / 100).toFixed(2)}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="tp_commission_percentage" className="text-sm font-medium">
+                        TP Commission (%)
+                      </Label>
+                      <Input
+                        id="tp_commission_percentage"
+                        name="tp_commission_percentage"
+                        type="number"
+                        inputMode="decimal"
+                        value={formData.tp_commission_percentage}
+                        onChange={handleInputChange}
+                        className="h-10 text-sm"
+                        placeholder="e.g., 5"
+                        min="0"
+                        max="100"
+                        step="0.1"
+                      />
+                      {formData.basic_tp_premium && formData.tp_commission_percentage && (
+                        <p className="text-xs text-emerald-600 font-medium">
+                          TP Commission: &#x20B9;{((parseFloat(formData.basic_tp_premium) * parseFloat(formData.tp_commission_percentage)) / 100).toFixed(2)}
+                        </p>
+                      )}
+                    </div>
+                  </>
+                )}
 
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">

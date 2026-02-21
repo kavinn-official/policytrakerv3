@@ -31,6 +31,8 @@ interface PolicyData {
   premium_frequency?: string;
   // Motor specific
   idv?: number;
+  basic_od_premium?: number;
+  basic_tp_premium?: number;
   // Health specific
   sum_insured?: number;
   members_covered?: number;
@@ -39,6 +41,9 @@ interface PolicyData {
   sum_assured?: number;
   policy_term?: number;
   premium_payment_term?: number;
+  // Commission split
+  od_commission_percentage?: number;
+  tp_commission_percentage?: number;
 }
 
 interface ValidationError {
@@ -143,6 +148,8 @@ function validatePolicyData(data: any): { valid: boolean; errors: ValidationErro
     premium_frequency: data.premium_frequency || 'yearly',
     // Motor specific
     idv: data.idv ? Number(data.idv) : 0,
+    basic_od_premium: data.basic_od_premium ? Number(data.basic_od_premium) : 0,
+    basic_tp_premium: data.basic_tp_premium ? Number(data.basic_tp_premium) : 0,
     // Health specific
     sum_insured: data.sum_insured ? Number(data.sum_insured) : 0,
     members_covered: data.members_covered ? Number(data.members_covered) : 0,
@@ -151,6 +158,9 @@ function validatePolicyData(data: any): { valid: boolean; errors: ValidationErro
     sum_assured: data.sum_assured ? Number(data.sum_assured) : 0,
     policy_term: data.policy_term ? Number(data.policy_term) : null,
     premium_payment_term: data.premium_payment_term ? Number(data.premium_payment_term) : null,
+    // Commission split
+    od_commission_percentage: data.od_commission_percentage ? Number(data.od_commission_percentage) : 0,
+    tp_commission_percentage: data.tp_commission_percentage ? Number(data.tp_commission_percentage) : 0,
   };
 
   return { valid: true, errors: [], sanitized };
