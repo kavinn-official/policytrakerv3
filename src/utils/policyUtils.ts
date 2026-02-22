@@ -52,7 +52,7 @@ export const getDaysToExpiry = (expiryDate: string) => {
 
 export const filterPolicies = (policies: Policy[], searchTerm: string) => {
   if (!searchTerm) return policies;
-  
+
   const term = searchTerm.toLowerCase();
   return policies.filter(policy =>
     (policy.policy_number && policy.policy_number.toLowerCase().includes(term)) ||
@@ -76,11 +76,11 @@ export const formatDateDDMMYYYY = (dateString: string): string => {
   if (!dateString) return '';
   const date = new Date(dateString);
   if (isNaN(date.getTime())) return '';
-  
+
   const day = String(date.getDate()).padStart(2, '0');
   const monthName = MONTH_NAMES_TITLE_CASE[date.getMonth()];
   const year = date.getFullYear();
-  
+
   return `${day}-${monthName}-${year}`;
 };
 
@@ -90,11 +90,11 @@ export const formatDateDDMMYYYY = (dateString: string): string => {
  */
 export const formatDateFromDate = (date: Date | null | undefined): string => {
   if (!date || isNaN(date.getTime())) return '';
-  
+
   const day = String(date.getDate()).padStart(2, '0');
   const monthName = MONTH_NAMES_TITLE_CASE[date.getMonth()];
   const year = date.getFullYear();
-  
+
   return `${day}-${monthName}-${year}`;
 };
 
@@ -113,30 +113,22 @@ export const downloadPoliciesAsExcel = (policies: Policy[], filename: string) =>
     const tpCommRate = Number(policy.tp_commission_percentage) || 0;
     const odCommission = odPremium > 0 && odCommRate > 0 ? (odPremium * odCommRate / 100) : '';
     const tpCommission = tpPremium > 0 && tpCommRate > 0 ? (tpPremium * tpCommRate / 100) : '';
-    
+
     return {
-      'S.No': index + 1,
       'Policy Number': policy.policy_number,
-      'Client Name': policy.client_name,
       'Insurance Type': policy.insurance_type || 'Vehicle Insurance',
       'Product Name': policy.product_name || '',
       'Company Name': policy.company_name || '',
-      'Agent Name': policy.agent_code || '',
-      'Reference': policy.reference || '',
+      'Client Name': policy.client_name,
+      'Risk Start Date (RSD)': formatDateDDMMYYYY(policy.policy_active_date),
+      'Risk End Date (RED)': formatDateDDMMYYYY(policy.policy_expiry_date),
+      'Contact Number': policy.contact_number || '',
       'Vehicle Number': policy.vehicle_number || '',
       'Vehicle Make': policy.vehicle_make || '',
       'Vehicle Model': policy.vehicle_model || '',
-      'Risk Start Date (RSD)': formatDateDDMMYYYY(policy.policy_active_date),
-      'Risk End Date (RED)': formatDateDDMMYYYY(policy.policy_expiry_date),
       'Net Premium': premium,
       'Basic OD Premium': odPremium || '',
       'Basic TP Premium': tpPremium || '',
-      'Commission %': commissionRate,
-      'Commission Amount': commission,
-      'OD Commission %': odCommRate || '',
-      'OD Commission Amount': odCommission,
-      'TP Commission %': tpCommRate || '',
-      'TP Commission Amount': tpCommission,
       'IDV': policy.idv || '',
       'Sum Insured': policy.sum_insured || '',
       'Sum Assured': policy.sum_assured || '',
@@ -146,17 +138,23 @@ export const downloadPoliciesAsExcel = (policies: Policy[], filename: string) =>
       'Premium Frequency': policy.premium_frequency || '',
       'Premium Payment Term': policy.premium_payment_term || '',
       'Status': policy.status,
-      'Contact Number': policy.contact_number || '',
-      'Created Date': formatDateDDMMYYYY(policy.created_at),
+      'Agent Name': policy.agent_code || '',
+      'Reference': policy.reference || '',
+      'Commission %': commissionRate,
+      'Commission Amount': commission,
+      'OD Commission %': odCommRate || '',
+      'OD Commission Amount': odCommission,
+      'TP Commission %': tpCommRate || '',
+      'TP Commission Amount': tpCommission,
     };
   }));
 
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, 'Policies');
-  
+
   const fileName = `${filename}_${new Date().toISOString().split('T')[0]}.xlsx`;
   XLSX.writeFile(workbook, fileName);
-  
+
   return {
     fileName,
     count: policies.length
