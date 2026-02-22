@@ -12,15 +12,15 @@ import { ArrowRight, HelpCircle } from "lucide-react";
 const faqs = [
   {
     question: "What is PolicyTracker.in?",
-    answer: "PolicyTracker.in is India's leading insurance agent CRM and policy management software. It helps insurance agents track motor, health, life, and general insurance policies, send WhatsApp renewal reminders to clients, manage commissions, store policy documents, and grow their insurance business. Trusted by 1,500+ agents across India."
+    answer: "PolicyTracker.in is the best insurance agent CRM and policy management software in India. It enables insurance agents to track motor, health, life, and general insurance policies, automate WhatsApp renewal reminders, manage commissions, and securely store documents."
   },
   {
     question: "How does PolicyTracker help insurance agents manage renewals?",
-    answer: "PolicyTracker automatically tracks all policy expiry dates and sends you alerts 30, 15, and 7 days before renewal. You can send personalized WhatsApp reminders to clients with one click, including policy details and expiry date. This automated system helps agents achieve 98% renewal rates and never miss a policy renewal."
+    answer: "PolicyTracker manages renewals by automatically tracking expiry dates and sending alerts 30, 15, and 7 days before a policy expires. Agents can also send 1-click personalized WhatsApp reminders, helping them achieve a 98% renewal success rate."
   },
   {
     question: "Is PolicyTracker free to use?",
-    answer: "Yes! PolicyTracker offers a Free Forever plan that includes up to 200 policies, basic renewal alerts, 50 OCR scans per month, and 2GB document storage. For agents managing larger portfolios, the Pro plan at ₹199/month (or ₹1,999/year) offers unlimited policies, automated WhatsApp reminders, and advanced commission analytics."
+    answer: "Yes, PolicyTracker is free to use with our Free Forever plan that includes up to 200 policies, basic renewal alerts, 50 OCR scans per month, and 2GB document storage. We also offer a Pro plan at ₹199/month for unlimited policies and advanced features."
   },
   {
     question: "Which types of insurance policies can I track?",
@@ -63,7 +63,7 @@ const faqs = [
 const FAQSection = () => {
   return (
     <section className="py-16 sm:py-24 bg-gradient-to-b from-white to-gray-50" id="faq" aria-labelledby="faq-heading">
-      
+
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-12">
@@ -82,8 +82,8 @@ const FAQSection = () => {
         {/* FAQ Accordion */}
         <Accordion type="single" collapsible className="space-y-4">
           {faqs.map((faq, index) => (
-            <AccordionItem 
-              key={index} 
+            <AccordionItem
+              key={index}
               value={`item-${index}`}
               className="bg-white rounded-xl border border-gray-200 px-6 shadow-sm hover:shadow-md transition-shadow"
             >

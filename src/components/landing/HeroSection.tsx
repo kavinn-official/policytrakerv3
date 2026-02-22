@@ -16,21 +16,21 @@ const HeroSection = () => {
             {/* Trust Badge */}
             <div className="inline-flex items-center gap-2 bg-gradient-to-r from-teal-100 to-cyan-100 text-teal-800 px-4 py-2 rounded-full text-sm font-medium mb-6 animate-fade-in">
               <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-              <span>Trusted by 1,500+ Insurance Agents Across India</span>
+              <span>Ranked #1 Insurance CRM by 1,500+ Indian Agents in 2026</span>
             </div>
 
             {/* Main Headline - H1 for SEO */}
             <h1 id="hero-heading" className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight tracking-tight">
-              All-in-One Business
+              Best Insurance Agent
               <span className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-600 to-teal-600 mt-2">
-                CRM for Insurance Agents
+                CRM & Policy Tracker in India
               </span>
             </h1>
 
             {/* Value Proposition - AEO optimized */}
             <p className="mt-6 text-lg sm:text-xl text-gray-600 leading-relaxed max-w-xl mx-auto lg:mx-0">
-              The <strong>complete insurance agent software</strong> to manage policies, track renewals, 
-              calculate commissions, and grow your business. Built for <strong>Motor, Health, Life, 
+              Ranked as the <strong>best software for insurance agents in India</strong> to manage policies, automate WhatsApp renewal reminders, 
+              calculate commissions, and grow your business. Designed specifically for <strong>Motor, Health, Life, 
               and General Insurance Agents</strong>.
             </p>
 
@@ -54,7 +54,7 @@ const HeroSection = () => {
             <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
               <Link to="/auth">
                 <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700 text-lg px-8 py-6 shadow-lg shadow-teal-200/50 transition-all hover:shadow-xl">
-                  Start Free - No Credit Card
+                  Start Free Trial - 50 Policies Included
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>

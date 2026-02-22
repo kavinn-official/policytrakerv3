@@ -1,13 +1,13 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { 
-  FileText, 
-  Bell, 
-  BarChart3, 
-  Upload, 
-  FolderOpen, 
-  FileSpreadsheet, 
-  Shield, 
+import {
+  FileText,
+  Bell,
+  BarChart3,
+  Upload,
+  FolderOpen,
+  FileSpreadsheet,
+  Shield,
   MessageCircle,
   Smartphone,
   Scan,
@@ -19,20 +19,20 @@ import {
 const features = [
   {
     icon: FileText,
-    title: "Policy Management",
-    description: "Add, view, edit, and organize all your insurance policies in one centralized dashboard. Track motor, health, and life policies seamlessly.",
+    title: "Insurance Policy Management System",
+    description: "Add, view, edit, and organize all your insurance policies in one centralized dashboard. Seamlessly track motor, health, and life insurance portfolios.",
     keywords: "policy management software, insurance policy tracker"
   },
   {
     icon: Bell,
-    title: "Renewal Tracking & Alerts",
-    description: "Never miss a renewal. Get automated alerts 30, 15, and 7 days before policy expiry. Configurable reminder schedules.",
+    title: "Automated Renewal Tracking & Alerts",
+    description: "Never miss a renewal opportunity. Get automated alerts 30, 15, and 7 days before policy expiry to boost your renewal rates by 25%.",
     keywords: "policy renewal reminder, insurance expiry alerts"
   },
   {
     icon: MessageCircle,
-    title: "WhatsApp Integration",
-    description: "Send personalized renewal reminders to clients via WhatsApp with one click. Pre-formatted messages with policy details.",
+    title: "WhatsApp Policy Renewal Reminders",
+    description: "Send personalized renewal reminders to clients via WhatsApp with exactly one click, improving client engagement and retention.",
     keywords: "WhatsApp reminder for insurance, client communication"
   },
   {
@@ -49,8 +49,8 @@ const features = [
   },
   {
     icon: Scan,
-    title: "OCR PDF Auto-Fill",
-    description: "Upload policy PDFs and let AI extract policy details automatically. Save 80% of manual data entry time.",
+    title: "AI-Powered OCR PDF Auto-Fill",
+    description: "Upload policy PDFs and let our AI extract extracted details automatically. Save 80% of manual data entry time per policy imported.",
     keywords: "OCR policy scanning, PDF auto-fill insurance"
   },
   {
@@ -104,7 +104,7 @@ const FeaturesSection = () => {
             Everything You Need to Manage Your Insurance Business
           </h2>
           <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-            A complete <strong>insurance agent CRM</strong> with policy tracking, renewal management, commission analytics, 
+            A complete <strong>insurance agent CRM</strong> with policy tracking, renewal management, commission analytics,
             and client communication — all in one powerful platform.
           </p>
         </div>
@@ -112,8 +112,8 @@ const FeaturesSection = () => {
         {/* Features Grid */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {features.map((feature, index) => (
-            <article 
-              key={index} 
+            <article
+              key={index}
               className="group bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-lg hover:border-teal-200 transition-all duration-300 hover:-translate-y-1"
             >
               <div className="w-12 h-12 bg-gradient-to-br from-cyan-100 to-teal-100 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
