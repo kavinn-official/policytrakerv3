@@ -10,55 +10,77 @@ export const generateSampleExcelTemplate = () => {
       'Policy Number': 'POL001',
       'Insurance Type': 'Vehicle Insurance',
       'Product Name': 'Private Car Package',
+      'Company Name': 'Cholamandalam',
       'Client Name': 'John Doe',
       'Risk Start Date (RSD)': '01-01-2025',
       'Risk End Date (RED)': '31-12-2025',
       'Contact Number': '9876543210',
-      'Company Name': 'Cholamandalam',
       'Vehicle Number': 'MH01AB1234',
       'Vehicle Make': 'Maruti',
       'Vehicle Model': 'Swift',
       'Net Premium': '5000',
       'Basic OD Premium': '3000',
       'Basic TP Premium': '2000',
+      'IDV': '400000',
+      'Sum Insured': '',
+      'Sum Assured': '',
+      'Members Covered': '',
+      'Plan Type': '',
+      'Policy Term': '1',
+      'Premium Frequency': 'Yearly',
+      'Premium Payment Term': '1',
       'Status': 'Active',
       'Agent Name': 'AG001',
       'Reference': 'New customer',
       'Commission %': '15',
+      'Commission Amount': '750',
       'OD Commission %': '15',
+      'OD Commission Amount': '450',
       'TP Commission %': '5',
+      'TP Commission Amount': '100',
     }
   ];
 
   const worksheet = XLSX.utils.json_to_sheet(sampleData);
-  
+
   // Set column widths for better readability
   worksheet['!cols'] = [
     { wch: 15 }, // Policy Number
     { wch: 18 }, // Insurance Type
     { wch: 22 }, // Product Name
+    { wch: 18 }, // Company Name
     { wch: 20 }, // Client Name
     { wch: 18 }, // Risk Start Date (RSD)
     { wch: 18 }, // Risk End Date (RED)
     { wch: 14 }, // Contact Number
-    { wch: 18 }, // Company Name
     { wch: 14 }, // Vehicle Number
     { wch: 12 }, // Vehicle Make
     { wch: 12 }, // Vehicle Model
     { wch: 12 }, // Net Premium
     { wch: 16 }, // Basic OD Premium
     { wch: 16 }, // Basic TP Premium
+    { wch: 12 }, // IDV
+    { wch: 14 }, // Sum Insured
+    { wch: 14 }, // Sum Assured
+    { wch: 16 }, // Members Covered
+    { wch: 14 }, // Plan Type
+    { wch: 12 }, // Policy Term
+    { wch: 18 }, // Premium Frequency
+    { wch: 22 }, // Premium Payment Term
     { wch: 10 }, // Status
     { wch: 15 }, // Agent Name
     { wch: 20 }, // Reference
     { wch: 14 }, // Commission %
+    { wch: 18 }, // Commission Amount
     { wch: 16 }, // OD Commission %
+    { wch: 20 }, // OD Commission Amount
     { wch: 16 }, // TP Commission %
+    { wch: 20 }, // TP Commission Amount
   ];
-  
+
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, 'Policy Template');
-  
+
   // Add instructions sheet
   const instructions = [
     ['Policy Upload Template Instructions'],
@@ -100,23 +122,23 @@ export const generateSampleExcelTemplate = () => {
   const instructionsSheet = XLSX.utils.aoa_to_sheet(instructions);
   instructionsSheet['!cols'] = [{ wch: 80 }];
   XLSX.utils.book_append_sheet(workbook, instructionsSheet, 'Instructions');
-  
+
   const fileName = `policy_upload_template.xlsx`;
   XLSX.writeFile(workbook, fileName);
-  
+
   return fileName;
 };
 
 export const parseExcelFile = (file: File): Promise<any[]> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    
+
     reader.onload = (e) => {
       try {
         const data = e.target?.result;
         const workbook = XLSX.read(data, { type: 'binary' });
         // Skip instructions sheet if present
-        const sheetName = workbook.SheetNames.find(name => 
+        const sheetName = workbook.SheetNames.find(name =>
           name.toLowerCase() !== 'instructions'
         ) || workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
@@ -126,7 +148,7 @@ export const parseExcelFile = (file: File): Promise<any[]> => {
         reject(error);
       }
     };
-    
+
     reader.onerror = () => reject(new Error('Failed to read file'));
     reader.readAsBinaryString(file);
   });
@@ -135,12 +157,12 @@ export const parseExcelFile = (file: File): Promise<any[]> => {
 export const validatePolicyData = (data: any, rowIndex: number): { valid: boolean; errors: string[] } => {
   const errors: string[] = [];
   const rowNum = rowIndex + 2; // +2 for 1-indexed and header row
-  
+
   // Only 4 mandatory fields: Policy Number, Insurance Type, Client Name, Risk Start Date
   if (!data['Policy Number']) {
     errors.push(`Row ${rowNum}: Policy Number is required`);
   }
-  
+
   const insuranceType = data['Insurance Type'] || data['Type of Insurance'];
   if (!insuranceType) {
     errors.push(`Row ${rowNum}: Insurance Type is required`);
@@ -150,20 +172,20 @@ export const validatePolicyData = (data: any, rowIndex: number): { valid: boolea
       errors.push(`Row ${rowNum}: Insurance Type must be one of: ${validTypes.join(', ')}`);
     }
   }
-  
+
   if (!data['Client Name']) {
     errors.push(`Row ${rowNum}: Client Name is required`);
   }
-  
+
   // Support both old and new field names for backward compatibility
   const activeDate = data['Risk Start Date (RSD)'] || data['Risk Start Date (PSD)'] || data['Active Date'] || data['Policy Active Date'];
-  
+
   if (!activeDate) {
     errors.push(`Row ${rowNum}: Risk Start Date (RSD) is required`);
   }
-  
+
   // Risk End Date is now optional - will be auto-calculated if empty
-  
+
   // Validate date formats
   if (activeDate) {
     const parsedDate = parseExcelDate(activeDate);
@@ -171,7 +193,7 @@ export const validatePolicyData = (data: any, rowIndex: number): { valid: boolea
       errors.push(`Row ${rowNum}: Invalid Risk Start Date format`);
     }
   }
-  
+
   const expiryDate = data['Risk End Date (RED)'] || data['Risk End Date (PED)'] || data['Expiry Date'] || data['Policy Expiry Date'];
   if (expiryDate) {
     const parsedDate = parseExcelDate(expiryDate);
@@ -179,7 +201,7 @@ export const validatePolicyData = (data: any, rowIndex: number): { valid: boolea
       errors.push(`Row ${rowNum}: Invalid Risk End Date format`);
     }
   }
-  
+
   // Validate contact number if provided
   if (data['Contact Number']) {
     const phone = String(data['Contact Number']).replace(/\D/g, '');
@@ -187,7 +209,7 @@ export const validatePolicyData = (data: any, rowIndex: number): { valid: boolea
       errors.push(`Row ${rowNum}: Contact Number should be at least 10 digits`);
     }
   }
-  
+
   // Validate premium if provided
   if (data['Net Premium']) {
     const premium = parseFloat(String(data['Net Premium']).replace(/[^\d.]/g, ''));
@@ -195,7 +217,7 @@ export const validatePolicyData = (data: any, rowIndex: number): { valid: boolea
       errors.push(`Row ${rowNum}: Net Premium must be a valid positive number`);
     }
   }
-  
+
   return {
     valid: errors.length === 0,
     errors
@@ -204,7 +226,7 @@ export const validatePolicyData = (data: any, rowIndex: number): { valid: boolea
 
 const parseExcelDate = (value: any): string => {
   if (!value) return '';
-  
+
   // If it's already a string in YYYY-MM-DD format, return it directly
   if (typeof value === 'string') {
     // YYYY-MM-DD format
@@ -215,7 +237,7 @@ const parseExcelDate = (value: any): string => {
       const day = String(isoMatch[3]).padStart(2, '0');
       return `${year}-${month}-${day}`;
     }
-    
+
     // DD-MM-YYYY or DD/MM/YYYY format
     const dmyMatch = value.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);
     if (dmyMatch) {
@@ -225,7 +247,7 @@ const parseExcelDate = (value: any): string => {
       return `${year}-${month}-${day}`;
     }
   }
-  
+
   // If it's a Date object, use UTC methods to avoid timezone issues
   if (value instanceof Date && !isNaN(value.getTime())) {
     const year = value.getUTCFullYear();
@@ -233,7 +255,7 @@ const parseExcelDate = (value: any): string => {
     const day = String(value.getUTCDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   }
-  
+
   // If it's an Excel serial number (numeric)
   if (typeof value === 'number') {
     // Excel dates are stored as days since 1900-01-01
@@ -244,7 +266,7 @@ const parseExcelDate = (value: any): string => {
     const day = String(date.getUTCDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   }
-  
+
   // Try to parse as a date string
   const date = new Date(value);
   if (!isNaN(date.getTime())) {
@@ -253,7 +275,7 @@ const parseExcelDate = (value: any): string => {
     const day = String(date.getUTCDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   }
-  
+
   return '';
 };
 
@@ -268,33 +290,33 @@ export const convertExcelRowToPolicy = (row: any, userId: string): any => {
   // Support both old and new field names for backward compatibility
   const activeDate = row['Risk Start Date (RSD)'] || row['Risk Start Date (PSD)'] || row['Active Date'] || row['Policy Active Date'];
   const expiryDate = row['Risk End Date (RED)'] || row['Risk End Date (PED)'] || row['Expiry Date'] || row['Policy Expiry Date'];
-  
+
   const parsedStartDate = parseExcelDate(activeDate);
   let parsedEndDate = parseExcelDate(expiryDate);
-  
+
   // Auto-calculate end date if empty (1 year from start date)
   if (!parsedEndDate && parsedStartDate) {
     parsedEndDate = calculateEndDate(parsedStartDate);
   }
-  
+
   // Normalize company name - automatically standardize variations
   let companyName = row['Company Name'] || '';
   if (companyName) {
     companyName = normalizeCompanyName(companyName);
   }
-  
+
   // Parse and clean contact number
   let contactNumber = row['Contact Number'] || '';
   if (contactNumber) {
     contactNumber = String(contactNumber).replace(/\D/g, '');
   }
-  
+
   // Parse premium
   let netPremium = 0;
   if (row['Net Premium']) {
     netPremium = parseFloat(String(row['Net Premium']).replace(/[^\d.]/g, '')) || 0;
   }
-  
+
   return {
     policy_number: String(row['Policy Number'] || '').trim(),
     client_name: normalizeName(String(row['Client Name'] || '')),
@@ -314,6 +336,14 @@ export const convertExcelRowToPolicy = (row: any, userId: string): any => {
     commission_percentage: row['Commission %'] ? parseFloat(String(row['Commission %']).replace(/[^\d.]/g, '')) || 0 : 0,
     od_commission_percentage: row['OD Commission %'] ? parseFloat(String(row['OD Commission %']).replace(/[^\d.]/g, '')) || 0 : 0,
     tp_commission_percentage: row['TP Commission %'] ? parseFloat(String(row['TP Commission %']).replace(/[^\d.]/g, '')) || 0 : 0,
+    idv: row['IDV'] ? parseFloat(String(row['IDV']).replace(/[^\d.]/g, '')) || 0 : 0,
+    sum_insured: row['Sum Insured'] ? parseFloat(String(row['Sum Insured']).replace(/[^\d.]/g, '')) || 0 : 0,
+    sum_assured: row['Sum Assured'] ? parseFloat(String(row['Sum Assured']).replace(/[^\d.]/g, '')) || 0 : 0,
+    members_covered: row['Members Covered'] ? parseInt(String(row['Members Covered']).replace(/\D/g, ''), 10) || null : null,
+    plan_type: row['Plan Type'] || null,
+    policy_term: row['Policy Term'] ? parseInt(String(row['Policy Term']).replace(/\D/g, ''), 10) || null : null,
+    premium_frequency: row['Premium Frequency'] || null,
+    premium_payment_term: row['Premium Payment Term'] ? parseInt(String(row['Premium Payment Term']).replace(/\D/g, ''), 10) || null : null,
     insurance_type: row['Insurance Type'] || row['Type of Insurance'] || 'Vehicle Insurance',
     product_name: row['Product Name'] || null,
     user_id: userId
@@ -321,16 +351,16 @@ export const convertExcelRowToPolicy = (row: any, userId: string): any => {
 };
 
 // Batch validation helper
-export const validateBulkUpload = (data: any[]): { 
-  valid: boolean; 
-  errors: string[]; 
+export const validateBulkUpload = (data: any[]): {
+  valid: boolean;
+  errors: string[];
   validRows: number;
   invalidRows: number;
 } => {
   const allErrors: string[] = [];
   let validRows = 0;
   let invalidRows = 0;
-  
+
   data.forEach((row, index) => {
     const result = validatePolicyData(row, index);
     if (result.valid) {
@@ -340,13 +370,13 @@ export const validateBulkUpload = (data: any[]): {
       allErrors.push(...result.errors);
     }
   });
-  
+
   // Limit error display to first 10 errors
   const displayErrors = allErrors.slice(0, 10);
   if (allErrors.length > 10) {
     displayErrors.push(`... and ${allErrors.length - 10} more errors`);
   }
-  
+
   return {
     valid: invalidRows === 0,
     errors: displayErrors,

@@ -71,9 +71,9 @@ const AdminUsers = () => {
 
       if (profilesError) throw profilesError;
 
-      const { data: subscribers } = await supabase
-        .from('subscribers')
-        .select('user_id, subscription_tier, is_active');
+      const { data: subscriptions } = await supabase
+        .from('subscriptions')
+        .select('user_id, plan_name, status, end_date');
 
       const { data: policyCounts } = await supabase
         .from('policies')
@@ -85,8 +85,12 @@ const AdminUsers = () => {
       });
 
       const subscriberMap: Record<string, { tier: string; active: boolean }> = {};
-      subscribers?.forEach((s) => {
-        subscriberMap[s.user_id] = { tier: s.subscription_tier, active: s.is_active };
+      subscriptions?.forEach((s) => {
+        const now = new Date();
+        const isActive = s.status === 'active' && s.end_date && new Date(s.end_date) > now;
+        if (isActive || !subscriberMap[s.user_id]) {
+          subscriberMap[s.user_id] = { tier: s.plan_name?.toLowerCase(), active: isActive };
+        }
       });
 
       const enrichedUsers = profiles?.map((profile) => ({
@@ -111,21 +115,24 @@ const AdminUsers = () => {
     setActionLoading(true);
     try {
       const { data: existing } = await supabase
-        .from('subscribers')
+        .from('subscriptions')
         .select('id')
         .eq('user_id', user.id)
         .maybeSingle();
 
+      const newEndDate = new Date(Date.now() + 30 * 86400000).toISOString();
+      const newStartDate = new Date().toISOString();
+
       if (existing) {
         const { error } = await supabase
-          .from('subscribers')
-          .update({ subscription_tier: 'pro', is_active: true, subscription_end_date: new Date(Date.now() + 365 * 86400000).toISOString() })
+          .from('subscriptions')
+          .update({ plan_name: 'pro', status: 'active', end_date: newEndDate, amount: 0, currency: 'INR' })
           .eq('user_id', user.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
-          .from('subscribers')
-          .insert({ user_id: user.id, subscription_tier: 'pro', is_active: true, subscription_end_date: new Date(Date.now() + 365 * 86400000).toISOString() });
+          .from('subscriptions')
+          .insert({ user_id: user.id, plan_name: 'pro', status: 'active', start_date: newStartDate, end_date: newEndDate, amount: 0, currency: 'INR' });
         if (error) throw error;
       }
 
@@ -145,21 +152,21 @@ const AdminUsers = () => {
     try {
       const newActive = !user.isActive;
       const { data: existing } = await supabase
-        .from('subscribers')
+        .from('subscriptions')
         .select('id')
         .eq('user_id', user.id)
         .maybeSingle();
 
       if (existing) {
         const { error } = await supabase
-          .from('subscribers')
-          .update({ is_active: newActive })
+          .from('subscriptions')
+          .update({ status: newActive ? 'active' : 'inactive' })
           .eq('user_id', user.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
-          .from('subscribers')
-          .insert({ user_id: user.id, subscription_tier: 'free', is_active: newActive });
+          .from('subscriptions')
+          .insert({ user_id: user.id, plan_name: 'free', status: newActive ? 'active' : 'inactive', amount: 0, currency: 'INR' });
         if (error) throw error;
       }
 
@@ -344,7 +351,7 @@ const AdminUsers = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Upgrade to Pro</AlertDialogTitle>
             <AlertDialogDescription>
-              Upgrade <strong>{selectedUser?.full_name || selectedUser?.email}</strong> to Pro plan for 1 year? This will give them access to all premium features.
+              Upgrade <strong>{selectedUser?.full_name || selectedUser?.email}</strong> to Pro plan for 1 month? This will give them access to all premium features.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
