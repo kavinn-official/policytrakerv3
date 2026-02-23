@@ -34,7 +34,7 @@ async function checkRateLimit(supabaseService: any, userId: string, functionName
     }
 
     const currentCount = existing?.request_count || 0;
-    
+
     if (currentCount >= RATE_LIMIT_MAX_REQUESTS) {
       return { allowed: false, remaining: 0 };
     }
@@ -82,12 +82,13 @@ serve(async (req) => {
 
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
     );
 
     const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: authError } = await supabaseClient.auth.getUser(token);
-    
+
     if (authError || !userData.user) {
       console.log("Authentication failed:", authError?.message);
       return new Response(
@@ -115,7 +116,7 @@ serve(async (req) => {
     }
 
     const { pdfBase64 } = await req.json();
-    
+
     if (!pdfBase64) {
       return new Response(
         JSON.stringify({ error: "No PDF data provided" }),
@@ -132,9 +133,9 @@ serve(async (req) => {
       );
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("LOVABLE_API_KEY");
+    if (!GEMINI_API_KEY) {
+      throw new Error("GEMINI_API_KEY is not configured");
     }
 
     // Validate base64 format before processing
@@ -153,17 +154,17 @@ serve(async (req) => {
     // These are well-known file signatures encoded in base64
     let mimeType = "application/pdf"; // default
     let detectedType = "unknown";
-    
+
     if (pdfBase64.startsWith('JVBERi0')) {
       // PDF magic bytes: %PDF-
       mimeType = "application/pdf";
       detectedType = "PDF";
     } else if (pdfBase64.startsWith('/9j/')) {
-      // JPEG magic bytes: FFD8FF
+      // JPEG magic bytes: commonly starts with /9j/ in base64
       mimeType = "image/jpeg";
       detectedType = "JPEG";
     } else if (pdfBase64.startsWith('iVBORw0KGgo')) {
-      // PNG magic bytes: 89504E47
+      // PNG magic bytes: \x89PNG\r\n\x1a\n
       mimeType = "image/png";
       detectedType = "PNG";
     } else if (pdfBase64.startsWith('UklGR')) {
@@ -182,13 +183,12 @@ serve(async (req) => {
       // If we can't detect the type, log a warning but continue with PDF default
       console.log("Unknown file signature, defaulting to PDF. First 20 chars:", pdfBase64.substring(0, 20));
     }
-    
+
     console.log(`Document type detection - detected: ${detectedType}, mimeType: ${mimeType}, Base64 length: ${pdfBase64.length}`);
 
-    // Build the content structure using image_url format (works for PDFs and images)
-    const userContent: any[] = [
+    // Build the content structure using inline_data format native to Gemini API
+    const userContent: any = [
       {
-        type: "text",
         text: `Extract insurance policy details from this document. Return ONLY a valid JSON object with these fields:
 - policy_number: The policy number/ID
 - client_name: The policyholder's name
@@ -218,26 +218,14 @@ For basic_tp_premium, look for 'TP Premium', 'Third Party Premium', 'Basic TP', 
 If a field cannot be found or is not applicable, use empty string for text or 0 for numbers.`
       },
       {
-        type: "image_url",
-        image_url: {
-          url: `data:${mimeType};base64,${pdfBase64}`
+        inline_data: {
+          mime_type: mimeType,
+          data: pdfBase64
         }
       }
     ];
 
-    // Use Gemini to extract policy details
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          {
-            role: "system",
-            content: `You are an expert at extracting insurance policy information from Indian insurance documents.
+    const systemInstruction = `You are an expert at extracting insurance policy information from Indian insurance documents.
 
 CRITICAL INSTRUCTIONS FOR NET PREMIUM:
 The net_premium field MUST contain the base premium amount BEFORE any GST/taxes are added.
@@ -274,36 +262,47 @@ Determine insurance_type from document keywords:
 - Life/Term/Endowment/ULIP/Pension → "Life Insurance"
 - Otherwise → "Other"
 
-Return ONLY a valid JSON object. If a field cannot be found or is not applicable, use empty string for text or 0 for numbers.`
-          },
+Return ONLY a valid JSON object. If a field cannot be found or is not applicable, use empty string for text or 0 for numbers.`;
+
+    // Use Gemini to extract policy details natively
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        system_instruction: {
+          parts: [{ text: systemInstruction }]
+        },
+        contents: [
           {
             role: "user",
-            content: userContent
+            parts: userContent
           }
-        ],
-      }),
+        ]
+      })
     });
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error("AI Gateway error:", response.status, errorText);
-      
+
       // Return generic error messages to clients - keep specifics in server logs only
       if (response.status === 429 || response.status === 402 || response.status >= 500) {
         return new Response(
-          JSON.stringify({ error: "Unable to process document. Please try again later." }),
+          JSON.stringify({ error: "Unable to process document. Please try again later. Detailed: " + errorText }),
           { status: response.status === 429 ? 429 : 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      
-      throw new Error("Document processing failed");
+
+      throw new Error("Document processing failed: " + errorText);
     }
 
     const aiResponse = await response.json();
-    const content = aiResponse.choices?.[0]?.message?.content;
-    
+    const content = aiResponse.candidates?.[0]?.content?.parts?.[0]?.text;
+
     if (!content) {
-      throw new Error("No response from AI");
+      throw new Error("No response from AI: " + JSON.stringify(aiResponse));
     }
 
     // Parse the JSON response
@@ -347,17 +346,17 @@ Return ONLY a valid JSON object. If a field cannot be found or is not applicable
     }
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        data: extractedData 
+      JSON.stringify({
+        success: true,
+        data: extractedData
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
     console.error("Error parsing policy PDF:", error);
     return new Response(
-      JSON.stringify({ 
-        error: error instanceof Error ? error.message : "Failed to parse PDF" 
+      JSON.stringify({
+        error: error instanceof Error ? error.message : "Failed to parse PDF"
       }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

@@ -10,13 +10,13 @@ const corsHeaders = {
 async function verifyHash(params: Record<string, string>, salt: string): Promise<boolean> {
   // Reverse hash formula: salt|status||||||udf5|udf4|udf3|udf2|udf1|email|firstname|productinfo|amount|txnid|key
   const hashString = `${salt}|${params.status}|||||||||||${params.email}|${params.firstname}|${params.productinfo}|${params.amount}|${params.txnid}|${params.key}`;
-  
+
   const encoder = new TextEncoder();
   const data = encoder.encode(hashString);
   const hashBuffer = await crypto.subtle.digest('SHA-512', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   const calculatedHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  
+
   return calculatedHash.toLowerCase() === params.hash?.toLowerCase();
 }
 
@@ -92,11 +92,11 @@ serve(async (req) => {
     // Check payment status
     if (params.status !== 'success') {
       console.log('Payment failed or cancelled:', params.status);
-      
+
       // Update payment request status
       await supabaseService
         .from('payment_requests')
-        .update({ 
+        .update({
           status: 'failed',
           payment_id: params.mihpayid || null,
           updated_at: new Date().toISOString()
@@ -112,7 +112,7 @@ serve(async (req) => {
     // Payment successful - update payment request
     const { error: updateError } = await supabaseService
       .from('payment_requests')
-      .update({ 
+      .update({
         status: 'completed',
         payment_id: params.mihpayid,
         updated_at: new Date().toISOString()
@@ -128,7 +128,7 @@ serve(async (req) => {
     const now = new Date();
     const subscriptionEnd = new Date();
     const isYearly = paymentData.plan_type?.includes('yearly');
-    
+
     if (isYearly) {
       subscriptionEnd.setFullYear(subscriptionEnd.getFullYear() + 1);
     } else {
@@ -188,23 +188,33 @@ serve(async (req) => {
     console.log('Subscription activated successfully');
 
     return new Response(
-      createRedirectHtml('/subscription?payment=success'),
+      createRedirectHtml('/subscription?payment=success', req.url),
       { headers: { 'Content-Type': 'text/html' } }
     );
   } catch (error) {
     console.error('Error in verify-payu-payment:', error);
     return new Response(
-      createRedirectHtml('/subscription?payment=failed&error=server_error'),
+      createRedirectHtml('/subscription?payment=failed&error=server_error', req.url),
       { headers: { 'Content-Type': 'text/html' } }
     );
   }
 });
 
-function createRedirectHtml(path: string): string {
-  // Get the frontend URL from environment or use default
-  const frontendUrl = Deno.env.get('FRONTEND_URL') || 'https://policytracker.in';
+function createRedirectHtml(path: string, requestUrl: string): string {
+  // Get the frontend URL from the redirect_to query parameter, environment, or use default
+  let frontendUrl = Deno.env.get('FRONTEND_URL') || 'https://policytracker.in';
+  try {
+    const url = new URL(requestUrl);
+    const redirectTo = url.searchParams.get('redirect_to');
+    if (redirectTo) {
+      frontendUrl = decodeURIComponent(redirectTo);
+    }
+  } catch (e) {
+    console.error('Error parsing request URL for redirect_to parameter', e);
+  }
+
   const fullUrl = `${frontendUrl}${path}`;
-  
+
   return `
     <!DOCTYPE html>
     <html>
