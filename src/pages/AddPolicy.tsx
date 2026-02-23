@@ -962,29 +962,30 @@ const AddPolicy = () => {
   };
 
   return (
-    <div className="space-y-4 sm:space-y-6 px-2 sm:px-4 lg:px-6 pb-4 sm:pb-6">
-      <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-        <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4">
+    <div className="space-y-4 sm:space-y-6 px-4 sm:px-6 lg:px-8 py-8 min-h-screen bg-gradient-to-br from-indigo-50/80 via-white to-blue-50/80 rounded-t-3xl sm:-mx-6 -mx-4 lg:-mx-8">
+      <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 bg-white/70 backdrop-blur-md p-5 rounded-2xl shadow-sm border border-white/50">
+        <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-5">
           <Button
             variant="outline"
             size="sm"
             onClick={() => navigate(-1)}
-            className="self-start"
+            className="self-start rounded-full shadow-sm hover:bg-slate-50 transition-all border-slate-200"
           >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
+            <ArrowLeft className="h-4 w-4 mr-2 text-slate-600" />
+            <span className="text-slate-700 font-medium">Back</span>
           </Button>
           <div>
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Add New Policy</h1>
-            <p className="text-gray-600 text-sm sm:text-base">Create a new insurance policy</p>
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-indigo-700">Add New Policy</h1>
+            <p className="text-gray-500 font-medium text-sm sm:text-base mt-1">Create a new insurance policy</p>
           </div>
         </div>
         <Button
           variant="ghost"
           size="sm"
           onClick={clearForm}
-          className="self-start sm:self-auto text-muted-foreground"
+          className="self-start sm:self-auto text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
         >
+          <X className="h-4 w-4 mr-1" />
           Clear Form
         </Button>
       </div>
@@ -999,8 +1000,8 @@ const AddPolicy = () => {
         )}
 
         {/* PDF Upload Card with Drag & Drop */}
-        <Card className="shadow-lg border-0 bg-gradient-to-r from-blue-50 to-indigo-50">
-          <CardContent className="p-4 sm:p-6">
+        <Card className="shadow-lg shadow-blue-900/5 border border-white/60 bg-white/80 backdrop-blur-sm rounded-2xl overflow-hidden">
+          <CardContent className="p-5 sm:p-8">
             <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
               <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center flex-shrink-0">
                 <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
@@ -1089,10 +1090,10 @@ const AddPolicy = () => {
                     onDrop={handleDrop}
                     onClick={() => fileInputRef.current?.click()}
                     className={`
-                      flex flex-col items-center justify-center p-4 sm:p-6 border-2 border-dashed rounded-lg cursor-pointer transition-all
+                      relative overflow-hidden flex flex-col items-center justify-center p-6 sm:p-10 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-300 ease-out
                       ${isDragging
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-300 bg-white hover:border-blue-400 hover:bg-gray-50'
+                        ? 'border-blue-500 bg-blue-50/80 scale-[1.01] shadow-inner'
+                        : 'border-indigo-200 bg-slate-50/50 hover:border-indigo-400 hover:bg-indigo-50/30 hover:shadow-sm'
                       }
                     `}
                   >
@@ -1110,13 +1111,19 @@ const AddPolicy = () => {
           </CardContent>
         </Card>
 
-        {/* Form Card */}
-        <Card className="shadow-lg border-0">
-          <CardHeader className="pb-4 px-4 sm:px-6">
-            <CardTitle className="text-lg sm:text-xl">Policy Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4 px-4 sm:px-6">
-            <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Replace the monolithic Form Card with distinct sectional cards */}
+        <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
+          {/* Section 1: Basic Details */}
+          <Card className="shadow-md shadow-blue-900/5 border-0 bg-white/90 backdrop-blur-sm rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-lg">
+            <CardHeader className="pb-4 px-5 sm:px-8 bg-gradient-to-r from-blue-50/80 to-slate-50 border-b border-gray-100">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-100 rounded-lg shadow-sm">
+                  <FileText className="h-5 w-5 text-blue-700" />
+                </div>
+                <CardTitle className="text-xl font-bold tracking-tight text-slate-800">Basic Details</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4 px-4 sm:px-6 pt-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="policy_number" className="text-sm font-medium">
@@ -1198,219 +1205,6 @@ const AddPolicy = () => {
                   <p className="text-xs text-gray-500">Letters only (auto Camel Case)</p>
                 </div>
 
-                {/* Dynamic Vehicle Fields - Only for Vehicle Insurance */}
-                {formData.insurance_type === 'Vehicle Insurance' && (
-                  <>
-                    <div className="space-y-2 sm:col-span-2">
-                      <Label htmlFor="vehicle_number" className="text-sm font-medium">
-                        Vehicle Number <span className="text-red-500">*</span>
-                      </Label>
-                      <Input
-                        id="vehicle_number"
-                        name="vehicle_number"
-                        type="text"
-                        value={formData.vehicle_number}
-                        onChange={handleInputChange}
-                        required
-                        className={`h-10 text-sm uppercase ${duplicateError?.includes('vehicle') ? 'border-destructive' : ''}`}
-                        placeholder="TN01AB1234"
-                      />
-                      <p className="text-xs text-gray-500">Uppercase letters and numbers only</p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="vehicle_make" className="text-sm font-medium">
-                        Vehicle Make
-                      </Label>
-                      <Input
-                        id="vehicle_make"
-                        name="vehicle_make"
-                        value={formData.vehicle_make}
-                        onChange={handleInputChange}
-                        className="h-10 text-sm"
-                        placeholder="e.g., Maruti, Honda, Toyota"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="vehicle_model" className="text-sm font-medium">
-                        Vehicle Model
-                      </Label>
-                      <Input
-                        id="vehicle_model"
-                        name="vehicle_model"
-                        value={formData.vehicle_model}
-                        onChange={handleInputChange}
-                        className="h-10 text-sm"
-                        placeholder="e.g., Swift, City, Fortuner"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="idv" className="text-sm font-medium">
-                        IDV (₹)
-                      </Label>
-                      <Input
-                        id="idv"
-                        name="idv"
-                        type="number"
-                        inputMode="numeric"
-                        value={formData.idv}
-                        onChange={handleInputChange}
-                        className="h-10 text-sm"
-                        placeholder="e.g., 500000"
-                        min="0"
-                      />
-                      <p className="text-xs text-gray-500">Insured Declared Value</p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="basic_od_premium" className="text-sm font-medium">
-                        Basic OD Premium (&#x20B9;)
-                      </Label>
-                      <Input
-                        id="basic_od_premium"
-                        name="basic_od_premium"
-                        type="number"
-                        inputMode="decimal"
-                        value={formData.basic_od_premium}
-                        onChange={handleInputChange}
-                        className="h-10 text-sm"
-                        placeholder="e.g., 5000"
-                        min="0"
-                        step="0.01"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="basic_tp_premium" className="text-sm font-medium">
-                        Basic TP Premium (&#x20B9;)
-                      </Label>
-                      <Input
-                        id="basic_tp_premium"
-                        name="basic_tp_premium"
-                        type="number"
-                        inputMode="decimal"
-                        value={formData.basic_tp_premium}
-                        onChange={handleInputChange}
-                        className="h-10 text-sm"
-                        placeholder="e.g., 3000"
-                        min="0"
-                        step="0.01"
-                      />
-                    </div>
-                  </>
-                )}
-
-                {/* Dynamic Health Insurance Fields */}
-                {formData.insurance_type === 'Health Insurance' && (
-                  <>
-                    <div className="space-y-2">
-                      <Label htmlFor="sum_insured" className="text-sm font-medium">
-                        Sum Insured (₹)
-                      </Label>
-                      <Input
-                        id="sum_insured"
-                        name="sum_insured"
-                        type="number"
-                        inputMode="numeric"
-                        value={formData.sum_insured}
-                        onChange={handleInputChange}
-                        className="h-10 text-sm"
-                        placeholder="e.g., 500000"
-                        min="0"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="members_covered" className="text-sm font-medium">
-                        Members Covered
-                      </Label>
-                      <Input
-                        id="members_covered"
-                        name="members_covered"
-                        type="number"
-                        inputMode="numeric"
-                        value={formData.members_covered}
-                        onChange={handleInputChange}
-                        className="h-10 text-sm"
-                        placeholder="e.g., 4"
-                        min="1"
-                      />
-                    </div>
-
-                    <div className="space-y-2 sm:col-span-2">
-                      <Label htmlFor="plan_type" className="text-sm font-medium">
-                        Plan Type
-                      </Label>
-                      <Input
-                        id="plan_type"
-                        name="plan_type"
-                        value={formData.plan_type}
-                        onChange={handleInputChange}
-                        className="h-10 text-sm"
-                        placeholder="e.g., Individual, Family Floater"
-                      />
-                    </div>
-                  </>
-                )}
-
-                {/* Dynamic Life Insurance Fields */}
-                {formData.insurance_type === 'Life Insurance' && (
-                  <>
-                    <div className="space-y-2">
-                      <Label htmlFor="sum_assured" className="text-sm font-medium">
-                        Sum Assured (₹)
-                      </Label>
-                      <Input
-                        id="sum_assured"
-                        name="sum_assured"
-                        type="number"
-                        inputMode="numeric"
-                        value={formData.sum_assured}
-                        onChange={handleInputChange}
-                        className="h-10 text-sm"
-                        placeholder="e.g., 5000000"
-                        min="0"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="policy_term" className="text-sm font-medium">
-                        Policy Term (Years)
-                      </Label>
-                      <Input
-                        id="policy_term"
-                        name="policy_term"
-                        type="number"
-                        inputMode="numeric"
-                        value={formData.policy_term}
-                        onChange={handleInputChange}
-                        className="h-10 text-sm"
-                        placeholder="e.g., 20"
-                        min="1"
-                      />
-                    </div>
-
-                    <div className="space-y-2 sm:col-span-2">
-                      <Label htmlFor="premium_payment_term" className="text-sm font-medium">
-                        Premium Payment Term (Years)
-                      </Label>
-                      <Input
-                        id="premium_payment_term"
-                        name="premium_payment_term"
-                        type="number"
-                        inputMode="numeric"
-                        value={formData.premium_payment_term}
-                        onChange={handleInputChange}
-                        className="h-10 text-sm"
-                        placeholder="e.g., 15"
-                        min="1"
-                      />
-                    </div>
-                  </>
-                )}
-
                 <div className="space-y-2">
                   <Label htmlFor="company_name" className="text-sm font-medium">
                     Insurance Company
@@ -1442,31 +1236,248 @@ const AddPolicy = () => {
                   />
                   <p className="text-xs text-gray-500">10 digits only (optional)</p>
                 </div>
+              </div>
+            </CardContent>
+          </Card>
 
+          {/* Section 2: Vehicle Details (Dynamic) */}
+          {formData.insurance_type === 'Vehicle Insurance' && (
+            <Card className="shadow-md shadow-indigo-900/5 border-0 bg-white/90 backdrop-blur-sm rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-lg">
+              <CardHeader className="pb-4 px-5 sm:px-8 bg-gradient-to-r from-indigo-50/80 to-slate-50 border-b border-gray-100">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-indigo-100 rounded-lg shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-indigo-700"><path d="M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-3.6a2 2 0 0 0-1.6-.8H8.3a2 2 0 0 0-1.6.8L4 11l-5.16.86a1 1 0 0 0-.84.99V16h3" /><circle cx="6.5" cy="16.5" r="2.5" /><circle cx="16.5" cy="16.5" r="2.5" /></svg>
+                  </div>
+                  <CardTitle className="text-xl font-bold tracking-tight text-slate-800">Vehicle Details</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-5 px-5 sm:px-8 pt-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2 sm:col-span-2">
+                    <Label htmlFor="vehicle_number" className="text-sm font-medium">
+                      Vehicle Number <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="vehicle_number"
+                      name="vehicle_number"
+                      type="text"
+                      value={formData.vehicle_number}
+                      onChange={handleInputChange}
+                      required
+                      className={`h-10 text-sm uppercase ${duplicateError?.includes('vehicle') ? 'border-destructive' : ''}`}
+                      placeholder="TN01AB1234"
+                    />
+                    <p className="text-xs text-gray-500">Uppercase letters and numbers only</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="vehicle_make" className="text-sm font-medium">
+                      Vehicle Make
+                    </Label>
+                    <Input
+                      id="vehicle_make"
+                      name="vehicle_make"
+                      value={formData.vehicle_make}
+                      onChange={handleInputChange}
+                      className="h-10 text-sm"
+                      placeholder="e.g., Maruti, Honda, Toyota"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="vehicle_model" className="text-sm font-medium">
+                      Vehicle Model
+                    </Label>
+                    <Input
+                      id="vehicle_model"
+                      name="vehicle_model"
+                      value={formData.vehicle_model}
+                      onChange={handleInputChange}
+                      className="h-10 text-sm"
+                      placeholder="e.g., Swift, City, Fortuner"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="idv" className="text-sm font-medium">
+                      IDV (₹)
+                    </Label>
+                    <Input
+                      id="idv"
+                      name="idv"
+                      type="number"
+                      inputMode="numeric"
+                      value={formData.idv}
+                      onChange={handleInputChange}
+                      className="h-10 text-sm"
+                      placeholder="e.g., 500000"
+                      min="0"
+                    />
+                    <p className="text-xs text-gray-500">Insured Declared Value</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Section 3: Coverage Details (Dynamic) */}
+          {(formData.insurance_type === 'Health Insurance' || formData.insurance_type === 'Life Insurance') && (
+            <Card className="shadow-md shadow-pink-900/5 border-0 bg-white/90 backdrop-blur-sm rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-lg">
+              <CardHeader className="pb-4 px-5 sm:px-8 bg-gradient-to-r from-pink-50/80 to-slate-50 border-b border-gray-100">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-pink-100 rounded-lg shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-pink-700"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
+                  </div>
+                  <CardTitle className="text-xl font-bold tracking-tight text-slate-800">Coverage Details</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-5 px-5 sm:px-8 pt-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {formData.insurance_type === 'Health Insurance' && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="sum_insured" className="text-sm font-medium">
+                          Sum Insured (₹)
+                        </Label>
+                        <Input
+                          id="sum_insured"
+                          name="sum_insured"
+                          type="number"
+                          inputMode="numeric"
+                          value={formData.sum_insured}
+                          onChange={handleInputChange}
+                          className="h-10 text-sm"
+                          placeholder="e.g., 500000"
+                          min="0"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="members_covered" className="text-sm font-medium">
+                          Members Covered
+                        </Label>
+                        <Input
+                          id="members_covered"
+                          name="members_covered"
+                          type="number"
+                          inputMode="numeric"
+                          value={formData.members_covered}
+                          onChange={handleInputChange}
+                          className="h-10 text-sm"
+                          placeholder="e.g., 4"
+                          min="1"
+                        />
+                      </div>
+
+                      <div className="space-y-2 sm:col-span-2">
+                        <Label htmlFor="plan_type" className="text-sm font-medium">
+                          Plan Type
+                        </Label>
+                        <Input
+                          id="plan_type"
+                          name="plan_type"
+                          value={formData.plan_type}
+                          onChange={handleInputChange}
+                          className="h-10 text-sm"
+                          placeholder="e.g., Individual, Family Floater"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {formData.insurance_type === 'Life Insurance' && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="sum_assured" className="text-sm font-medium">
+                          Sum Assured (₹)
+                        </Label>
+                        <Input
+                          id="sum_assured"
+                          name="sum_assured"
+                          type="number"
+                          inputMode="numeric"
+                          value={formData.sum_assured}
+                          onChange={handleInputChange}
+                          className="h-10 text-sm"
+                          placeholder="e.g., 5000000"
+                          min="0"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="policy_term" className="text-sm font-medium">
+                          Policy Term (Years)
+                        </Label>
+                        <Input
+                          id="policy_term"
+                          name="policy_term"
+                          type="number"
+                          inputMode="numeric"
+                          value={formData.policy_term}
+                          onChange={handleInputChange}
+                          className="h-10 text-sm"
+                          placeholder="e.g., 20"
+                          min="1"
+                        />
+                      </div>
+
+                      <div className="space-y-2 sm:col-span-2">
+                        <Label htmlFor="premium_payment_term" className="text-sm font-medium">
+                          Premium Payment Term (Years)
+                        </Label>
+                        <Input
+                          id="premium_payment_term"
+                          name="premium_payment_term"
+                          type="number"
+                          inputMode="numeric"
+                          value={formData.premium_payment_term}
+                          onChange={handleInputChange}
+                          className="h-10 text-sm"
+                          placeholder="e.g., 15"
+                          min="1"
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Section 4: Premium & Dates */}
+          <Card className="shadow-md shadow-emerald-900/5 border-0 bg-white/90 backdrop-blur-sm rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-lg">
+            <CardHeader className="pb-4 px-5 sm:px-8 bg-gradient-to-r from-emerald-50/80 to-slate-50 border-b border-gray-100">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-emerald-100 rounded-lg shadow-sm">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-700"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
+                </div>
+                <CardTitle className="text-xl font-bold tracking-tight text-slate-800">Premium & Validity</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-5 px-5 sm:px-8 pt-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="agent_code" className="text-sm font-medium">
-                    Agent Name
+                  <Label className="text-sm font-medium">
+                    Risk Start Date (RSD) <span className="text-red-500">*</span>
                   </Label>
-                  <Input
-                    id="agent_code"
-                    name="agent_code"
-                    value={formData.agent_code}
-                    onChange={handleInputChange}
-                    className="h-10 text-sm"
-                    placeholder="Agent Name"
+                  <MaterialDatePicker
+                    date={policyActiveDate}
+                    onDateChange={handleActiveDateChange}
+                    placeholder="Select date"
                   />
-                  <p className="text-xs text-gray-500">Letters only (auto Camel Case, optional)</p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="reference" className="text-sm font-medium">Reference</Label>
-                  <Input
-                    id="reference"
-                    name="reference"
-                    value={formData.reference}
-                    onChange={handleInputChange}
-                    className="h-10 text-sm"
-                    placeholder="Enter reference"
+                  <Label className="text-sm font-medium">
+                    Risk End Date (RED) <span className="text-red-500">*</span>
+                  </Label>
+                  <MaterialDatePicker
+                    date={policyExpiryDate}
+                    onDateChange={(date) => {
+                      setDuplicateError(null);
+                      setPolicyExpiryDate(date);
+                    }}
+                    placeholder="Select date"
                   />
                 </div>
 
@@ -1508,6 +1519,88 @@ const AddPolicy = () => {
                       <SelectItem value="single">Single Premium</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+
+                {formData.insurance_type === 'Vehicle Insurance' && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="basic_od_premium" className="text-sm font-medium">
+                        Basic OD Premium (&#x20B9;)
+                      </Label>
+                      <Input
+                        id="basic_od_premium"
+                        name="basic_od_premium"
+                        type="number"
+                        inputMode="decimal"
+                        value={formData.basic_od_premium}
+                        onChange={handleInputChange}
+                        className="h-10 text-sm"
+                        placeholder="e.g., 5000"
+                        min="0"
+                        step="0.01"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="basic_tp_premium" className="text-sm font-medium">
+                        Basic TP Premium (&#x20B9;)
+                      </Label>
+                      <Input
+                        id="basic_tp_premium"
+                        name="basic_tp_premium"
+                        type="number"
+                        inputMode="decimal"
+                        value={formData.basic_tp_premium}
+                        onChange={handleInputChange}
+                        className="h-10 text-sm"
+                        placeholder="e.g., 3000"
+                        min="0"
+                        step="0.01"
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Section 5: Agent & Commission Info */}
+          <Card className="shadow-md shadow-amber-900/5 border-0 bg-white/90 backdrop-blur-sm rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-lg">
+            <CardHeader className="pb-4 px-5 sm:px-8 bg-gradient-to-r from-amber-50/80 to-slate-50 border-b border-gray-100">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-amber-100 rounded-lg shadow-sm">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-700"><circle cx="12" cy="8" r="5" /><path d="M20 21a8 8 0 1 0-16 0" /></svg>
+                </div>
+                <CardTitle className="text-xl font-bold tracking-tight text-slate-800">Agent & Commission</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-5 px-5 sm:px-8 pt-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="agent_code" className="text-sm font-medium">
+                    Agent Name
+                  </Label>
+                  <Input
+                    id="agent_code"
+                    name="agent_code"
+                    value={formData.agent_code}
+                    onChange={handleInputChange}
+                    className="h-10 text-sm"
+                    placeholder="Agent Name"
+                  />
+                  <p className="text-xs text-gray-500">Letters only (auto Camel Case, optional)</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="reference" className="text-sm font-medium">Reference</Label>
+                  <Input
+                    id="reference"
+                    name="reference"
+                    value={formData.reference}
+                    onChange={handleInputChange}
+                    className="h-10 text-sm"
+                    placeholder="Enter reference"
+                  />
                 </div>
 
                 <div className="space-y-2">
@@ -1585,69 +1678,40 @@ const AddPolicy = () => {
                     </div>
                   </>
                 )}
-
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">
-                    Risk Start Date (RSD) <span className="text-red-500">*</span>
-                  </Label>
-                  <MaterialDatePicker
-                    date={policyActiveDate}
-                    onDateChange={handleActiveDateChange}
-                    placeholder="Select date"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Risk End Date (RED)</Label>
-                  <MaterialDatePicker
-                    date={policyExpiryDate}
-                    onDateChange={(date) => setPolicyExpiryDate(date)}
-                    placeholder="Auto-calculated (1 year)"
-                  />
-                  <p className="text-xs text-muted-foreground">Auto-calculated from RSD (editable)</p>
-                </div>
               </div>
+            </CardContent>
+          </Card>
 
-              {/* Submit error with retry */}
-              {submitError && !loading && !isSubmitting && (
-                <Alert variant="destructive" className="py-2">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription className="flex items-center justify-between">
-                    <span className="text-sm">{submitError}</span>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={retrySubmit}
-                      className="h-7 px-3 text-xs ml-2"
-                    >
-                      <RefreshCw className="w-3 h-3 mr-1" />
-                      Retry
-                    </Button>
-                  </AlertDescription>
-                </Alert>
+          {submitError && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="flex justify-between items-center">
+                <span>{submitError}</span>
+                <Button size="sm" variant="outline" onClick={retrySubmit}>Retry</Button>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          <div className="pt-4 pb-12 sm:pb-4 flex justify-end">
+            <Button
+              type="submit"
+              className="w-full sm:w-auto min-w-[200px] h-14 rounded-xl text-base font-bold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md shadow-blue-500/30 transition-all duration-300 hover:-translate-y-0.5"
+              disabled={loading || isSubmitting}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Saving Policy...
+                </>
+              ) : (
+                "Save Policy"
               )}
-
-              <div className="pt-4">
-                <Button
-                  type="submit"
-                  disabled={loading || checkingDuplicate || isSubmitting}
-                  className="w-full h-10 text-sm"
-                >
-                  {checkingDuplicate ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Checking for duplicates...
-                    </>
-                  ) : loading ? (
-                    "Adding Policy..."
-                  ) : (
-                    "Add Policy"
-                  )}
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+            </Button>
+          </div>
+          <p className="text-center sm:text-right text-xs text-gray-400 -mt-2">
+            Fields marked with <span className="text-red-500">*</span> are required
+          </p>
+        </form>
       </div>
     </div>
   );

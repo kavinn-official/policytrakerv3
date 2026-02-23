@@ -136,7 +136,8 @@ serve(async (req) => {
     }
 
     // Update subscription
-    const planName = paymentData.plan_type?.split('_')[0] || 'Pro';
+    const planNameRaw = paymentData.plan_type?.split('_')[0] || 'Pro';
+    const planName = planNameRaw.toUpperCase();
 
     // Check for existing subscription
     const { data: existingSub } = await supabaseService

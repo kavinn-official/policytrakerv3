@@ -109,14 +109,14 @@ serve(async (req) => {
     const frontendUrl = isLocal ? origin : 'https://policytracker.in';
 
     // The URLs PayU will redirect to after payment (we pass the frontendUrl in the URL so verify can redirect back correctly)
-    const callbackUrl = `${Deno.env.get('VITE_SUPABASE_URL')}/functions/v1/verify-payu-payment?redirect_to=${encodeURIComponent(frontendUrl)}`;
+    const callbackUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/verify-payu-payment?redirect_to=${encodeURIComponent(frontendUrl)}`;
 
     // PayU parameters
     const params: Record<string, string> = {
       key: merchantKey,
       txnid: txnId,
       amount: amount.toFixed(2),
-      productinfo: `PolicyTracker ${planType} - ${billingCycle}`,
+      productinfo: `PolicyTracker.in ${planType} - ${billingCycle}`,
       firstname: user.user_metadata?.full_name?.split(' ')[0] || 'Customer',
       email: user.email,
       phone: user.user_metadata?.mobile_number || '',

@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { IndianRupee, TrendingUp, Percent, Briefcase } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { normalizeCompanyName } from "@/utils/companyNormalization";
+import { getComputedPolicyStatus } from "@/utils/policyUtils";
 
 interface CommissionData {
   totalCommission: number;
@@ -38,16 +39,16 @@ const CommissionAnalytics = ({ policies, formatCurrency, periodLabel }: Commissi
     const premium = Number(policy.net_premium) || 0;
     const commissionRate = Number(policy.commission_percentage) || 0;
     const firstYearComm = Number(policy.first_year_commission) || ((premium * commissionRate) / 100);
-    
+
     if (commissionRate > 0) {
       policiesWithCommission++;
       totalCommissionRate += commissionRate;
     }
 
     commissionData.totalCommission += firstYearComm;
-    
+
     // Classify as first year or renewal based on status
-    if (policy.status === 'Fresh') {
+    if (getComputedPolicyStatus(policy) === 'Fresh') {
       commissionData.firstYearCommission += firstYearComm;
     } else {
       commissionData.renewalCommission += firstYearComm;
@@ -63,10 +64,10 @@ const CommissionAnalytics = ({ policies, formatCurrency, periodLabel }: Commissi
   });
 
   commissionData.policyCount = policies.length;
-  commissionData.avgCommissionRate = policiesWithCommission > 0 
-    ? totalCommissionRate / policiesWithCommission 
+  commissionData.avgCommissionRate = policiesWithCommission > 0
+    ? totalCommissionRate / policiesWithCommission
     : 0;
-  
+
   commissionData.topCompanies = Object.entries(companyCommissions)
     .map(([name, data]) => ({ name, ...data }))
     .sort((a, b) => b.commission - a.commission)
@@ -180,8 +181,8 @@ const CommissionAnalytics = ({ policies, formatCurrency, periodLabel }: Commissi
                     {formatCurrency(company.commission)}
                   </span>
                 </div>
-                <Progress 
-                  value={(company.commission / maxCommission) * 100} 
+                <Progress
+                  value={(company.commission / maxCommission) * 100}
                   className="h-2 bg-amber-100"
                 />
               </div>
