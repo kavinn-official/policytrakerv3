@@ -19,7 +19,7 @@ import { productNamesByInsuranceType } from "@/data/productNameData";
 
 const INSURANCE_TYPES = [
   "Vehicle Insurance",
-  "Health Insurance", 
+  "Health Insurance",
   "Life Insurance",
   "Other"
 ] as const;
@@ -43,7 +43,7 @@ const EditPolicy = () => {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [parseProgress, setParseProgress] = useState(0);
   const [isRemovingDocument, setIsRemovingDocument] = useState(false);
-  
+
   // Bulk renewal flow state
   const isRenewal = searchParams.get('renewal') === 'true';
   const isBulkRenewal = searchParams.get('bulk') === 'true';
@@ -191,7 +191,7 @@ const EditPolicy = () => {
     setParsing(true);
     setParseError(null);
     setParseProgress(10);
-    
+
     try {
       if (!file) {
         throw new Error("No file provided");
@@ -240,10 +240,42 @@ const EditPolicy = () => {
 
       if (error) {
         console.error("Supabase function error:", error);
-        if (error.message?.includes('Failed to send') || error.message?.includes('Failed to fetch')) {
+        let realErrorMsg = error.message;
+
+        if (error.context && typeof error.context.text === 'function') {
+          try {
+            const errorText = await error.context.text();
+            try {
+              const errorJson = JSON.parse(errorText);
+              if (errorJson.error) {
+                realErrorMsg = errorJson.error;
+              } else {
+                realErrorMsg = errorText;
+              }
+            } catch (e) {
+              realErrorMsg = errorText;
+            }
+          } catch (e) {
+            console.error("Could not read error context:", e);
+          }
+        } else if (error && error.message) {
+          realErrorMsg = error.message;
+        }
+
+        if (realErrorMsg?.includes('Failed to send') || realErrorMsg?.includes('Failed to fetch')) {
           throw new Error("Network error. Please check your connection and try again.");
         }
-        throw new Error(error.message || "Failed to process document");
+        if (realErrorMsg?.includes('Rate limit')) {
+          throw new Error("Too many requests. Please wait a moment and try again.");
+        }
+        if (realErrorMsg?.includes('credits')) {
+          throw new Error("AI service temporarily unavailable. Please try again later.");
+        }
+        if (realErrorMsg?.includes('Invalid JWT') || realErrorMsg?.includes('Authentication failed')) {
+          throw new Error("Your session has expired or is invalid. Please log out and log back in.");
+        }
+
+        throw new Error(realErrorMsg || "Failed to process document");
       }
 
       if (data?.error) {
@@ -253,7 +285,7 @@ const EditPolicy = () => {
 
       if (data?.success && data?.data) {
         const extracted = data.data;
-        
+
         // Update form with extracted data, preserving manually edited values
         setFormData(prev => ({
           ...prev,
@@ -265,8 +297,8 @@ const EditPolicy = () => {
           company_name: extracted.company_name || prev.company_name,
           contact_number: extracted.contact_number?.replace(/\D/g, '').substring(0, 10) || prev.contact_number,
           net_premium: extracted.net_premium ? String(extracted.net_premium) : prev.net_premium,
-          insurance_type: INSURANCE_TYPES.includes(extracted.insurance_type) 
-            ? extracted.insurance_type 
+          insurance_type: INSURANCE_TYPES.includes(extracted.insurance_type)
+            ? extracted.insurance_type
             : prev.insurance_type,
           product_name: extracted.product_name || prev.product_name,
         }));
@@ -293,12 +325,12 @@ const EditPolicy = () => {
       }
     } catch (error: any) {
       console.error("PDF parsing error:", error);
-      
+
       let errorMessage = "Could not extract data from the document.";
       if (error.message) {
         errorMessage = error.message;
       }
-      
+
       setParseError(errorMessage);
       toast({
         title: "Parsing Failed",
@@ -441,9 +473,9 @@ const EditPolicy = () => {
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    
+
     if (isSubmitting || loading) return;
-    
+
     setSubmitError(null);
 
     if (!policyActiveDate || !policyExpiryDate) {
@@ -488,7 +520,7 @@ const EditPolicy = () => {
     try {
       // Upload new PDF if provided
       let documentUrl: string | null = existingDocumentUrl;
-      
+
       if (uploadedFile && uploadedFile.type === 'application/pdf') {
         const compressedFile = await compressDocument(uploadedFile);
         // Delete old document if exists
@@ -500,7 +532,7 @@ const EditPolicy = () => {
 
         const fileExt = 'pdf';
         const fileName = `${user?.id}/${Date.now()}_${formData.policy_number.replace(/[^a-zA-Z0-9]/g, '_')}.${fileExt}`;
-        
+
         const { error: uploadError } = await supabase.storage
           .from('policy-documents')
           .upload(fileName, compressedFile, {
@@ -550,11 +582,33 @@ const EditPolicy = () => {
       });
 
       if (validationError || !result?.success) {
+        let errorMessage = result?.error || "Failed to update policy";
+
+        if (validationError) {
+          if (validationError.context && typeof validationError.context.text === 'function') {
+            try {
+              const errorText = await validationError.context.text();
+              try {
+                const errorJson = JSON.parse(errorText);
+                if (errorJson.error) {
+                  errorMessage = errorJson.error;
+                }
+              } catch (e) {
+                errorMessage = errorText || errorMessage;
+              }
+            } catch (e) {
+              // ignore
+            }
+          } else if (validationError.message) {
+            errorMessage = validationError.message;
+          }
+        }
+
         const errorDetails = result?.details;
         if (errorDetails && Array.isArray(errorDetails)) {
           throw new Error(errorDetails.map((e: any) => e.message).join(', '));
         }
-        throw new Error(result?.error || validationError?.message || "Failed to update policy");
+        throw new Error(errorMessage);
       }
 
       toast({
@@ -591,7 +645,7 @@ const EditPolicy = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    
+
     if (name === "policy_number") {
       setFormData({ ...formData, [name]: value.toUpperCase() });
     } else if (name === "client_name") {
@@ -633,14 +687,14 @@ const EditPolicy = () => {
     if (bulkRenewalQueue.length > 0) {
       const nextPolicyId = bulkRenewalQueue[0];
       const remainingQueue = bulkRenewalQueue.slice(1);
-      
+
       // Update session storage with remaining queue
       if (remainingQueue.length > 0) {
         sessionStorage.setItem('bulkRenewalQueue', JSON.stringify(remainingQueue));
       } else {
         sessionStorage.removeItem('bulkRenewalQueue');
       }
-      
+
       // Navigate to next policy
       navigate(`/edit-policy/${nextPolicyId}?renewal=true${remainingQueue.length > 0 ? '&bulk=true' : ''}`);
     } else {
@@ -701,7 +755,7 @@ const EditPolicy = () => {
                 <p className="text-sm text-gray-600 mb-3">
                   Upload a new policy PDF to update the details automatically.
                 </p>
-                
+
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -717,9 +771,9 @@ const EditPolicy = () => {
                   <div className="flex items-center gap-2 p-3 bg-white rounded-lg border mb-3">
                     <FileText className="w-5 h-5 text-green-500" />
                     <span className="text-sm text-gray-700 flex-1 truncate">Current document attached</span>
-                    <Button 
-                      size="sm" 
-                      variant="ghost" 
+                    <Button
+                      size="sm"
+                      variant="ghost"
                       onClick={handleRemoveExistingDocument}
                       disabled={isRemovingDocument}
                       className="h-7 px-2 text-red-500 hover:text-red-600 hover:bg-red-50"
@@ -732,7 +786,7 @@ const EditPolicy = () => {
                     </Button>
                   </div>
                 )}
-                
+
                 {uploadedFile ? (
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 p-3 bg-white rounded-lg border">
@@ -741,9 +795,9 @@ const EditPolicy = () => {
                       {parsing ? (
                         <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
                       ) : parseError ? (
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
+                        <Button
+                          size="sm"
+                          variant="outline"
                           onClick={retryParsing}
                           className="h-7 px-2 text-xs"
                         >
@@ -756,26 +810,26 @@ const EditPolicy = () => {
                         </button>
                       )}
                     </div>
-                    
+
                     {parsing && parseProgress > 0 && (
                       <div className="space-y-1">
                         <Progress value={parseProgress} className="h-2" />
                         <p className="text-xs text-muted-foreground text-center">
-                          {parseProgress < 40 ? "Reading document..." : 
-                           parseProgress < 85 ? "Extracting policy details with AI..." : 
-                           "Finalizing..."}
+                          {parseProgress < 40 ? "Reading document..." :
+                            parseProgress < 85 ? "Extracting policy details with AI..." :
+                              "Finalizing..."}
                         </p>
                       </div>
                     )}
-                    
+
                     {parseError && !parsing && (
                       <Alert variant="destructive" className="py-2">
                         <AlertCircle className="h-4 w-4" />
                         <AlertDescription className="flex items-center justify-between">
                           <span className="text-xs">{parseError}</span>
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
+                          <Button
+                            size="sm"
+                            variant="ghost"
                             onClick={retryParsing}
                             className="h-6 px-2 text-xs ml-2"
                           >
@@ -796,8 +850,8 @@ const EditPolicy = () => {
                     onClick={() => fileInputRef.current?.click()}
                     className={`
                       flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg cursor-pointer transition-all
-                      ${isDragging 
-                        ? 'border-blue-500 bg-blue-50' 
+                      ${isDragging
+                        ? 'border-blue-500 bg-blue-50'
                         : 'border-gray-300 bg-white hover:border-blue-400 hover:bg-gray-50'
                       }
                     `}
@@ -1146,9 +1200,9 @@ const EditPolicy = () => {
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription className="flex items-center justify-between">
                     <span className="text-sm">{submitError}</span>
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
+                    <Button
+                      size="sm"
+                      variant="outline"
                       onClick={retrySubmit}
                       className="h-7 px-3 text-xs ml-2"
                     >
@@ -1169,16 +1223,16 @@ const EditPolicy = () => {
                         Policy renewed successfully! {bulkRenewalQueue.length} more {bulkRenewalQueue.length === 1 ? 'policy' : 'policies'} remaining.
                       </span>
                       <div className="flex gap-2">
-                        <Button 
+                        <Button
                           type="button"
-                          size="sm" 
+                          size="sm"
                           variant="outline"
                           onClick={handleFinishBulkRenewal}
                           className="h-8"
                         >
                           Finish
                         </Button>
-                        <Button 
+                        <Button
                           type="button"
                           size="sm"
                           onClick={handleNextPolicy}

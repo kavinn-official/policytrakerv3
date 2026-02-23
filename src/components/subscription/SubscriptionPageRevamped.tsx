@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Crown, Calendar, CreditCard, Check, Zap, Shield, Bell, 
+import {
+  Crown, Calendar, CreditCard, Check, Zap, Shield, Bell,
   BarChart3, Users, Sparkles, Loader2, Star, ArrowRight
 } from "lucide-react";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -27,16 +27,6 @@ const SubscriptionPageRevamped = () => {
   const { toast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
-
-  // Load Razorpay SDK
-  useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    script.async = true;
-    script.onload = () => setRazorpayLoaded(true);
-    document.body.appendChild(script);
-    return () => { document.body.removeChild(script); };
-  }, []);
 
   // Handle payment callback
   useEffect(() => {
@@ -62,75 +52,58 @@ const SubscriptionPageRevamped = () => {
       return;
     }
 
-    if (!razorpayLoaded) {
-      toast({ title: "Please wait", description: "Payment gateway is loading...", variant: "destructive" });
-      return;
-    }
-
     setIsProcessing(true);
 
     try {
-      const amount = billingCycle === 'yearly' ? 1999 : 199;
-      
-      const { data, error } = await supabase.functions.invoke('create-razorpay-payment', {
+      const { data, error } = await supabase.functions.invoke('create-payu-payment', {
         headers: { Authorization: `Bearer ${session.access_token}` },
-        body: { planType: 'Pro', amount, billingCycle },
+        body: { planType: 'Pro', billingCycle },
       });
 
       if (error) throw error;
-      if (!data?.success || !data?.orderId) throw new Error(data?.error || 'Failed to create order');
 
-      // Open Razorpay checkout
-      const options = {
-        key: data.keyId,
-        amount: data.amount,
-        currency: data.currency || 'INR',
-        name: 'PolicyTracker.in',
-        description: `Pro Plan - ${billingCycle === 'yearly' ? 'Yearly' : 'Monthly'}`,
-        order_id: data.orderId,
-        handler: async (response: any) => {
-          try {
-            const { data: verifyData, error: verifyError } = await supabase.functions.invoke('verify-razorpay-payment', {
-              headers: { Authorization: `Bearer ${session.access_token}` },
-              body: {
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-              },
-            });
-            
-            if (verifyError) throw verifyError;
-            if (verifyData?.success) {
-              toast({ title: "Payment Successful!", description: "Your Pro subscription is now active!" });
-              checkSubscription();
-            } else {
-              throw new Error(verifyData?.error || 'Verification failed');
-            }
-          } catch (err: any) {
-            toast({ title: "Verification Failed", description: err.message || "Please contact support.", variant: "destructive" });
-          }
-          setIsProcessing(false);
-        },
-        prefill: {
-          email: user?.email || '',
-          name: user?.user_metadata?.full_name || '',
-          contact: user?.user_metadata?.mobile_number || '',
-        },
-        theme: { color: '#0891B2' },
-        modal: {
-          ondismiss: () => { setIsProcessing(false); },
-        },
-      };
+      if (data?.success && data?.paymentUrl && data?.params) {
+        // Create and submit PayU form
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = data.paymentUrl;
 
-      const rzp = new window.Razorpay(options);
-      rzp.on('payment.failed', (response: any) => {
-        toast({ title: "Payment Failed", description: response.error?.description || "Please try again.", variant: "destructive" });
-        setIsProcessing(false);
-      });
-      rzp.open();
+        Object.entries(data.params).forEach(([key, value]) => {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = key;
+          input.value = String(value);
+          form.appendChild(input);
+        });
+
+        document.body.appendChild(form);
+        form.submit();
+      } else {
+        throw new Error(data?.error || 'Failed to create payment');
+      }
     } catch (error: any) {
       console.error('Payment error:', error);
-      toast({ title: "Payment Error", description: error.message || "Failed to initiate payment.", variant: "destructive" });
+
+      let realErrorMsg = error.message || "Failed to initiate payment.";
+      if (error && error.context && typeof error.context.text === 'function') {
+        try {
+          // It's a FunctionsHttpError, let's extract the real backend error string
+          realErrorMsg = "Connecting to payment gateway failed. Please try again later.";
+          error.context.text().then((text: string) => {
+            try {
+              const parsed = JSON.parse(text);
+              if (parsed.error) {
+                toast({ title: "Payment Error", description: parsed.error, variant: "destructive" });
+              }
+            } catch (e) {
+              toast({ title: "Payment Error", description: text || realErrorMsg, variant: "destructive" });
+            }
+          });
+          return; // We handle the toast async
+        } catch (e) { }
+      }
+
+      toast({ title: "Payment Error", description: realErrorMsg, variant: "destructive" });
       setIsProcessing(false);
     }
   };
@@ -239,7 +212,7 @@ const SubscriptionPageRevamped = () => {
 
       {/* Trust Badges */}
       <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-sm text-muted-foreground py-4">
-        <div className="flex items-center gap-2"><Shield className="w-4 h-4 text-green-500" /><span>Secure Razorpay Payments</span></div>
+        <div className="flex items-center gap-2"><Shield className="w-4 h-4 text-green-500" /><span>Secure Payments via PayU</span></div>
         <div className="flex items-center gap-2"><Zap className="w-4 h-4 text-blue-500" /><span>Instant Activation</span></div>
         <div className="flex items-center gap-2"><Calendar className="w-4 h-4 text-purple-500" /><span>Cancel Anytime</span></div>
       </div>

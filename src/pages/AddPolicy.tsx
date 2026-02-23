@@ -19,7 +19,7 @@ import { productNamesByInsuranceType } from "@/data/productNameData";
 
 const INSURANCE_TYPES = [
   "Vehicle Insurance",
-  "Health Insurance", 
+  "Health Insurance",
   "Life Insurance",
   "Other"
 ] as const;
@@ -177,22 +177,22 @@ const AddPolicy = () => {
         try {
           const cache = await caches.open('shared-files');
           const response = await cache.match('/shared-pdf');
-          
+
           if (response) {
             const blob = await response.blob();
             const fileName = decodeURIComponent(response.headers.get('X-File-Name') || 'shared-policy.pdf');
             const file = new File([blob], fileName, { type: 'application/pdf' });
-            
+
             await cache.delete('/shared-pdf');
-            
+
             setUploadedFile(file);
             setSharedFileLoaded(true);
-            
+
             toast({
               title: "PDF Received",
               description: `"${fileName}" has been loaded. Processing document...`,
             });
-            
+
             await parseFile(file);
             navigate('/add-policy', { replace: true });
           }
@@ -218,7 +218,7 @@ const AddPolicy = () => {
     setDuplicateError(null);
     setParseError(null);
     setParseProgress(10);
-    
+
     try {
       // Validate file before parsing
       if (!file) {
@@ -270,18 +270,46 @@ const AddPolicy = () => {
       setParseProgress(90);
 
       if (error) {
-        console.error("Supabase function error:", error);
-        // Parse specific error messages
-        if (error.message?.includes('Failed to send') || error.message?.includes('Failed to fetch')) {
+        console.error("Supabase function error (raw):", error);
+
+        let realErrorMsg = error.message;
+
+        if (error.context && typeof error.context.text === 'function') {
+          try {
+            const errorText = await error.context.text();
+            console.error("Real error from Edge Function:", errorText);
+            try {
+              const errorJson = JSON.parse(errorText);
+              if (errorJson.error) {
+                realErrorMsg = errorJson.error;
+              } else {
+                realErrorMsg = errorText;
+              }
+            } catch (e) {
+              realErrorMsg = errorText;
+            }
+          } catch (e) {
+            console.error("Could not read error context:", e);
+          }
+        } else if (error && error.message) {
+          realErrorMsg = error.message;
+        }
+
+        // Parse specific error messages based on realErrorMsg
+        if (realErrorMsg?.includes('Failed to send') || realErrorMsg?.includes('Failed to fetch')) {
           throw new Error("Network error. Please check your connection and try again.");
         }
-        if (error.message?.includes('Rate limit')) {
+        if (realErrorMsg?.includes('Rate limit')) {
           throw new Error("Too many requests. Please wait a moment and try again.");
         }
-        if (error.message?.includes('credits')) {
+        if (realErrorMsg?.includes('credits')) {
           throw new Error("AI service temporarily unavailable. Please try again later.");
         }
-        throw new Error(error.message || "Failed to process document");
+        if (realErrorMsg?.includes('Invalid JWT') || realErrorMsg?.includes('Authentication failed')) {
+          throw new Error("Your session has expired or is invalid. Please log out and log back in.");
+        }
+
+        throw new Error(realErrorMsg || "Failed to process document");
       }
 
       if (data?.error) {
@@ -291,7 +319,7 @@ const AddPolicy = () => {
 
       if (data?.success && data?.data) {
         const extracted = data.data;
-        
+
         const newFormData = {
           ...formData,
           policy_number: extracted.policy_number || formData.policy_number,
@@ -302,8 +330,8 @@ const AddPolicy = () => {
           company_name: extracted.company_name || formData.company_name,
           contact_number: extracted.contact_number?.replace(/\D/g, '').substring(0, 10) || formData.contact_number,
           net_premium: extracted.net_premium ? String(extracted.net_premium) : formData.net_premium,
-          insurance_type: INSURANCE_TYPES.includes(extracted.insurance_type) 
-            ? extracted.insurance_type 
+          insurance_type: INSURANCE_TYPES.includes(extracted.insurance_type)
+            ? extracted.insurance_type
             : formData.insurance_type,
           product_name: extracted.product_name || formData.product_name,
           // Motor specific
@@ -319,12 +347,12 @@ const AddPolicy = () => {
           policy_term: extracted.policy_term ? String(extracted.policy_term) : formData.policy_term,
           premium_payment_term: extracted.premium_payment_term ? String(extracted.premium_payment_term) : formData.premium_payment_term,
         };
-        
+
         setFormData(newFormData);
 
         let newActiveDate: Date | undefined;
         let newExpiryDate: Date | undefined;
-        
+
         if (extracted.policy_active_date) {
           try {
             const activeDate = parse(extracted.policy_active_date, 'yyyy-MM-dd', new Date());
@@ -362,11 +390,11 @@ const AddPolicy = () => {
       }
     } catch (error: any) {
       console.error("PDF parsing error:", error);
-      
+
       // Provide user-friendly error messages
       let errorMessage = "Could not extract data from the document.";
       let errorTitle = "Parsing Failed";
-      
+
       if (error.message) {
         if (error.message.includes("Network error") || error.message.includes("Failed to fetch")) {
           errorTitle = "Connection Error";
@@ -387,10 +415,10 @@ const AddPolicy = () => {
           errorMessage = error.message;
         }
       }
-      
+
       // Store error for retry functionality
       setParseError(errorMessage);
-      
+
       toast({
         title: errorTitle,
         description: errorMessage,
@@ -419,11 +447,11 @@ const AddPolicy = () => {
     expiryDate?: Date
   ): Promise<boolean> => {
     if (!user?.id) return false;
-    
+
     try {
       const policyNum = policyNumber?.trim().toUpperCase();
       const vehicleNum = vehicleNumber?.trim().toUpperCase();
-      
+
       // Check by policy number (exact match, case-insensitive)
       if (policyNum) {
         const { data: existingByPolicyNumber } = await supabase
@@ -453,11 +481,11 @@ const AddPolicy = () => {
         if (existingByVehicle && existingByVehicle.length > 0) {
           const newActiveDate = activeDate;
           const newExpiryDate = expiryDate || addDays(activeDate, 364);
-          
+
           for (const existing of existingByVehicle) {
             const existingActive = new Date(existing.policy_active_date);
             const existingExpiry = new Date(existing.policy_expiry_date);
-            
+
             // Check if dates overlap
             if (newActiveDate <= existingExpiry && newExpiryDate >= existingActive) {
               setDuplicateError(
@@ -566,14 +594,14 @@ const AddPolicy = () => {
   // Check for duplicate policy
   const checkDuplicatePolicy = async (): Promise<boolean> => {
     if (!user?.id) return false;
-    
+
     setCheckingDuplicate(true);
     setDuplicateError(null);
 
     try {
       const policyNumber = formData.policy_number.trim().toUpperCase();
       const vehicleNumber = formData.vehicle_number.trim().toUpperCase();
-      
+
       // Check by policy number (exact match, case-insensitive)
       if (policyNumber) {
         const { data: existingByPolicyNumber } = await supabase
@@ -604,11 +632,11 @@ const AddPolicy = () => {
           // Check for date overlap
           const newActiveDate = policyActiveDate;
           const newExpiryDate = policyExpiryDate || addDays(policyActiveDate, 364);
-          
+
           for (const existing of existingByVehicle) {
             const existingActive = new Date(existing.policy_active_date);
             const existingExpiry = new Date(existing.policy_expiry_date);
-            
+
             // Check if dates overlap
             if (newActiveDate <= existingExpiry && newExpiryDate >= existingActive) {
               setDuplicateError(
@@ -631,16 +659,16 @@ const AddPolicy = () => {
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    
+
     // Prevent double submission
     if (isSubmitting || loading) return;
-    
+
     setDuplicateError(null);
     setSubmitError(null);
 
     // Validate required fields
     const validationErrors: string[] = [];
-    
+
     if (!policyActiveDate || !policyExpiryDate) {
       validationErrors.push("Policy active date is required");
     }
@@ -710,10 +738,10 @@ const AddPolicy = () => {
         .eq('user_id', user?.id)
         .maybeSingle();
 
-      const isSubscribed = subscription && 
-                          subscription.status === 'active' && 
-                          subscription.end_date && 
-                          new Date(subscription.end_date) > new Date();
+      const isSubscribed = subscription &&
+        subscription.status === 'active' &&
+        subscription.end_date &&
+        new Date(subscription.end_date) > new Date();
 
       if (!isSubscribed) {
         const { count, error: countError } = await supabase
@@ -741,7 +769,7 @@ const AddPolicy = () => {
         const compressedFile = await compressDocument(uploadedFile);
         const fileExt = 'pdf';
         const fileName = `${user?.id}/${Date.now()}_${formData.policy_number.replace(/[^a-zA-Z0-9]/g, '_')}.${fileExt}`;
-        
+
         const { error: uploadError } = await supabase.storage
           .from('policy-documents')
           .upload(fileName, compressedFile, {
@@ -791,11 +819,33 @@ const AddPolicy = () => {
       });
 
       if (validationError || !result?.success) {
+        let errorMessage = result?.error || "Failed to add policy";
+
+        if (validationError) {
+          if (validationError.context && typeof validationError.context.text === 'function') {
+            try {
+              const errorText = await validationError.context.text();
+              try {
+                const errorJson = JSON.parse(errorText);
+                if (errorJson.error) {
+                  errorMessage = errorJson.error;
+                }
+              } catch (e) {
+                errorMessage = errorText || errorMessage;
+              }
+            } catch (e) {
+              // ignore
+            }
+          } else if (validationError.message) {
+            errorMessage = validationError.message;
+          }
+        }
+
         const errorDetails = result?.details;
         if (errorDetails && Array.isArray(errorDetails)) {
           throw new Error(errorDetails.map((e: any) => e.message).join(', '));
         }
-        throw new Error(result?.error || validationError?.message || "Failed to add policy");
+        throw new Error(errorMessage);
       }
 
       // Clear saved form data on success
@@ -829,12 +879,12 @@ const AddPolicy = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    
+
     // Clear duplicate error when user modifies key fields
     if (['policy_number', 'vehicle_number', 'company_name'].includes(name)) {
       setDuplicateError(null);
     }
-    
+
     if (name === "policy_number") {
       setFormData({ ...formData, [name]: value.toUpperCase() });
     } else if (name === "client_name") {
@@ -964,7 +1014,7 @@ const AddPolicy = () => {
                     Tip: Share PDFs from other apps!
                   </span>
                 </p>
-                
+
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -974,7 +1024,7 @@ const AddPolicy = () => {
                   id="pdf-upload"
                   capture={undefined}
                 />
-                
+
                 {uploadedFile ? (
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 p-2 sm:p-3 bg-white rounded-lg border min-w-0">
@@ -983,9 +1033,9 @@ const AddPolicy = () => {
                       {parsing ? (
                         <Loader2 className="w-4 h-4 animate-spin text-blue-500 flex-shrink-0" />
                       ) : parseError ? (
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
+                        <Button
+                          size="sm"
+                          variant="outline"
                           onClick={retryParsing}
                           className="h-7 px-2 text-xs flex-shrink-0"
                         >
@@ -998,28 +1048,28 @@ const AddPolicy = () => {
                         </button>
                       )}
                     </div>
-                    
+
                     {/* Progress indicator */}
                     {parsing && parseProgress > 0 && (
                       <div className="space-y-1">
                         <Progress value={parseProgress} className="h-2" />
                         <p className="text-xs text-muted-foreground text-center">
-                          {parseProgress < 40 ? "Reading document..." : 
-                           parseProgress < 85 ? "Extracting policy details with AI..." : 
-                           "Finalizing..."}
+                          {parseProgress < 40 ? "Reading document..." :
+                            parseProgress < 85 ? "Extracting policy details with AI..." :
+                              "Finalizing..."}
                         </p>
                       </div>
                     )}
-                    
+
                     {/* Parse error with retry */}
                     {parseError && !parsing && (
                       <Alert variant="destructive" className="py-2">
                         <AlertCircle className="h-4 w-4" />
                         <AlertDescription className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:justify-between">
                           <span className="text-xs">{parseError}</span>
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
+                          <Button
+                            size="sm"
+                            variant="ghost"
                             onClick={retryParsing}
                             className="h-6 px-2 text-xs"
                           >
@@ -1040,8 +1090,8 @@ const AddPolicy = () => {
                     onClick={() => fileInputRef.current?.click()}
                     className={`
                       flex flex-col items-center justify-center p-4 sm:p-6 border-2 border-dashed rounded-lg cursor-pointer transition-all
-                      ${isDragging 
-                        ? 'border-blue-500 bg-blue-50' 
+                      ${isDragging
+                        ? 'border-blue-500 bg-blue-50'
                         : 'border-gray-300 bg-white hover:border-blue-400 hover:bg-gray-50'
                       }
                     `}
@@ -1564,9 +1614,9 @@ const AddPolicy = () => {
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription className="flex items-center justify-between">
                     <span className="text-sm">{submitError}</span>
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
+                    <Button
+                      size="sm"
+                      variant="outline"
                       onClick={retrySubmit}
                       className="h-7 px-3 text-xs ml-2"
                     >

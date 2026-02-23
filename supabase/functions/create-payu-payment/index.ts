@@ -6,10 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-// PayU configuration
-const PAYU_BASE_URL = Deno.env.get('PAYU_MODE') === 'LIVE' 
-  ? 'https://secure.payu.in/_payment'
-  : 'https://test.payu.in/_payment';
+// PayU configuration - Hardcoded to production
+const PAYU_BASE_URL = 'https://secure.payu.in/_payment';
 
 // Plan pricing (server-side enforcement)
 const PLAN_PRICES: Record<string, { monthly: number; yearly: number }> = {
@@ -26,7 +24,7 @@ function generateTxnId(): string {
 // Generate PayU hash
 async function generateHash(params: Record<string, string>, salt: string): Promise<string> {
   const hashString = `${params.key}|${params.txnid}|${params.amount}|${params.productinfo}|${params.firstname}|${params.email}|||||||||||${salt}`;
-  
+
   const encoder = new TextEncoder();
   const data = encoder.encode(hashString);
   const hashBuffer = await crypto.subtle.digest('SHA-512', data);
@@ -58,7 +56,7 @@ serve(async (req) => {
 
     const token = authHeader.replace('Bearer ', '');
     const { data: authData, error: authError } = await supabaseClient.auth.getUser(token);
-    
+
     if (authError || !authData.user?.email) {
       console.error('Authentication failed');
       return new Response(
@@ -73,7 +71,7 @@ serve(async (req) => {
     // Parse request
     let planType = 'Pro';
     let billingCycle = 'monthly';
-    
+
     try {
       const body = await req.json();
       if (body.planType && PLAN_PRICES[body.planType]) {
@@ -99,13 +97,20 @@ serve(async (req) => {
     }
 
     // Calculate amount based on plan and billing cycle
-    const amount = billingCycle === 'yearly' 
-      ? PLAN_PRICES[planType].yearly 
+    const amount = billingCycle === 'yearly'
+      ? PLAN_PRICES[planType].yearly
       : PLAN_PRICES[planType].monthly;
 
     const txnId = generateTxnId();
-    const projectUrl = Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '') || '';
-    
+
+    // Determine frontend URL based on request origin to support local testing
+    const origin = req.headers.get('origin') || 'https://policytracker.in';
+    const isLocal = origin.includes('localhost') || origin.includes('127.0.0.1');
+    const frontendUrl = isLocal ? origin : 'https://policytracker.in';
+
+    // The URLs PayU will redirect to after payment (we pass the frontendUrl in the URL so verify can redirect back correctly)
+    const callbackUrl = `${Deno.env.get('VITE_SUPABASE_URL')}/functions/v1/verify-payu-payment?redirect_to=${encodeURIComponent(frontendUrl)}`;
+
     // PayU parameters
     const params: Record<string, string> = {
       key: merchantKey,
@@ -115,8 +120,8 @@ serve(async (req) => {
       firstname: user.user_metadata?.full_name?.split(' ')[0] || 'Customer',
       email: user.email,
       phone: user.user_metadata?.mobile_number || '',
-      surl: `${Deno.env.get('VITE_SUPABASE_URL')}/functions/v1/verify-payu-payment`,
-      furl: `${Deno.env.get('VITE_SUPABASE_URL')}/functions/v1/verify-payu-payment`,
+      surl: callbackUrl,
+      furl: callbackUrl,
     };
 
     // Generate hash

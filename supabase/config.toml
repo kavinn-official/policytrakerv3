@@ -5,3 +5,20 @@ verify_jwt = false
 
 [functions.verify-payu-payment]
 verify_jwt = false
+[functions.parse-policy-pdf]
+verify_jwt = false
+
+[functions.validate-policy]
+verify_jwt = false
+
+[functions.create-razorpay-payment]
+verify_jwt = false
+
+[functions.verify-razorpay-payment]
+verify_jwt = false
+
+[functions.create-payu-payment]
+verify_jwt = false
+
+[functions.send-policy-report]
+verify_jwt = false
