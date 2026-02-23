@@ -2,7 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Car, User, Eye, Edit, Building, Trash2, FileText, AlertTriangle, Heart, Shield } from "lucide-react";
-import { Policy, formatDateDDMMYYYY } from "@/utils/policyUtils";
+import { Policy, formatDateDDMMYYYY, getComputedPolicyStatus } from "@/utils/policyUtils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface PolicyCardProps {
@@ -94,42 +94,42 @@ const PolicyCard = ({ policy, daysToExpiry, statusColor, onViewPolicy, onEditPol
             <p className="text-xs sm:text-sm text-gray-600 truncate">{policy.company_name}</p>
           </div>
           {(() => {
-            const isExpired = new Date(policy.policy_expiry_date) < new Date();
-            if (isExpired) {
+            const status = getComputedPolicyStatus(policy);
+            if (status === "Expired") {
               return <Badge className="bg-red-100 text-red-800 flex-shrink-0 text-xs">Expired</Badge>;
             }
-            return <Badge className={`${statusColor} flex-shrink-0 text-xs`}>{policy.status}</Badge>;
+            return <Badge className={`${statusColor} flex-shrink-0 text-xs`}>{status}</Badge>;
           })()}
         </div>
-        
+
         <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
           <div className="flex items-center text-xs sm:text-sm">
             <User className="h-4 w-4 mr-2 sm:mr-3 text-gray-500 flex-shrink-0" />
             <span className="font-medium truncate">{policy.client_name}</span>
           </div>
-          
+
           <div className="flex items-center text-xs sm:text-sm">
             <Building className="h-4 w-4 mr-2 sm:mr-3 text-gray-500 flex-shrink-0" />
             <span className="text-gray-600 truncate">Agent: {policy.agent_code || '—'}{policy.reference ? ` • Ref: ${policy.reference}` : ''}</span>
           </div>
-          
+
           <div className="flex items-center text-xs sm:text-sm">
             {getInsuranceIcon(policy.insurance_type)}
             <span className="truncate">{getInsuranceDetailText(policy)}</span>
           </div>
-          
+
           <div className="flex items-center text-xs sm:text-sm">
             <Calendar className="h-4 w-4 mr-2 sm:mr-3 text-gray-500 flex-shrink-0" />
             <span className="truncate">{formatDateDDMMYYYY(policy.policy_active_date)} - {formatDateDDMMYYYY(policy.policy_expiry_date)}</span>
           </div>
-          
+
           {daysToExpiry <= 30 && (
             <div className="text-xs sm:text-sm text-red-600 font-medium bg-red-50 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg">
               {daysToExpiry > 0 ? `${daysToExpiry} days to expiry` : 'Expired'}
             </div>
           )}
         </div>
-        
+
         <div className="grid grid-cols-3 gap-2">
           <Button
             variant="outline"

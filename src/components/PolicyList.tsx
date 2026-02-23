@@ -14,7 +14,7 @@ import PolicyDateFilter from "./policy/PolicyDateFilter";
 import PolicyViewDialogRevamped from "./policy/PolicyViewDialogRevamped";
 import PolicyEditDialog from "./policy/PolicyEditDialog";
 import PolicyDocumentPreviewDialog from "./policy/PolicyDocumentPreviewDialog";
-import { Policy, getStatusColor, getDaysToExpiry, filterPolicies, downloadPoliciesAsExcel } from "@/utils/policyUtils";
+import { Policy, getStatusColor, getDaysToExpiry, filterPolicies, downloadPoliciesAsExcel, getComputedPolicyStatus } from "@/utils/policyUtils";
 import { triggerManualPolicyReport } from "@/utils/emailReportUtils";
 import { generateSampleExcelTemplate, parseExcelFile, validatePolicyData, convertExcelRowToPolicy } from "@/utils/excelUtils";
 import {
@@ -146,7 +146,7 @@ const PolicyList = () => {
     }
     return true;
   });
-  
+
   // Pagination logic
   const totalPages = Math.ceil(filteredPolicies.length / POLICIES_PER_PAGE);
   const startIndex = (currentPage - 1) * POLICIES_PER_PAGE;
@@ -212,7 +212,7 @@ const PolicyList = () => {
 
   const downloadAllPolicies = () => {
     const result = downloadPoliciesAsExcel(policies, 'all_policies');
-    
+
     if (!result) {
       toast({
         title: "No Policies",
@@ -220,7 +220,7 @@ const PolicyList = () => {
       });
       return;
     }
-    
+
     toast({
       title: "Download Complete",
       description: `Downloaded ${result.count} policies to ${result.fileName}`,
@@ -317,7 +317,7 @@ const PolicyList = () => {
       // Free user bulk upload limit: 200 total policies
       const FREE_USER_TOTAL_LIMIT = 200;
       const currentPolicyCount = policies.length;
-      
+
       if (!subscribed) {
         const remainingSlots = FREE_USER_TOTAL_LIMIT - currentPolicyCount;
         if (remainingSlots <= 0) {
@@ -415,12 +415,11 @@ const PolicyList = () => {
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-3 sm:space-y-0">
               <CardTitle className="text-lg sm:text-xl font-semibold text-gray-900">Policy Management</CardTitle>
               <div className="flex flex-col space-y-2">
-                <Button 
-                  className={`min-h-[44px] w-full sm:w-auto ${
-                    isAddPolicyDisabled 
-                      ? "bg-gray-400 cursor-not-allowed" 
-                      : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-                  }`}
+                <Button
+                  className={`min-h-[44px] w-full sm:w-auto ${isAddPolicyDisabled
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                    }`}
                   onClick={handleAddPolicy}
                   disabled={isAddPolicyDisabled}
                 >
@@ -440,7 +439,7 @@ const PolicyList = () => {
                   <p className="text-xs text-gray-500 text-center">
                     <span className="text-orange-600 font-medium">Free Plan: {policies.length}/50 policies used</span>
                     <br />
-                    <button 
+                    <button
                       onClick={() => navigate("/subscription")}
                       className="text-blue-600 hover:text-blue-700 underline"
                     >
@@ -500,12 +499,11 @@ const PolicyList = () => {
             {filteredPolicies.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-gray-600 mb-4">No policies found.</p>
-                <Button 
-                  className={`min-h-[44px] ${
-                    isAddPolicyDisabled 
-                      ? "bg-gray-400 cursor-not-allowed" 
-                      : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-                  }`}
+                <Button
+                  className={`min-h-[44px] ${isAddPolicyDisabled
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                    }`}
                   onClick={handleAddPolicy}
                   disabled={isAddPolicyDisabled}
                 >
@@ -542,7 +540,7 @@ const PolicyList = () => {
                     <tbody>
                       {paginatedPolicies.map((policy) => {
                         const daysToExpiry = getDaysToExpiry(policy.policy_expiry_date);
-                        const statusColor = getStatusColor(policy.status);
+                        const statusColor = getStatusColor(getComputedPolicyStatus(policy));
                         return (
                           <PolicyTableRow
                             key={policy.id}
@@ -564,7 +562,7 @@ const PolicyList = () => {
                 <div className="lg:hidden space-y-4">
                   {paginatedPolicies.map((policy) => {
                     const daysToExpiry = getDaysToExpiry(policy.policy_expiry_date);
-                    const statusColor = getStatusColor(policy.status);
+                    const statusColor = getStatusColor(getComputedPolicyStatus(policy));
                     return (
                       <PolicyCard
                         key={policy.id}
@@ -640,7 +638,7 @@ const PolicyList = () => {
 
         {/* Download and Email Buttons at Bottom */}
         <div className="flex flex-col sm:flex-row justify-center gap-3 px-4 sm:px-0">
-          <Button 
+          <Button
             variant="outline"
             onClick={downloadAllPolicies}
             className="hover:bg-blue-50 border-blue-200 text-blue-700 hover:text-blue-800 min-h-[44px] w-full sm:w-auto"
@@ -648,8 +646,8 @@ const PolicyList = () => {
             <Download className="h-4 w-4 mr-2" />
             Download All Policies
           </Button>
-          
-          <Button 
+
+          <Button
             variant="outline"
             onClick={sendPolicyReportEmail}
             disabled={isEmailSending}
@@ -696,7 +694,7 @@ const PolicyList = () => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={confirmDeletePolicy}
               className="bg-red-600 hover:bg-red-700"
             >

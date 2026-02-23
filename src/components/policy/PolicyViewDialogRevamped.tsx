@@ -2,15 +2,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { 
-  Calendar, 
-  Phone, 
-  User, 
-  Car, 
-  Building, 
-  FileText, 
-  Hash, 
-  Tag, 
+import {
+  Calendar,
+  Phone,
+  User,
+  Car,
+  Building,
+  FileText,
+  Hash,
+  Tag,
   IndianRupee,
   Percent,
   Shield,
@@ -19,7 +19,7 @@ import {
   CheckCircle2,
   AlertCircle
 } from "lucide-react";
-import { Policy, formatDateDDMMYYYY } from "@/utils/policyUtils";
+import { Policy, formatDateDDMMYYYY, getComputedPolicyStatus } from "@/utils/policyUtils";
 import { differenceInDays } from "date-fns";
 
 interface PolicyViewDialogProps {
@@ -81,7 +81,7 @@ const PolicyViewDialogRevamped = ({ policy, open, onOpenChange }: PolicyViewDial
   const InfoRow = ({ icon: Icon, label, value, iconColor = "text-gray-500" }: { icon: any; label: string; value: string | number | null | undefined; iconColor?: string }) => {
     // Don't render if value is empty/0
     if (!hasValue(value)) return null;
-    
+
     return (
       <div className="flex items-start gap-3 py-2">
         <Icon className={`h-4 w-4 mt-0.5 flex-shrink-0 ${iconColor}`} />
@@ -130,7 +130,7 @@ const PolicyViewDialogRevamped = ({ policy, open, onOpenChange }: PolicyViewDial
             </div>
           </div>
           <div className="p-4 sm:p-6 space-y-5">
-            
+
             {/* Client Information Section */}
             <div>
               <div className="flex items-center gap-2 mb-3">
@@ -147,101 +147,101 @@ const PolicyViewDialogRevamped = ({ policy, open, onOpenChange }: PolicyViewDial
             </div>
 
             {/* Vehicle Information Section - Show only for vehicle insurance with actual data */}
-            {(policy.insurance_type === 'Vehicle Insurance' || !policy.insurance_type) && 
-             (hasValue(policy.vehicle_number) || hasValue(policy.vehicle_make) || hasValue(policy.vehicle_model) || (policy.idv && policy.idv > 0)) && (
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <Car className="h-4 w-4 text-green-600" />
-                  <h3 className="font-semibold text-foreground">Vehicle Information</h3>
+            {(policy.insurance_type === 'Vehicle Insurance' || !policy.insurance_type) &&
+              (hasValue(policy.vehicle_number) || hasValue(policy.vehicle_make) || hasValue(policy.vehicle_model) || (policy.idv && policy.idv > 0)) && (
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Car className="h-4 w-4 text-green-600" />
+                    <h3 className="font-semibold text-foreground">Vehicle Information</h3>
+                  </div>
+                  <div className="bg-green-50 rounded-xl p-4 space-y-1">
+                    <InfoRow icon={Hash} label="Vehicle Number" value={policy.vehicle_number} iconColor="text-green-600" />
+                    {hasValue(policy.vehicle_number) && hasValue(policy.vehicle_make) && <Separator className="my-1" />}
+                    <InfoRow icon={Tag} label="Vehicle Make" value={policy.vehicle_make} iconColor="text-green-600" />
+                    {(hasValue(policy.vehicle_number) || hasValue(policy.vehicle_make)) && hasValue(policy.vehicle_model) && <Separator className="my-1" />}
+                    <InfoRow icon={Tag} label="Vehicle Model" value={policy.vehicle_model} iconColor="text-green-600" />
+                    {policy.idv && policy.idv > 0 && (
+                      <>
+                        {(hasValue(policy.vehicle_number) || hasValue(policy.vehicle_make) || hasValue(policy.vehicle_model)) && <Separator className="my-1" />}
+                        <InfoRow icon={IndianRupee} label="IDV" value={`₹${policy.idv.toLocaleString('en-IN')}`} iconColor="text-green-600" />
+                      </>
+                    )}
+                  </div>
                 </div>
-                <div className="bg-green-50 rounded-xl p-4 space-y-1">
-                  <InfoRow icon={Hash} label="Vehicle Number" value={policy.vehicle_number} iconColor="text-green-600" />
-                  {hasValue(policy.vehicle_number) && hasValue(policy.vehicle_make) && <Separator className="my-1" />}
-                  <InfoRow icon={Tag} label="Vehicle Make" value={policy.vehicle_make} iconColor="text-green-600" />
-                  {(hasValue(policy.vehicle_number) || hasValue(policy.vehicle_make)) && hasValue(policy.vehicle_model) && <Separator className="my-1" />}
-                  <InfoRow icon={Tag} label="Vehicle Model" value={policy.vehicle_model} iconColor="text-green-600" />
-                  {policy.idv && policy.idv > 0 && (
-                    <>
-                      {(hasValue(policy.vehicle_number) || hasValue(policy.vehicle_make) || hasValue(policy.vehicle_model)) && <Separator className="my-1" />}
-                      <InfoRow icon={IndianRupee} label="IDV" value={`₹${policy.idv.toLocaleString('en-IN')}`} iconColor="text-green-600" />
-                    </>
-                  )}
-                </div>
-              </div>
-            )}
+              )}
 
             {/* Life/Health Insurance Specific Fields - Show only if there's actual data */}
-            {(policy.insurance_type === 'Life Insurance' || policy.insurance_type === 'Health Insurance') && 
-             ((policy.sum_assured && policy.sum_assured > 0) || 
-              (policy.sum_insured && policy.sum_insured > 0) || 
-              (policy.members_covered && policy.members_covered > 0) || 
-              (policy.policy_term && policy.policy_term > 0) || 
-              hasValue(policy.plan_type)) && (
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  {policy.insurance_type === 'Health Insurance' ? (
-                    <Heart className="h-4 w-4 text-red-600" />
-                  ) : (
-                    <Shield className="h-4 w-4 text-emerald-600" />
-                  )}
-                  <h3 className="font-semibold text-foreground">Policy Coverage</h3>
+            {(policy.insurance_type === 'Life Insurance' || policy.insurance_type === 'Health Insurance') &&
+              ((policy.sum_assured && policy.sum_assured > 0) ||
+                (policy.sum_insured && policy.sum_insured > 0) ||
+                (policy.members_covered && policy.members_covered > 0) ||
+                (policy.policy_term && policy.policy_term > 0) ||
+                hasValue(policy.plan_type)) && (
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    {policy.insurance_type === 'Health Insurance' ? (
+                      <Heart className="h-4 w-4 text-red-600" />
+                    ) : (
+                      <Shield className="h-4 w-4 text-emerald-600" />
+                    )}
+                    <h3 className="font-semibold text-foreground">Policy Coverage</h3>
+                  </div>
+                  <div className={`${policy.insurance_type === 'Health Insurance' ? 'bg-red-50' : 'bg-emerald-50'} rounded-xl p-4 space-y-1`}>
+                    {policy.sum_assured && policy.sum_assured > 0 && (
+                      <InfoRow
+                        icon={IndianRupee}
+                        label="Sum Assured"
+                        value={`₹${policy.sum_assured.toLocaleString('en-IN')}`}
+                        iconColor={policy.insurance_type === 'Health Insurance' ? "text-red-600" : "text-emerald-600"}
+                      />
+                    )}
+                    {policy.sum_insured && policy.sum_insured > 0 && (
+                      <>
+                        {policy.sum_assured && policy.sum_assured > 0 && <Separator className="my-1" />}
+                        <InfoRow
+                          icon={IndianRupee}
+                          label="Sum Insured"
+                          value={`₹${policy.sum_insured.toLocaleString('en-IN')}`}
+                          iconColor={policy.insurance_type === 'Health Insurance' ? "text-red-600" : "text-emerald-600"}
+                        />
+                      </>
+                    )}
+                    {policy.members_covered && policy.members_covered > 0 && (
+                      <>
+                        {((policy.sum_assured && policy.sum_assured > 0) || (policy.sum_insured && policy.sum_insured > 0)) && <Separator className="my-1" />}
+                        <InfoRow
+                          icon={User}
+                          label="Members Covered"
+                          value={policy.members_covered}
+                          iconColor={policy.insurance_type === 'Health Insurance' ? "text-red-600" : "text-emerald-600"}
+                        />
+                      </>
+                    )}
+                    {policy.policy_term && policy.policy_term > 0 && (
+                      <>
+                        <Separator className="my-1" />
+                        <InfoRow
+                          icon={Clock}
+                          label="Policy Term"
+                          value={`${policy.policy_term} years`}
+                          iconColor={policy.insurance_type === 'Health Insurance' ? "text-red-600" : "text-emerald-600"}
+                        />
+                      </>
+                    )}
+                    {hasValue(policy.plan_type) && (
+                      <>
+                        <Separator className="my-1" />
+                        <InfoRow
+                          icon={FileText}
+                          label="Plan Type"
+                          value={policy.plan_type}
+                          iconColor={policy.insurance_type === 'Health Insurance' ? "text-red-600" : "text-emerald-600"}
+                        />
+                      </>
+                    )}
+                  </div>
                 </div>
-                <div className={`${policy.insurance_type === 'Health Insurance' ? 'bg-red-50' : 'bg-emerald-50'} rounded-xl p-4 space-y-1`}>
-                  {policy.sum_assured && policy.sum_assured > 0 && (
-                    <InfoRow 
-                      icon={IndianRupee} 
-                      label="Sum Assured" 
-                      value={`₹${policy.sum_assured.toLocaleString('en-IN')}`} 
-                      iconColor={policy.insurance_type === 'Health Insurance' ? "text-red-600" : "text-emerald-600"} 
-                    />
-                  )}
-                  {policy.sum_insured && policy.sum_insured > 0 && (
-                    <>
-                      {policy.sum_assured && policy.sum_assured > 0 && <Separator className="my-1" />}
-                      <InfoRow 
-                        icon={IndianRupee} 
-                        label="Sum Insured" 
-                        value={`₹${policy.sum_insured.toLocaleString('en-IN')}`} 
-                        iconColor={policy.insurance_type === 'Health Insurance' ? "text-red-600" : "text-emerald-600"} 
-                      />
-                    </>
-                  )}
-                  {policy.members_covered && policy.members_covered > 0 && (
-                    <>
-                      {((policy.sum_assured && policy.sum_assured > 0) || (policy.sum_insured && policy.sum_insured > 0)) && <Separator className="my-1" />}
-                      <InfoRow 
-                        icon={User} 
-                        label="Members Covered" 
-                        value={policy.members_covered} 
-                        iconColor={policy.insurance_type === 'Health Insurance' ? "text-red-600" : "text-emerald-600"} 
-                      />
-                    </>
-                  )}
-                  {policy.policy_term && policy.policy_term > 0 && (
-                    <>
-                      <Separator className="my-1" />
-                      <InfoRow 
-                        icon={Clock} 
-                        label="Policy Term" 
-                        value={`${policy.policy_term} years`} 
-                        iconColor={policy.insurance_type === 'Health Insurance' ? "text-red-600" : "text-emerald-600"} 
-                      />
-                    </>
-                  )}
-                  {hasValue(policy.plan_type) && (
-                    <>
-                      <Separator className="my-1" />
-                      <InfoRow 
-                        icon={FileText} 
-                        label="Plan Type" 
-                        value={policy.plan_type} 
-                        iconColor={policy.insurance_type === 'Health Insurance' ? "text-red-600" : "text-emerald-600"} 
-                      />
-                    </>
-                  )}
-                </div>
-              </div>
-            )}
+              )}
 
             {/* Policy Dates Section */}
             <div>
@@ -267,14 +267,13 @@ const PolicyViewDialogRevamped = ({ policy, open, onOpenChange }: PolicyViewDial
                   </div>
                 </div>
                 <div className="mt-3 text-center">
-                  <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${
-                    isExpired ? 'bg-red-100 text-red-700' :
+                  <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${isExpired ? 'bg-red-100 text-red-700' :
                     isCritical ? 'bg-red-100 text-red-700' :
-                    isWarning ? 'bg-amber-100 text-amber-700' :
-                    'bg-green-100 text-green-700'
-                  }`}>
+                      isWarning ? 'bg-amber-100 text-amber-700' :
+                        'bg-green-100 text-green-700'
+                    }`}>
                     <Clock className="h-3 w-3" />
-                    {isExpired 
+                    {isExpired
                       ? `Expired ${Math.abs(daysRemaining)} days ago`
                       : `${daysRemaining} days remaining`
                     }
@@ -317,9 +316,7 @@ const PolicyViewDialogRevamped = ({ policy, open, onOpenChange }: PolicyViewDial
               <div className="bg-gray-50 rounded-xl p-4 space-y-1">
                 <InfoRow icon={Hash} label="Agent Name" value={policy.agent_code} iconColor="text-gray-600" />
                 <Separator className="my-1" />
-                <InfoRow icon={FileText} label="Reference" value={policy.reference} iconColor="text-gray-600" />
-                <Separator className="my-1" />
-                <InfoRow icon={Tag} label="Status" value={policy.status} iconColor="text-gray-600" />
+                <InfoRow icon={Tag} label="Status" value={getComputedPolicyStatus(policy)} iconColor="text-gray-600" />
               </div>
             </div>
 

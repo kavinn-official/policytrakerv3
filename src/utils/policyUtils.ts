@@ -39,13 +39,32 @@ export interface Policy {
   product_name?: string;
 }
 
+export const getComputedPolicyStatus = (policy: Policy): string => {
+  if (policy.status === "Cancelled" || policy.status === "Lapsed") {
+    return policy.status;
+  }
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const expiry = new Date(policy.policy_expiry_date);
+  expiry.setHours(0, 0, 0, 0);
+
+  if (expiry < today) {
+    return "Expired";
+  }
+
+  return policy.status;
+};
+
 export const getStatusColor = (status: string) => {
+  if (status === "Expired") return "bg-red-100 text-red-800";
   return status === "Fresh" ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800";
 };
 
 export const getDaysToExpiry = (expiryDate: string) => {
   const today = new Date();
+  today.setHours(0, 0, 0, 0);
   const expiry = new Date(expiryDate);
+  expiry.setHours(0, 0, 0, 0);
   const timeDiff = expiry.getTime() - today.getTime();
   return Math.ceil(timeDiff / (1000 * 3600 * 24));
 };
@@ -137,7 +156,7 @@ export const downloadPoliciesAsExcel = (policies: Policy[], filename: string) =>
       'Policy Term': policy.policy_term || '',
       'Premium Frequency': policy.premium_frequency || '',
       'Premium Payment Term': policy.premium_payment_term || '',
-      'Status': policy.status,
+      'Status': getComputedPolicyStatus(policy),
       'Agent Name': policy.agent_code || '',
       'Reference': policy.reference || '',
       'Commission %': commissionRate,
@@ -146,6 +165,7 @@ export const downloadPoliciesAsExcel = (policies: Policy[], filename: string) =>
       'OD Commission Amount': odCommission,
       'TP Commission %': tpCommRate || '',
       'TP Commission Amount': tpCommission,
+      'Created At': formatDateDDMMYYYY(policy.created_at),
     };
   }));
 

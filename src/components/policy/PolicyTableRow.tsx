@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Eye, Edit, Trash2, FileText } from "lucide-react";
-import { Policy, formatDateDDMMYYYY } from "@/utils/policyUtils";
+import { Policy, formatDateDDMMYYYY, getComputedPolicyStatus } from "@/utils/policyUtils";
 
 interface PolicyTableRowProps {
   policy: Policy;
@@ -50,7 +50,7 @@ const PolicyTableRow = ({ policy, daysToExpiry, statusColor, onViewPolicy, onEdi
         )}
       </td>
       <td className="p-3 sm:p-4">
-        <Badge className={`${statusColor} text-xs px-2 py-1`}>{policy.status}</Badge>
+        <Badge className={`${statusColor} text-xs px-2 py-1`}>{getComputedPolicyStatus(policy)}</Badge>
       </td>
       <td className="p-3 sm:p-4">
         <div className="flex items-center gap-1.5 flex-wrap justify-center sm:justify-start">

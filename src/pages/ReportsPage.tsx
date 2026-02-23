@@ -7,14 +7,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { format, startOfMonth, endOfMonth, getYear, getMonth, setMonth, setYear, subMonths, startOfYear, endOfYear, startOfDay, endOfDay } from "date-fns";
-import { 
-  ArrowLeft, 
-  Download, 
-  Mail, 
-  Loader2, 
-  Car, 
-  Heart, 
-  Shield, 
+import {
+  ArrowLeft,
+  Download,
+  Mail,
+  Loader2,
+  Car,
+  Heart,
+  Shield,
   FileText,
   TrendingUp,
   TrendingDown,
@@ -93,7 +93,7 @@ const ReportsPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
-  
+
   const now = new Date();
   const [reportType, setReportType] = useState<'today' | 'monthly' | 'yearly' | 'custom'>('today');
   const [selectedMonth, setSelectedMonth] = useState<string>(String(getMonth(now)));
@@ -106,7 +106,7 @@ const ReportsPage = () => {
   const [previousStats, setPreviousStats] = useState<PolicyStats | null>(null);
   const [monthlyTrends, setMonthlyTrends] = useState<MonthlyTrend[]>([]);
   const [allPolicies, setAllPolicies] = useState<any[]>([]);
-  
+
   // Filter states
   const [selectedInsuranceType, setSelectedInsuranceType] = useState<string>('all');
   const [selectedCompany, setSelectedCompany] = useState<string>('all');
@@ -125,22 +125,22 @@ const ReportsPage = () => {
   // Filter policies based on selected filters
   const filteredPolicies = useMemo(() => {
     let filtered = allPolicies;
-    
+
     if (selectedInsuranceType !== 'all') {
       filtered = filtered.filter(p => p.insurance_type === selectedInsuranceType);
     }
-    
+
     if (selectedCompany !== 'all') {
       filtered = filtered.filter(p => normalizeCompanyName(p.company_name || '') === selectedCompany);
     }
-    
+
     return filtered;
   }, [allPolicies, selectedInsuranceType, selectedCompany]);
 
   // Calculate filtered stats
   const filteredStats = useMemo(() => {
     if (!filteredPolicies.length) return null;
-    
+
     const stats: PolicyStats = {
       totalPolicies: filteredPolicies.length,
       totalNetPremium: 0,
@@ -201,7 +201,7 @@ const ReportsPage = () => {
 
   const fetchStatsForPeriod = async (startDate: Date, endDate: Date): Promise<PolicyStats | null> => {
     if (!user?.id) return null;
-    
+
     try {
       // For 'today' report type, filter by created_at (date added/uploaded)
       // For other report types, filter by policy_active_date (Risk Start Date)
@@ -271,14 +271,14 @@ const ReportsPage = () => {
 
   const fetchStats = async () => {
     if (!user?.id) return;
-    
+
     setLoading(true);
     try {
       const year = parseInt(selectedYear);
       const month = parseInt(selectedMonth);
-      
+
       let startDate: Date, endDate: Date;
-      
+
       if (reportType === 'today') {
         startDate = startOfDay(now);
         endDate = endOfDay(now);
@@ -298,7 +298,7 @@ const ReportsPage = () => {
         startDate = range.startDate;
         endDate = range.endDate;
       }
-      
+
       // Fetch current period stats
       const currentStats = await fetchStatsForPeriod(startDate, endDate);
       setStats(currentStats);
@@ -329,7 +329,7 @@ const ReportsPage = () => {
         const trends: MonthlyTrend[] = [];
         const trendCount = reportType === 'yearly' ? 12 : 6;
         const baseDate = reportType === 'today' ? now : startDate;
-        
+
         for (let i = trendCount - 1; i >= 0; i--) {
           const trendMonth = subMonths(baseDate, i);
           const trendRange = getDateRange(getMonth(trendMonth), getYear(trendMonth));
@@ -439,7 +439,7 @@ const ReportsPage = () => {
     }
 
     const workbook = XLSX.utils.book_new();
-    
+
     const summaryData = [
       [reportType === 'yearly' ? 'Yearly Policy Report' : 'Monthly Policy Report'],
       ['Period', periodLabel],
@@ -475,7 +475,7 @@ const ReportsPage = () => {
       const tpPremium = Number(p.basic_tp_premium) || 0;
       const odCommRate = Number(p.od_commission_percentage) || 0;
       const tpCommRate = Number(p.tp_commission_percentage) || 0;
-      
+
       return {
         'S.No': index + 1,
         'Policy Number': p.policy_number,
@@ -532,7 +532,7 @@ const ReportsPage = () => {
       const premium = Number(p.net_premium) || 0;
       const commissionRate = Number(p.commission_percentage) || 0;
       const commission = Number(p.first_year_commission) || ((premium * commissionRate) / 100);
-      
+
       return [
         index + 1,
         p.policy_number,
@@ -584,20 +584,20 @@ const ReportsPage = () => {
 
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
-    
+
     // Header with branding
     doc.setFillColor(59, 130, 246);
     doc.rect(0, 0, pageWidth, 35, 'F');
-    
+
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
     doc.text('Policy Tracker.in', 14, 18);
-    
+
     doc.setFontSize(11);
     doc.setFont('helvetica', 'normal');
     doc.text(`${reportType === 'yearly' ? 'Yearly' : 'Monthly'} Policy Report - ${periodLabel}`, 14, 28);
-    
+
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(9);
     doc.text(`Generated: ${format(new Date(), 'dd-MMM-yyyy HH:mm')}`, pageWidth - 14, 28, { align: 'right' });
@@ -680,7 +680,7 @@ const ReportsPage = () => {
 
     // Policy details on new page
     doc.addPage();
-    
+
     doc.setFillColor(59, 130, 246);
     doc.rect(0, 0, pageWidth, 25, 'F');
     doc.setTextColor(255, 255, 255);
@@ -692,7 +692,7 @@ const ReportsPage = () => {
       const premium = Number(p.net_premium) || 0;
       const commissionRate = Number(p.commission_percentage) || 0;
       const commission = Number(p.first_year_commission) || ((premium * commissionRate) / 100);
-      
+
       return [
         String(index + 1),
         p.policy_number,
@@ -782,17 +782,17 @@ const ReportsPage = () => {
     }
   };
 
-  const StatCard = ({ 
-    title, 
-    count, 
-    premium, 
-    icon: Icon, 
-    colorClass 
-  }: { 
-    title: string; 
-    count: number; 
-    premium: number; 
-    icon: any; 
+  const StatCard = ({
+    title,
+    count,
+    premium,
+    icon: Icon,
+    colorClass
+  }: {
+    title: string;
+    count: number;
+    premium: number;
+    icon: any;
     colorClass: string;
   }) => (
     <Card className="shadow-md border-0">
@@ -883,9 +883,9 @@ const ReportsPage = () => {
                 </SelectContent>
               </Select>
             </div>
-            
+
             {reportType === 'monthly' && (
-              <div className="w-full sm:w-32 space-y-2">
+              <div className="w-full sm:w-32 space-y-2 mt-2 sm:mt-0">
                 <Label>Year</Label>
                 <Select value={selectedYear} onValueChange={setSelectedYear}>
                   <SelectTrigger>
@@ -901,9 +901,9 @@ const ReportsPage = () => {
                 </Select>
               </div>
             )}
-            
+
             {reportType === 'yearly' && (
-              <div className="w-full sm:w-32 space-y-2">
+              <div className="w-full sm:w-32 space-y-2 mt-2 sm:mt-0">
                 <Label>Year</Label>
                 <Select value={selectedYear} onValueChange={setSelectedYear}>
                   <SelectTrigger>
@@ -921,7 +921,7 @@ const ReportsPage = () => {
             )}
 
             {reportType === 'custom' && (
-              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto mt-2 sm:mt-0">
                 <div className="w-full sm:w-48 space-y-2">
                   <Label>Start Date</Label>
                   <MaterialDatePicker
@@ -940,8 +940,8 @@ const ReportsPage = () => {
                 </div>
               </div>
             )}
-            
-            <div className="flex gap-2 w-full sm:w-auto flex-wrap">
+
+            <div className="flex gap-2 w-full sm:w-auto flex-wrap mt-2 sm:mt-0">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button disabled={loading || !displayStats || displayStats.policies.length === 0} size="sm" className="flex-1 sm:flex-none">
@@ -964,7 +964,7 @@ const ReportsPage = () => {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <Button 
+              <Button
                 onClick={emailReport}
                 disabled={emailing || loading || !displayStats || displayStats.policies.length === 0}
                 variant="outline"
@@ -1049,9 +1049,9 @@ const ReportsPage = () => {
           </div>
 
           {/* Distribution Charts - Pass company data */}
-          <DistributionCharts 
-            pieChartData={getPieChartData()} 
-            barChartData={getBarChartData()} 
+          <DistributionCharts
+            pieChartData={getPieChartData()}
+            barChartData={getBarChartData()}
             formatCurrency={formatCurrency}
             companyData={displayStats.byCompany}
           />
@@ -1068,9 +1068,9 @@ const ReportsPage = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <CommissionAnalytics 
-                policies={displayStats.policies} 
-                formatCurrency={formatCurrency} 
+              <CommissionAnalytics
+                policies={displayStats.policies}
+                formatCurrency={formatCurrency}
                 periodLabel={periodLabel}
               />
             </CardContent>
