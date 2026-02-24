@@ -52,7 +52,11 @@ const OPTIONAL_COLUMNS = [
   'Agent Code',
   'Reference',
   'OD Commission %',
+  'OD Commission Amount',
   'TP Commission %',
+  'TP Commission Amount',
+  'Commission Amount',
+  'Net Commission Amount',
   'Product Name',
 ];
 
@@ -91,6 +95,7 @@ const BulkUpload = ({ policyCount = 0, maxPolicies = 200, isPro = false }: BulkU
       ['Optional Fields:'],
       ['- Premium Frequency: yearly, half-yearly, quarterly, monthly (default: yearly)'],
       ['- Commission Percentage: Your commission % (e.g., 15)'],
+      ['- Commission Amount: Your total commission amount in INR'],
       ['- Policy Status: Active or Expired (default: Active)'],
       ['- Vehicle Number: For motor insurance'],
       ['- Vehicle Model: For motor insurance'],
@@ -116,7 +121,7 @@ const BulkUpload = ({ policyCount = 0, maxPolicies = 200, isPro = false }: BulkU
 
     // Data sheet with headers
     const headers = [...REQUIRED_COLUMNS, ...OPTIONAL_COLUMNS];
-      const sampleData = [
+    const sampleData = [
       headers,
       [
         'Rajesh Kumar',
@@ -149,7 +154,7 @@ const BulkUpload = ({ policyCount = 0, maxPolicies = 200, isPro = false }: BulkU
 
     // Download
     XLSX.writeFile(wb, 'PolicyTracker_Bulk_Upload_Template.xlsx');
-    
+
     toast({
       title: "Template Downloaded",
       description: "Fill in your policy data in the 'Data' sheet and upload.",
@@ -169,7 +174,7 @@ const BulkUpload = ({ policyCount = 0, maxPolicies = 200, isPro = false }: BulkU
 
   const parseDate = (value: any): Date | null => {
     if (!value) return null;
-    
+
     // Handle Excel date serial numbers
     if (typeof value === 'number') {
       const date = XLSX.SSF.parse_date_code(value);
@@ -177,65 +182,65 @@ const BulkUpload = ({ policyCount = 0, maxPolicies = 200, isPro = false }: BulkU
         return new Date(date.y, date.m - 1, date.d);
       }
     }
-    
+
     // Handle string dates
     const str = String(value).trim();
-    
+
     // Try DD/MM/YYYY format
     let parsed = parse(str, 'dd/MM/yyyy', new Date());
     if (isValid(parsed)) return parsed;
-    
+
     // Try DD-MM-YYYY format
     parsed = parse(str, 'dd-MM-yyyy', new Date());
     if (isValid(parsed)) return parsed;
-    
+
     // Try YYYY-MM-DD format
     parsed = parse(str, 'yyyy-MM-dd', new Date());
     if (isValid(parsed)) return parsed;
-    
+
     return null;
   };
 
   const validateRow = (row: any, rowIndex: number): ValidationError[] => {
     const errors: ValidationError[] = [];
-    
+
     // Required field validations
     if (!row['Customer Name']?.trim()) {
       errors.push({ row: rowIndex, field: 'Customer Name', message: 'Customer name is required' });
     }
-    
+
     const mobile = String(row['Mobile Number'] || '').replace(/\D/g, '');
     if (mobile && mobile.length !== 10) {
       errors.push({ row: rowIndex, field: 'Mobile Number', message: 'Must be 10 digits if provided' });
     }
-    
+
     const validTypes = ['Vehicle Insurance', 'Health Insurance', 'Life Insurance', 'Other'];
     if (!validTypes.includes(row['Insurance Type'])) {
       errors.push({ row: rowIndex, field: 'Insurance Type', message: `Must be one of: ${validTypes.join(', ')}` });
     }
-    
+
     if (!row['Insurance Company']?.trim()) {
       errors.push({ row: rowIndex, field: 'Insurance Company', message: 'Insurance company is required' });
     }
-    
+
     if (!row['Policy Number']?.trim()) {
       errors.push({ row: rowIndex, field: 'Policy Number', message: 'Policy number is required' });
     }
-    
+
     const startDate = parseDate(row['Policy Start Date']);
     if (!startDate) {
       errors.push({ row: rowIndex, field: 'Policy Start Date', message: 'Invalid date format (use DD/MM/YYYY)' });
     }
-    
+
     const endDate = parseDate(row['Policy End Date']);
     if (!endDate) {
       errors.push({ row: rowIndex, field: 'Policy End Date', message: 'Invalid date format (use DD/MM/YYYY)' });
     }
-    
+
     if (startDate && endDate && startDate >= endDate) {
       errors.push({ row: rowIndex, field: 'Policy End Date', message: 'End date must be after start date' });
     }
-    
+
     const premiumVal = row['Premium Amount'];
     if (premiumVal !== undefined && premiumVal !== null && String(premiumVal).trim() !== '') {
       const premium = parseFloat(premiumVal);
@@ -243,33 +248,33 @@ const BulkUpload = ({ policyCount = 0, maxPolicies = 200, isPro = false }: BulkU
         errors.push({ row: rowIndex, field: 'Premium Amount', message: 'Must be a positive number if provided' });
       }
     }
-    
+
     return errors;
   };
 
   const processFile = async (file: File) => {
     if (!user?.id) return;
-    
+
     setUploading(true);
     setProgress(0);
     setResult(null);
-    
+
     try {
       const data = await file.arrayBuffer();
       const workbook = XLSX.read(data);
-      
+
       // Find the data sheet
-      const sheetName = workbook.SheetNames.find(name => 
+      const sheetName = workbook.SheetNames.find(name =>
         name.toLowerCase() === 'data' || name.toLowerCase() === 'sheet1'
       ) || workbook.SheetNames[0];
-      
+
       const worksheet = workbook.Sheets[sheetName];
       const rows = XLSX.utils.sheet_to_json(worksheet) as any[];
-      
+
       if (rows.length === 0) {
         throw new Error('No data found in the file');
       }
-      
+
       if (rows.length > 500) {
         throw new Error('Maximum 500 policies per upload. Please split your file.');
       }
@@ -284,29 +289,29 @@ const BulkUpload = ({ policyCount = 0, maxPolicies = 200, isPro = false }: BulkU
           throw new Error(`Free plan limit: You can only upload ${remainingQuota} more policies (${policyCount}/${maxPolicies} used). Please reduce your file or upgrade to Pro.`);
         }
       }
-      
+
       setProgress(10);
-      
+
       // Validate all rows first
       const allErrors: ValidationError[] = [];
       rows.forEach((row, index) => {
         const rowErrors = validateRow(row, index + 2); // +2 for header and 0-indexing
         allErrors.push(...rowErrors);
       });
-      
+
       setProgress(30);
-      
+
       // Prepare valid policies for insertion
       const validPolicies: any[] = [];
       const rowsWithErrors = new Set(allErrors.map(e => e.row));
-      
+
       rows.forEach((row, index) => {
         const rowNum = index + 2;
         if (rowsWithErrors.has(rowNum)) return;
-        
+
         const startDate = parseDate(row['Policy Start Date']);
         const endDate = parseDate(row['Policy End Date']);
-        
+
         validPolicies.push({
           user_id: user.id,
           client_name: normalizeName(String(row['Customer Name']).trim()) || String(row['Customer Name']).trim(),
@@ -336,23 +341,27 @@ const BulkUpload = ({ policyCount = 0, maxPolicies = 200, isPro = false }: BulkU
           reference: normalizeName(row['Reference']) || null,
           od_commission_percentage: parseFloat(row['OD Commission %']) || 0,
           tp_commission_percentage: parseFloat(row['TP Commission %']) || 0,
+          commission_amount: parseFloat(row['Commission Amount']) || 0,
+          od_commission_amount: parseFloat(row['OD Commission Amount']) || 0,
+          tp_commission_amount: parseFloat(row['TP Commission Amount']) || 0,
+          net_commission_amount: parseFloat(row['Net Commission Amount']) || 0,
           product_name: normalizeName(row['Product Name']) || null,
         });
       });
-      
+
       setProgress(50);
-      
+
       // Insert valid policies in batches
       let successCount = 0;
       const batchSize = 50;
-      
+
       for (let i = 0; i < validPolicies.length; i += batchSize) {
         const batch = validPolicies.slice(i, i + batchSize);
-        
+
         const { error } = await supabase
           .from('policies')
           .insert(batch);
-        
+
         if (error) {
           console.error('Batch insert error:', error);
           // Add errors for this batch
@@ -367,20 +376,20 @@ const BulkUpload = ({ policyCount = 0, maxPolicies = 200, isPro = false }: BulkU
         } else {
           successCount += batch.length;
         }
-        
+
         setProgress(50 + Math.round((i / validPolicies.length) * 45));
       }
-      
+
       setProgress(100);
-      
+
       const finalResult: UploadResult = {
         success: successCount,
         failed: rows.length - successCount,
         errors: allErrors,
       };
-      
+
       setResult(finalResult);
-      
+
       if (successCount > 0) {
         toast({
           title: "Upload Complete",
@@ -411,14 +420,14 @@ const BulkUpload = ({ policyCount = 0, maxPolicies = 200, isPro = false }: BulkU
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
+
     // Validate file type
     const validTypes = [
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       'application/vnd.ms-excel',
       'text/csv',
     ];
-    
+
     if (!validTypes.includes(file.type) && !file.name.match(/\.(xlsx|xls|csv)$/i)) {
       toast({
         title: "Invalid File",
@@ -427,7 +436,7 @@ const BulkUpload = ({ policyCount = 0, maxPolicies = 200, isPro = false }: BulkU
       });
       return;
     }
-    
+
     // Check file size (10MB limit)
     if (file.size > 10 * 1024 * 1024) {
       toast({
@@ -437,7 +446,7 @@ const BulkUpload = ({ policyCount = 0, maxPolicies = 200, isPro = false }: BulkU
       });
       return;
     }
-    
+
     await processFile(file);
   };
 
@@ -455,8 +464,8 @@ const BulkUpload = ({ policyCount = 0, maxPolicies = 200, isPro = false }: BulkU
           <p className="text-sm text-gray-700 mb-3">
             Download our Excel template, fill in your policy data, and upload to add multiple policies at once.
           </p>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={downloadTemplate}
             className="gap-2"
           >
@@ -464,7 +473,7 @@ const BulkUpload = ({ policyCount = 0, maxPolicies = 200, isPro = false }: BulkU
             Download Template
           </Button>
         </div>
-        
+
         {/* File Upload */}
         <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
           <input
@@ -475,7 +484,7 @@ const BulkUpload = ({ policyCount = 0, maxPolicies = 200, isPro = false }: BulkU
             className="hidden"
             id="bulk-upload-input"
           />
-          
+
           {uploading ? (
             <div className="space-y-3">
               <Loader2 className="h-10 w-10 text-blue-500 animate-spin mx-auto" />
@@ -489,8 +498,8 @@ const BulkUpload = ({ policyCount = 0, maxPolicies = 200, isPro = false }: BulkU
               <p className="text-sm text-gray-600 mb-2">
                 Drag & drop your Excel file here, or
               </p>
-              <Button 
-                variant="default" 
+              <Button
+                variant="default"
                 onClick={() => fileInputRef.current?.click()}
                 className="gap-2"
               >
@@ -503,7 +512,7 @@ const BulkUpload = ({ policyCount = 0, maxPolicies = 200, isPro = false }: BulkU
             </>
           )}
         </div>
-        
+
         {/* Results */}
         {result && (
           <div className={`rounded-lg p-4 ${result.failed > 0 ? 'bg-yellow-50' : 'bg-green-50'}`}>
@@ -522,8 +531,8 @@ const BulkUpload = ({ policyCount = 0, maxPolicies = 200, isPro = false }: BulkU
                     <p className="text-sm text-gray-600">
                       {result.failed} policies failed validation
                     </p>
-                    <Button 
-                      variant="link" 
+                    <Button
+                      variant="link"
                       className="p-0 h-auto text-sm text-blue-600"
                       onClick={() => downloadErrorReport(result.errors)}
                     >
@@ -532,8 +541,8 @@ const BulkUpload = ({ policyCount = 0, maxPolicies = 200, isPro = false }: BulkU
                   </>
                 )}
               </div>
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 size="sm"
                 onClick={() => setResult(null)}
                 className="h-6 w-6 p-0"

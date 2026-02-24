@@ -470,7 +470,8 @@ const ReportsPage = () => {
     const policyData = displayStats.policies.map((p, index) => {
       const premium = Number(p.net_premium) || 0;
       const commissionRate = Number(p.commission_percentage) || 0;
-      const commission = Number(p.first_year_commission) || ((premium * commissionRate) / 100);
+      const commissionAmount = Number(p.commission_amount) || 0;
+      const commission = commissionAmount > 0 ? commissionAmount : (Number(p.first_year_commission) || ((premium * commissionRate) / 100));
       const odPremium = Number(p.basic_od_premium) || 0;
       const tpPremium = Number(p.basic_tp_premium) || 0;
       const odCommRate = Number(p.od_commission_percentage) || 0;
@@ -531,7 +532,8 @@ const ReportsPage = () => {
     const rows = displayStats.policies.map((p, index) => {
       const premium = Number(p.net_premium) || 0;
       const commissionRate = Number(p.commission_percentage) || 0;
-      const commission = Number(p.first_year_commission) || ((premium * commissionRate) / 100);
+      const commissionAmount = Number(p.commission_amount) || 0;
+      const commission = commissionAmount > 0 ? commissionAmount : (Number(p.first_year_commission) || ((premium * commissionRate) / 100));
 
       return [
         index + 1,
@@ -691,7 +693,8 @@ const ReportsPage = () => {
     const policyTableData = displayStats.policies.map((p, index) => {
       const premium = Number(p.net_premium) || 0;
       const commissionRate = Number(p.commission_percentage) || 0;
-      const commission = Number(p.first_year_commission) || ((premium * commissionRate) / 100);
+      const commissionAmount = Number(p.commission_amount) || 0;
+      const commission = commissionAmount > 0 ? commissionAmount : (Number(p.first_year_commission) || ((premium * commissionRate) / 100));
 
       return [
         String(index + 1),

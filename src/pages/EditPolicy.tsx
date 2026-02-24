@@ -95,6 +95,11 @@ const EditPolicy = () => {
     // Commission split
     od_commission_percentage: "",
     tp_commission_percentage: "",
+    // Commission amounts
+    od_commission_amount: "",
+    tp_commission_amount: "",
+    net_commission_amount: "",
+    commission_amount: "",
   });
 
   const [policyActiveDate, setPolicyActiveDate] = useState<Date | undefined>(undefined);
@@ -152,6 +157,10 @@ const EditPolicy = () => {
           premium_payment_term: data.premium_payment_term ? String(data.premium_payment_term) : "",
           od_commission_percentage: data.od_commission_percentage ? String(data.od_commission_percentage) : "",
           tp_commission_percentage: data.tp_commission_percentage ? String(data.tp_commission_percentage) : "",
+          od_commission_amount: data.od_commission_amount ? String(data.od_commission_amount) : "",
+          tp_commission_amount: data.tp_commission_amount ? String(data.tp_commission_amount) : "",
+          net_commission_amount: data.net_commission_amount ? String(data.net_commission_amount) : "",
+          commission_amount: data.commission_amount ? String(data.commission_amount) : "",
         });
 
         if (data.policy_active_date) {
@@ -178,6 +187,23 @@ const EditPolicy = () => {
 
     fetchPolicy();
   }, [policyId, user, navigate, toast]);
+
+  // Auto-calculate Total Commission = OD + TP + Net
+  useEffect(() => {
+    const od = parseFloat(formData.od_commission_amount) || 0;
+    const tp = parseFloat(formData.tp_commission_amount) || 0;
+    const net = parseFloat(formData.net_commission_amount) || 0;
+
+    // Auto-calculate if any of the components are present
+    if (formData.od_commission_amount || formData.tp_commission_amount || formData.net_commission_amount) {
+      const total = od + tp + net;
+      // Format to avoid floating point precision issues and infinite loops
+      const formattedTotal = total.toFixed(2).replace(/\.00$/, '');
+      if (total >= 0 && formData.commission_amount !== formattedTotal) {
+        setFormData(prev => ({ ...prev, commission_amount: formattedTotal }));
+      }
+    }
+  }, [formData.od_commission_amount, formData.tp_commission_amount, formData.net_commission_amount]);
 
   const toCamelCase = (text: string): string => {
     return text
@@ -301,6 +327,11 @@ const EditPolicy = () => {
             ? extracted.insurance_type
             : prev.insurance_type,
           product_name: extracted.product_name || prev.product_name,
+          // Commission extracts
+          od_commission_amount: extracted.od_commission_amount ? String(extracted.od_commission_amount) : prev.od_commission_amount,
+          tp_commission_amount: extracted.tp_commission_amount ? String(extracted.tp_commission_amount) : prev.tp_commission_amount,
+          net_commission_amount: extracted.net_commission_amount ? String(extracted.net_commission_amount) : prev.net_commission_amount,
+          commission_amount: extracted.total_commission_amount ? String(extracted.total_commission_amount) : (extracted.commission_amount ? String(extracted.commission_amount) : prev.commission_amount),
         }));
 
         if (extracted.policy_active_date) {
@@ -577,6 +608,10 @@ const EditPolicy = () => {
             premium_payment_term: formData.premium_payment_term ? parseInt(formData.premium_payment_term) : null,
             od_commission_percentage: formData.od_commission_percentage ? parseFloat(formData.od_commission_percentage) : 0,
             tp_commission_percentage: formData.tp_commission_percentage ? parseFloat(formData.tp_commission_percentage) : 0,
+            od_commission_amount: formData.od_commission_amount ? parseFloat(formData.od_commission_amount) : null,
+            tp_commission_amount: formData.tp_commission_amount ? parseFloat(formData.tp_commission_amount) : null,
+            net_commission_amount: formData.net_commission_amount ? parseFloat(formData.net_commission_amount) : null,
+            commission_amount: formData.commission_amount ? parseFloat(formData.commission_amount) : null,
           }
         }
       });
@@ -1149,29 +1184,29 @@ const EditPolicy = () => {
                 {/* Commission Section */}
                 <div className="sm:col-span-2 border-t pt-4 mt-2">
                   <h3 className="text-sm font-semibold text-gray-700 mb-3">Commission Details</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="commission_percentage" className="text-sm font-medium">Total Commission %</Label>
-                      <Input id="commission_percentage" name="commission_percentage" type="number" inputMode="decimal" value={formData.commission_percentage} onChange={handleInputChange} className="h-10 text-sm" placeholder="0" min="0" max="100" step="0.01" />
-                    </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {formData.insurance_type === 'Vehicle Insurance' && (
                       <>
                         <div className="space-y-2">
-                          <Label htmlFor="od_commission_percentage" className="text-sm font-medium">OD Commission %</Label>
-                          <Input id="od_commission_percentage" name="od_commission_percentage" type="number" inputMode="decimal" value={formData.od_commission_percentage} onChange={handleInputChange} className="h-10 text-sm" placeholder="0" min="0" max="100" step="0.01" />
+                          <Label htmlFor="od_commission_amount" className="text-sm font-medium">OD Commission (&#x20B9;)</Label>
+                          <Input id="od_commission_amount" name="od_commission_amount" type="number" inputMode="decimal" value={formData.od_commission_amount} onChange={handleInputChange} className="h-10 text-sm" placeholder="0" min="0" step="0.01" />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="tp_commission_percentage" className="text-sm font-medium">TP Commission %</Label>
-                          <Input id="tp_commission_percentage" name="tp_commission_percentage" type="number" inputMode="decimal" value={formData.tp_commission_percentage} onChange={handleInputChange} className="h-10 text-sm" placeholder="0" min="0" max="100" step="0.01" />
+                          <Label htmlFor="tp_commission_amount" className="text-sm font-medium">TP Commission (&#x20B9;)</Label>
+                          <Input id="tp_commission_amount" name="tp_commission_amount" type="number" inputMode="decimal" value={formData.tp_commission_amount} onChange={handleInputChange} className="h-10 text-sm" placeholder="0" min="0" step="0.01" />
                         </div>
                       </>
                     )}
+                    <div className="space-y-2">
+                      <Label htmlFor="net_commission_amount" className="text-sm font-medium">Net Commission (&#x20B9;)</Label>
+                      <Input id="net_commission_amount" name="net_commission_amount" type="number" inputMode="decimal" value={formData.net_commission_amount} onChange={handleInputChange} className="h-10 text-sm" placeholder="0" min="0" step="0.01" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="commission_amount" className="text-sm font-medium">Total Commission (&#x20B9;)</Label>
+                      <Input id="commission_amount" name="commission_amount" type="number" inputMode="decimal" value={formData.commission_amount} onChange={handleInputChange} className="h-10 text-sm" placeholder="0" min="0" step="0.01" />
+                      <p className="text-xs text-gray-500">Auto-calculated as OD + TP + Net if missing</p>
+                    </div>
                   </div>
-                  {formData.net_premium && formData.commission_percentage && (
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Estimated Commission: <span className="rupee-symbol">₹</span>{((parseFloat(formData.net_premium) * parseFloat(formData.commission_percentage)) / 100).toFixed(2)}
-                    </p>
-                  )}
                 </div>
 
                 <div className="space-y-2">

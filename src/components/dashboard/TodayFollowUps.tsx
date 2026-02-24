@@ -99,9 +99,9 @@ const TodayFollowUps = () => {
           <Phone className="h-4 w-4 text-blue-600" />
           Today's Follow-Ups
         </CardTitle>
-        <Button 
-          variant="ghost" 
-          size="sm" 
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={() => navigate('/due-policies')}
           className="text-xs h-7 gap-1"
         >
@@ -119,30 +119,33 @@ const TodayFollowUps = () => {
             const isUrgent = daysRemaining <= 3;
 
             return (
-              <div 
+              <div
                 key={policy.id}
-                className={`flex items-center justify-between p-2.5 rounded-lg ${
-                  isUrgent ? 'bg-red-50 border border-red-100' : 'bg-gray-50'
-                }`}
+                className={`flex items-center justify-between p-3 rounded-lg border transition-colors cursor-pointer group hover:shadow-sm ${isUrgent ? 'bg-red-50/50 border-red-100' : 'bg-gray-50 border-gray-100'
+                  }`}
+                onClick={() => navigate('/due-policies')}
               >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium text-gray-900 truncate">
+                <div className="flex-1 min-w-0 pr-2">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <p className="text-sm font-semibold text-gray-900 truncate">
                       {policy.client_name}
                     </p>
                     {isUrgent && (
                       <AlertCircle className="h-3 w-3 text-red-500 flex-shrink-0" />
                     )}
                   </div>
-                  <p className="text-xs text-gray-500 truncate">
-                    {policy.insurance_type} • Expires in {daysRemaining} day{daysRemaining !== 1 ? 's' : ''}
+                  <p className="text-[11px] sm:text-xs text-gray-500 truncate">
+                    {policy.insurance_type} • Call in {daysRemaining} day{daysRemaining !== 1 ? 's' : ''}
                   </p>
                 </div>
                 {policy.contact_number && (
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleWhatsAppCall(policy.contact_number, policy.client_name)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleWhatsAppCall(policy.contact_number, policy.client_name);
+                    }}
                     className="h-8 w-8 p-0 flex-shrink-0"
                   >
                     <Phone className="h-4 w-4 text-green-600" />

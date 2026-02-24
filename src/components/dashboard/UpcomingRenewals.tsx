@@ -49,7 +49,7 @@ const UpcomingRenewals = () => {
         }
 
         setPolicies(data || []);
-        
+
         // Calculate summary
         const totalPremium = data?.reduce((sum, p) => sum + (p.net_premium || 0), 0) || 0;
         setSummary({ count: count || 0, totalPremium });
@@ -70,6 +70,15 @@ const UpcomingRenewals = () => {
       return `₹${(amount / 1000).toFixed(1)}K`;
     }
     return `₹${amount.toFixed(0)}`;
+  };
+
+  const getDaysRemaining = (expiryDate: string) => {
+    const expiry = new Date(expiryDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    expiry.setHours(0, 0, 0, 0);
+    const diffTime = expiry.getTime() - today.getTime();
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };
 
   if (loading) {
@@ -94,9 +103,9 @@ const UpcomingRenewals = () => {
           <RefreshCw className="h-4 w-4 text-orange-600" />
           Upcoming Renewals (30 Days)
         </CardTitle>
-        <Button 
-          variant="ghost" 
-          size="sm" 
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={() => navigate('/due-policies')}
           className="text-xs h-7 gap-1"
         >
@@ -123,32 +132,39 @@ const UpcomingRenewals = () => {
               No renewals in the next 30 days
             </div>
           ) : (
-            policies.map(policy => (
-              <div 
-                key={policy.id}
-                className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">
-                    {policy.client_name}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {policy.insurance_type}
-                  </p>
-                </div>
-                <div className="text-right flex-shrink-0 ml-2">
-                  <p className="text-xs text-gray-500 flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
-                    {format(new Date(policy.policy_expiry_date), 'dd MMM')}
-                  </p>
-                  {policy.net_premium && (
-                    <p className="text-xs font-medium text-green-600">
-                      {formatCurrency(policy.net_premium)}
+            policies.map(policy => {
+              const daysUntilExpiry = getDaysRemaining(policy.policy_expiry_date);
+
+              return (
+                <div
+                  key={policy.id}
+                  className={`flex items-center justify-between p-3 rounded-lg border transition-colors cursor-pointer group hover:shadow-sm ${daysUntilExpiry <= 15 ? 'bg-red-50/50 border-red-100' : 'bg-gray-50 border-gray-100'
+                    }`}
+                  onClick={() => navigate('/due-policies')}
+                >
+                  <div className="flex-1 min-w-0 pr-2">
+                    <p className="text-sm font-semibold text-gray-900 truncate">
+                      {policy.client_name}
                     </p>
-                  )}
+                    <p className="text-[11px] sm:text-xs text-gray-500 truncate mt-0.5">
+                      {policy.policy_number} • {policy.insurance_type}
+                    </p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <div className={`text-xs font-semibold flex items-center justify-end gap-1 mb-1
+                        ${daysUntilExpiry <= 15 ? 'text-red-600 bg-red-50 px-2 py-0.5 rounded-sm' : 'text-gray-600'}`}>
+                      <Calendar className="h-3 w-3" />
+                      {format(new Date(policy.policy_expiry_date), 'dd MMM yyyy')}
+                    </div>
+                    {policy.net_premium ? (
+                      <p className="text-xs font-bold text-emerald-600">
+                        {formatCurrency(policy.net_premium)}
+                      </p>
+                    ) : null}
+                  </div>
                 </div>
-              </div>
-            ))
+              )
+            })
           )}
         </div>
       </CardContent>

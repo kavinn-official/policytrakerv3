@@ -13,6 +13,8 @@ interface PolicyCardProps {
   onEditPolicy: (policy: Policy) => void;
   onDeletePolicy: (policy: Policy) => void;
   onPreviewDocument?: (policy: Policy) => void;
+  isSelected?: boolean;
+  onToggleSelect?: (policy: Policy, checked: boolean) => void;
 }
 
 // Get icon based on insurance type
@@ -60,38 +62,50 @@ const getMissingFields = (policy: Policy): string[] => {
   return missing;
 };
 
-const PolicyCard = ({ policy, daysToExpiry, statusColor, onViewPolicy, onEditPolicy, onDeletePolicy, onPreviewDocument }: PolicyCardProps) => {
+const PolicyCard = ({ policy, daysToExpiry, statusColor, onViewPolicy, onEditPolicy, onDeletePolicy, onPreviewDocument, isSelected, onToggleSelect }: PolicyCardProps) => {
   const missingFields = getMissingFields(policy);
   const hasWarning = missingFields.length > 0;
   return (
-    <Card className={`shadow-sm hover:shadow-lg transition-all duration-200 ${hasWarning ? 'border-amber-400 border-2' : 'border-gray-200'}`}>
+    <Card className={`shadow-sm hover:shadow-lg transition-all duration-200 ${hasWarning ? 'border-amber-400 border-2' : 'border-gray-200'} ${isSelected ? 'ring-2 ring-blue-500 bg-blue-50/50' : ''}`}>
       <CardContent className="p-4 sm:p-6">
         <div className="flex justify-between items-start mb-4">
-          <div className="min-w-0 flex-1 mr-2">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="font-semibold text-blue-600 text-base sm:text-lg break-all">{policy.policy_number || "No Policy #"}</h3>
-              {policy.document_url && (
-                <span title="Document attached">
-                  <FileText className="h-4 w-4 text-purple-500 flex-shrink-0" />
-                </span>
-              )}
-              {hasWarning && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="cursor-help">
-                      <AlertTriangle className="h-4 w-4 text-amber-500 flex-shrink-0" />
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-xs">
-                    <p className="font-medium text-amber-600">Missing fields:</p>
-                    <ul className="text-sm list-disc list-inside">
-                      {missingFields.map(field => <li key={field}>{field}</li>)}
-                    </ul>
-                  </TooltipContent>
-                </Tooltip>
-              )}
+          <div className="min-w-0 flex-1 mr-2 flex items-start gap-3">
+            {onToggleSelect && (
+              <div className="mt-1">
+                <input
+                  type="checkbox"
+                  className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                  checked={!!isSelected}
+                  onChange={(e) => onToggleSelect(policy, e.target.checked)}
+                />
+              </div>
+            )}
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="font-semibold text-blue-600 text-base sm:text-lg break-all">{policy.policy_number || "No Policy #"}</h3>
+                {policy.document_url && (
+                  <span title="Document attached">
+                    <FileText className="h-4 w-4 text-purple-500 flex-shrink-0" />
+                  </span>
+                )}
+                {hasWarning && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="cursor-help">
+                        <AlertTriangle className="h-4 w-4 text-amber-500 flex-shrink-0" />
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      <p className="font-medium text-amber-600">Missing fields:</p>
+                      <ul className="text-sm list-disc list-inside">
+                        {missingFields.map(field => <li key={field}>{field}</li>)}
+                      </ul>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
+              <p className="text-xs sm:text-sm text-gray-600 truncate mt-1">{policy.company_name}</p>
             </div>
-            <p className="text-xs sm:text-sm text-gray-600 truncate">{policy.company_name}</p>
           </div>
           {(() => {
             const status = getComputedPolicyStatus(policy);

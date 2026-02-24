@@ -10,7 +10,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import UsageStatistics from "@/components/dashboard/UsageStatistics";
 
 interface Transaction {
   id: string;
@@ -108,18 +107,18 @@ const ProfilePage = () => {
   const validateMobileNumber = (number: string): boolean => {
     // Remove all non-digit characters
     const cleanedNumber = number.replace(/\D/g, '');
-    
+
     // Check if it's exactly 10 digits and starts with a valid Indian mobile prefix
     if (cleanedNumber.length !== 10) {
       setMobileError('Mobile number must be exactly 10 digits');
       return false;
     }
-    
+
     if (!/^[6-9]/.test(cleanedNumber)) {
       setMobileError('Please enter a valid Indian mobile number');
       return false;
     }
-    
+
     setMobileError('');
     return true;
   };
@@ -128,7 +127,7 @@ const ProfilePage = () => {
     // Only allow digits
     const cleanedValue = value.replace(/\D/g, '').slice(0, 10);
     setMobileNumber(cleanedValue);
-    
+
     if (cleanedValue.length > 0) {
       validateMobileNumber(cleanedValue);
     } else {
@@ -147,7 +146,7 @@ const ProfilePage = () => {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ 
+        .update({
           mobile_number: mobileNumber,
           updated_at: new Date().toISOString()
         })
@@ -358,7 +357,7 @@ const ProfilePage = () => {
             )}
 
             {!subscribed && (
-              <Button 
+              <Button
                 className="w-full mt-2"
                 onClick={() => navigate('/subscription')}
               >
@@ -369,9 +368,6 @@ const ProfilePage = () => {
           </CardContent>
         </Card>
       </div>
-
-      {/* Usage Statistics */}
-      <UsageStatistics />
 
       {/* Transaction History */}
       <Card className="shadow-lg border-0">
@@ -390,17 +386,15 @@ const ProfilePage = () => {
           ) : (
             <div className="space-y-3">
               {transactions.map((transaction) => (
-                <div 
+                <div
                   key={transaction.id}
                   className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-full ${
-                      transaction.status === 'active' ? 'bg-green-100' : 'bg-gray-100'
-                    }`}>
-                      <CreditCard className={`h-4 w-4 ${
-                        transaction.status === 'active' ? 'text-green-600' : 'text-gray-600'
-                      }`} />
+                    <div className={`p-2 rounded-full ${transaction.status === 'active' ? 'bg-green-100' : 'bg-gray-100'
+                      }`}>
+                      <CreditCard className={`h-4 w-4 ${transaction.status === 'active' ? 'text-green-600' : 'text-gray-600'
+                        }`} />
                     </div>
                     <div>
                       <p className="font-medium">{transaction.plan_name}</p>

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Download, Mail, Lock, Upload, FileSpreadsheet, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Download, Mail, Lock, Upload, FileSpreadsheet, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -12,6 +12,7 @@ import PolicyTableRow from "./policy/PolicyTableRow";
 import PolicySearch from "./policy/PolicySearch";
 import PolicyDateFilter from "./policy/PolicyDateFilter";
 import PolicyViewDialogRevamped from "./policy/PolicyViewDialogRevamped";
+import PolicyCalendar from "./policy/PolicyCalendar";
 import PolicyEditDialog from "./policy/PolicyEditDialog";
 import PolicyDocumentPreviewDialog from "./policy/PolicyDocumentPreviewDialog";
 import { Policy, getStatusColor, getDaysToExpiry, filterPolicies, downloadPoliciesAsExcel, getComputedPolicyStatus } from "@/utils/policyUtils";
@@ -53,10 +54,18 @@ const PolicyList = () => {
   const [documentPreviewOpen, setDocumentPreviewOpen] = useState(false);
   const [documentPreviewPolicy, setDocumentPreviewPolicy] = useState<Policy | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [dateFromFilter, setDateFromFilter] = useState<Date | undefined>(undefined);
-  const [dateToFilter, setDateToFilter] = useState<Date | undefined>(undefined);
+  const [rsdFromDate, setRsdFromDate] = useState<Date | undefined>(undefined);
+  const [rsdToDate, setRsdToDate] = useState<Date | undefined>(undefined);
+  const [redFromDate, setRedFromDate] = useState<Date | undefined>(undefined);
+  const [redToDate, setRedToDate] = useState<Date | undefined>(undefined);
+  const [createdFromDate, setCreatedFromDate] = useState<Date | undefined>(undefined);
+  const [createdToDate, setCreatedToDate] = useState<Date | undefined>(undefined);
   const [insuranceTypeFilter, setInsuranceTypeFilter] = useState<string>('All');
   const [fyFilter, setFyFilter] = useState<string>('All');
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
+  const [selectedPolicies, setSelectedPolicies] = useState<Set<string>>(new Set());
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+  const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -125,14 +134,34 @@ const PolicyList = () => {
 
   // Filter policies based on search term, date range (by policy start date), insurance type, and FY
   const filteredPolicies = filterPolicies(policies, searchTerm).filter((policy) => {
-    // Date filter - now based on policy_active_date (Risk Start Date) instead of created_at
     const policyStartDate = new Date(policy.policy_active_date);
-    if (dateFromFilter && policyStartDate < dateFromFilter) return false;
-    if (dateToFilter) {
-      const endOfDay = new Date(dateToFilter);
+
+    // Risk Start Date
+    if (rsdFromDate && policyStartDate < rsdFromDate) return false;
+    if (rsdToDate) {
+      const endOfDay = new Date(rsdToDate);
       endOfDay.setHours(23, 59, 59, 999);
       if (policyStartDate > endOfDay) return false;
     }
+
+    // Risk End Date
+    const red = new Date(policy.policy_expiry_date);
+    if (redFromDate && red < redFromDate) return false;
+    if (redToDate) {
+      const endOfDay = new Date(redToDate);
+      endOfDay.setHours(23, 59, 59, 999);
+      if (red > endOfDay) return false;
+    }
+
+    // Created Date
+    const cd = new Date(policy.created_at);
+    if (createdFromDate && cd < createdFromDate) return false;
+    if (createdToDate) {
+      const endOfDay = new Date(createdToDate);
+      endOfDay.setHours(23, 59, 59, 999);
+      if (cd > endOfDay) return false;
+    }
+
     // Insurance type filter
     if (insuranceTypeFilter !== 'All') {
       const policyType = (policy as any).insurance_type || 'Vehicle Insurance';
@@ -155,11 +184,16 @@ const PolicyList = () => {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, dateFromFilter, dateToFilter, insuranceTypeFilter, fyFilter]);
+    setSelectedPolicies(new Set()); // Clear selections on filter change
+  }, [searchTerm, rsdFromDate, rsdToDate, redFromDate, redToDate, createdFromDate, createdToDate, insuranceTypeFilter, fyFilter]);
 
   const handleClearDateFilter = () => {
-    setDateFromFilter(undefined);
-    setDateToFilter(undefined);
+    setRsdFromDate(undefined);
+    setRsdToDate(undefined);
+    setRedFromDate(undefined);
+    setRedToDate(undefined);
+    setCreatedFromDate(undefined);
+    setCreatedToDate(undefined);
   };
 
   const handleViewPolicy = (policy: Policy) => {
@@ -174,6 +208,25 @@ const PolicyList = () => {
   const handleDeletePolicy = (policy: Policy) => {
     setPolicyToDelete(policy);
     setIsDeleteDialogOpen(true);
+  };
+
+  const handleToggleSelect = (policy: Policy, checked: boolean) => {
+    const newSelected = new Set(selectedPolicies);
+    if (checked) {
+      newSelected.add(policy.id);
+    } else {
+      newSelected.delete(policy.id);
+    }
+    setSelectedPolicies(newSelected);
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const allIds = new Set(filteredPolicies.map(p => p.id));
+      setSelectedPolicies(allIds);
+    } else {
+      setSelectedPolicies(new Set());
+    }
   };
 
   const handlePreviewDocument = (policy: Policy) => {
@@ -207,6 +260,39 @@ const PolicyList = () => {
         description: error.message || "Failed to delete policy. Please try again.",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedPolicies.size === 0) return;
+    setIsBulkDeleting(true);
+
+    try {
+      const idsToDelete = Array.from(selectedPolicies);
+      const { error } = await supabase
+        .from("policies")
+        .delete()
+        .in("id", idsToDelete);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `${idsToDelete.length} policies deleted successfully.`,
+      });
+
+      setIsBulkDeleteDialogOpen(false);
+      setSelectedPolicies(new Set());
+      fetchPolicies();
+    } catch (error: any) {
+      console.error("Error bulk deleting policies:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete selected policies.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsBulkDeleting(false);
     }
   };
 
@@ -410,8 +496,41 @@ const PolicyList = () => {
   return (
     <>
       <div className="space-y-4 sm:space-y-6">
-        <Card className="shadow-lg border-0">
-          <CardHeader className="px-4 sm:px-6">
+        <Card className="shadow-lg border-0 relative">
+          {/* Bulk Action Toolbar */}
+          {selectedPolicies.size > 0 && (
+            <div className="absolute top-0 left-0 right-0 z-10 bg-blue-50 border-b border-blue-200 p-3 sm:p-4 rounded-t-lg flex items-center justify-between shadow-sm animate-in fade-in slide-in-from-top-4">
+              <div className="flex items-center gap-4">
+                <span className="bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full">
+                  {selectedPolicies.size}
+                </span>
+                <span className="text-sm font-medium text-blue-900 hidden sm:inline">
+                  policies selected
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedPolicies(new Set())}
+                  className="text-blue-700 hover:text-blue-800 hover:bg-blue-100 h-8 text-xs font-medium"
+                >
+                  Clear Selection
+                </Button>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setIsBulkDeleteDialogOpen(true)}
+                  className="h-8 shadow-sm flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  <span className="hidden sm:inline">Delete Selected</span>
+                </Button>
+              </div>
+            </div>
+          )}
+
+          <CardHeader className={`px-4 sm:px-6 ${selectedPolicies.size > 0 ? "pt-20 sm:pt-20" : ""}`}>
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-3 sm:space-y-0">
               <CardTitle className="text-lg sm:text-xl font-semibold text-gray-900">Policy Management</CardTitle>
               <div className="flex flex-col space-y-2">
@@ -452,10 +571,34 @@ const PolicyList = () => {
           </CardHeader>
           <CardContent className="px-4 sm:px-6">
             <div className="flex flex-col gap-3 mb-4">
-              <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
                 <div className="flex-1">
                   <PolicySearch searchTerm={searchTerm} onSearchChange={setSearchTerm} />
                 </div>
+
+                <div className="flex bg-gray-100 p-1 rounded-md mb-2 sm:mb-0">
+                  <button
+                    onClick={() => setViewMode('list')}
+                    className={`px-3 py-1.5 text-sm font-medium rounded-sm transition-colors ${viewMode === 'list'
+                      ? 'bg-white text-gray-900 shadow-sm'
+                      : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                  >
+                    List
+                  </button>
+                  <button
+                    onClick={() => setViewMode('calendar')}
+                    className={`px-3 py-1.5 text-sm font-medium rounded-sm transition-colors ${viewMode === 'calendar'
+                      ? 'bg-white text-gray-900 shadow-sm'
+                      : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                  >
+                    Calendar
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3">
                 <div className="w-full sm:w-48">
                   <Select value={insuranceTypeFilter} onValueChange={setInsuranceTypeFilter}>
                     <SelectTrigger>
@@ -488,10 +631,21 @@ const PolicyList = () => {
                   </div>
                 )}
                 <PolicyDateFilter
-                  fromDate={dateFromFilter}
-                  toDate={dateToFilter}
-                  onFromDateChange={setDateFromFilter}
-                  onToDateChange={setDateToFilter}
+                  rsdFromDate={rsdFromDate}
+                  rsdToDate={rsdToDate}
+                  onRsdFromChange={setRsdFromDate}
+                  onRsdToChange={setRsdToDate}
+
+                  redFromDate={redFromDate}
+                  redToDate={redToDate}
+                  onRedFromChange={setRedFromDate}
+                  onRedToChange={setRedToDate}
+
+                  createdFromDate={createdFromDate}
+                  createdToDate={createdToDate}
+                  onCreatedFromChange={setCreatedFromDate}
+                  onCreatedToChange={setCreatedToDate}
+
                   onClear={handleClearDateFilter}
                 />
               </div>
@@ -520,6 +674,8 @@ const PolicyList = () => {
                   )}
                 </Button>
               </div>
+            ) : viewMode === 'calendar' ? (
+              <PolicyCalendar policies={filteredPolicies} onViewPolicy={handleViewPolicy} />
             ) : (
               <>
                 {/* Desktop Table View */}
@@ -527,6 +683,17 @@ const PolicyList = () => {
                   <table className="w-full border-collapse">
                     <thead>
                       <tr className="border-b border-gray-200 bg-gray-50">
+                        <th className="text-left p-4 font-semibold text-gray-900 w-12">
+                          <div className="flex items-center justify-center">
+                            <input
+                              type="checkbox"
+                              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                              checked={filteredPolicies.length > 0 && selectedPolicies.size === filteredPolicies.length}
+                              onChange={(e) => handleSelectAll(e.target.checked)}
+                              title="Select All"
+                            />
+                          </div>
+                        </th>
                         <th className="text-left p-4 font-semibold text-gray-900">Policy Number</th>
                         <th className="text-left p-4 font-semibold text-gray-900">Client Name</th>
                         <th className="text-left p-4 font-semibold text-gray-900">Agent / Reference</th>
@@ -551,6 +718,8 @@ const PolicyList = () => {
                             onEditPolicy={handleEditPolicy}
                             onDeletePolicy={handleDeletePolicy}
                             onPreviewDocument={handlePreviewDocument}
+                            isSelected={selectedPolicies.has(policy.id)}
+                            onToggleSelect={handleToggleSelect}
                           />
                         );
                       })}
@@ -560,6 +729,21 @@ const PolicyList = () => {
 
                 {/* Mobile Card View */}
                 <div className="lg:hidden space-y-4">
+                  {/* Select All Checkbox for Mobile */}
+                  {filteredPolicies.length > 0 && (
+                    <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg border border-gray-200 mb-2">
+                      <input
+                        type="checkbox"
+                        id="mobile-select-all"
+                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                        checked={selectedPolicies.size === filteredPolicies.length}
+                        onChange={(e) => handleSelectAll(e.target.checked)}
+                      />
+                      <label htmlFor="mobile-select-all" className="text-sm font-medium text-gray-700 cursor-pointer">
+                        Select All Policies
+                      </label>
+                    </div>
+                  )}
                   {paginatedPolicies.map((policy) => {
                     const daysToExpiry = getDaysToExpiry(policy.policy_expiry_date);
                     const statusColor = getStatusColor(getComputedPolicyStatus(policy));
@@ -573,6 +757,8 @@ const PolicyList = () => {
                         onEditPolicy={handleEditPolicy}
                         onDeletePolicy={handleDeletePolicy}
                         onPreviewDocument={handlePreviewDocument}
+                        isSelected={selectedPolicies.has(policy.id)}
+                        onToggleSelect={handleToggleSelect}
                       />
                     );
                   })}
@@ -699,6 +885,28 @@ const PolicyList = () => {
               className="bg-red-600 hover:bg-red-700"
             >
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      {/* Bulk Delete Confirmation Dialog */}
+      <AlertDialog open={isBulkDeleteDialogOpen} onOpenChange={setIsBulkDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {selectedPolicies.size} Policies?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the {selectedPolicies.size} selected policies.
+              This action cannot be undone. Are you sure you want to proceed?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isBulkDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBulkDelete}
+              disabled={isBulkDeleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isBulkDeleting ? 'Deleting...' : 'Delete Selected'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -19,7 +19,10 @@ interface StatItem {
 interface PolicyData {
   policy_expiry_date: string;
   created_at: string;
+  commission_amount: number | null;
   net_premium: number | null;
+  commission_percentage: number | null;
+  first_year_commission: number | null;
 }
 
 const DashboardStats = () => {
@@ -31,9 +34,8 @@ const DashboardStats = () => {
     duePolicies: 0,
     activePolicies: 0,
     expiredPolicies: 0,
-    newPoliciesToday: 0,
-    todayNetPremium: 0,
-    monthlyNetPremium: 0,
+    totalCommission: 0,
+    newPoliciesThisMonth: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -73,7 +75,7 @@ const DashboardStats = () => {
       // Fetch user's policies only - select only the columns we need
       const { data: policies, error } = await supabase
         .from('policies')
-        .select('policy_expiry_date, created_at, net_premium')
+        .select('policy_expiry_date, created_at, commission_amount, net_premium, commission_percentage, first_year_commission')
         .eq('user_id', user.id);
 
       if (error) {
@@ -102,27 +104,20 @@ const DashboardStats = () => {
         return expiryDate < today;
       }).length || 0;
 
-      const newPoliciesToday = policies?.filter((policy: PolicyData) => {
+      const newPoliciesThisMonth = policies?.filter((policy: PolicyData) => {
         const createdAt = new Date(policy.created_at);
-        return createdAt >= todayStart;
+        return createdAt >= monthStart;
       }).length || 0;
 
-      // Calculate today's net premium
-      const todayNetPremium = policies?.reduce((sum: number, policy: PolicyData) => {
-        const createdAt = new Date(policy.created_at);
-        if (createdAt >= todayStart) {
-          return sum + (policy.net_premium || 0);
-        }
-        return sum;
-      }, 0) || 0;
-
-      // Calculate monthly net premium
-      const monthlyNetPremium = policies?.reduce((sum: number, policy: PolicyData) => {
-        const createdAt = new Date(policy.created_at);
-        if (createdAt >= monthStart) {
-          return sum + (policy.net_premium || 0);
-        }
-        return sum;
+      // Calculate total commission earned using exact formula from other areas
+      const totalCommission = policies?.reduce((sum: number, policy: PolicyData) => {
+        const commissionAmount = Number(policy.commission_amount) || 0;
+        const premium = Number(policy.net_premium) || 0;
+        const commissionRate = Number(policy.commission_percentage) || 0;
+        const comm = commissionAmount > 0
+          ? commissionAmount
+          : (Number(policy.first_year_commission) || ((premium * commissionRate) / 100));
+        return sum + comm;
       }, 0) || 0;
 
       setStats({
@@ -130,9 +125,8 @@ const DashboardStats = () => {
         duePolicies,
         activePolicies,
         expiredPolicies,
-        newPoliciesToday,
-        todayNetPremium,
-        monthlyNetPremium,
+        totalCommission,
+        newPoliciesThisMonth,
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -150,62 +144,66 @@ const DashboardStats = () => {
     return `₹${amount.toFixed(0)}`;
   };
 
-  const statsData: StatItem[] = [
+  const statsData = [
     {
       title: "Total Policies",
       value: isLoading ? "..." : stats.totalPolicies.toString(),
-      subtitle: subscribed ? "Unlimited" : `Used: ${stats.totalPolicies} / 200`,
+      trend: stats.newPoliciesThisMonth > 0 ? `+${stats.newPoliciesThisMonth} this month` : 'All time',
+      trendUp: true,
       icon: FileText,
-      color: "bg-blue-500",
-      textColor: "text-blue-600",
-    },
-    {
-      title: "New Policies Today",
-      value: isLoading ? "..." : stats.newPoliciesToday.toString(),
-      subtitle: "Added today",
-      icon: PlusCircle,
-      color: "bg-purple-500",
-      textColor: "text-purple-600",
-    },
-    {
-      title: "Today's Premium",
-      value: isLoading ? "..." : formatCurrency(stats.todayNetPremium),
-      subtitle: "Net premium today",
-      icon: IndianRupee,
-      color: "bg-emerald-500",
-      textColor: "text-emerald-600",
-    },
-    {
-      title: "Monthly Premium",
-      value: isLoading ? "..." : formatCurrency(stats.monthlyNetPremium),
-      subtitle: "This month's total",
-      icon: TrendingUp,
-      color: "bg-cyan-500",
-      textColor: "text-cyan-600",
-    },
-    {
-      title: "Due for Renewal",
-      value: isLoading ? "..." : stats.duePolicies.toString(),
-      subtitle: "Next 30 days",
-      icon: AlertTriangle,
-      color: "bg-orange-500",
-      textColor: "text-orange-600",
+      iconBg: "bg-blue-100",
+      iconColor: "text-blue-600",
+      link: "/policies",
     },
     {
       title: "Active Policies",
       value: isLoading ? "..." : stats.activePolicies.toString(),
-      subtitle: "Currently active",
+      trend: "Currently active",
+      trendUp: true,
       icon: CheckCircle,
-      color: "bg-green-500",
-      textColor: "text-green-600",
+      iconBg: "bg-emerald-100",
+      iconColor: "text-emerald-600",
+      link: "/policies",
+    },
+    {
+      title: "Expiring Soon",
+      value: isLoading ? "..." : stats.duePolicies.toString(),
+      trend: "Next 30 days",
+      trendUp: false,
+      icon: AlertTriangle,
+      iconBg: "bg-amber-100",
+      iconColor: "text-amber-600",
+      link: "/due-policies",
     },
     {
       title: "Expired Policies",
       value: isLoading ? "..." : stats.expiredPolicies.toString(),
-      subtitle: "Need attention",
+      trend: "Need renewals",
+      trendUp: false,
       icon: Clock,
-      color: "bg-red-500",
-      textColor: "text-red-600",
+      iconBg: "bg-red-100",
+      iconColor: "text-red-600",
+      link: "/expired-policies",
+    },
+    {
+      title: "Total Commission",
+      value: isLoading ? "..." : formatCurrency(stats.totalCommission),
+      trend: "Total earned",
+      trendUp: true,
+      icon: IndianRupee,
+      iconBg: "bg-purple-100",
+      iconColor: "text-purple-600",
+      link: "/reports",
+    },
+    {
+      title: "Pending Renewals",
+      value: isLoading ? "..." : stats.duePolicies.toString(),
+      trend: "Requires action",
+      trendUp: false,
+      icon: TrendingUp,
+      iconBg: "bg-orange-100",
+      iconColor: "text-orange-600",
+      link: "/due-policies",
     },
   ];
 
@@ -226,24 +224,36 @@ const DashboardStats = () => {
   }
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3 sm:gap-4 lg:gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4 lg:gap-5">
       {statsData.map((stat, index) => {
         const IconComponent = stat.icon;
         return (
-          <Card key={index} className="shadow-lg border-0 hover:shadow-xl transition-shadow duration-200">
-            <CardContent className="p-3 sm:p-4">
-              <div className="flex items-center justify-between mb-3">
-                <div className={`p-2 rounded-full ${stat.color}`}>
-                  <IconComponent className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+          <a
+            key={index}
+            href={stat.link}
+            className="block"
+          >
+            <Card className="shadow-sm border-gray-100 hover:shadow-md hover:border-gray-300 transition-all duration-200 h-full cursor-pointer bg-white group">
+              <CardContent className="p-3 sm:p-5 flex flex-col h-full justify-between">
+                <div className="flex items-center justify-between mb-2 sm:mb-4">
+                  <div className={`p-2 sm:p-2.5 rounded-lg ${stat.iconBg} group-hover:scale-110 transition-transform`}>
+                    <IconComponent className={`h-4 w-4 sm:h-5 sm:w-5 ${stat.iconColor}`} />
+                  </div>
                 </div>
-              </div>
-              <div className="space-y-1">
-                <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">{stat.value}</h3>
-                <p className="text-xs font-medium text-gray-900 truncate">{stat.title}</p>
-                <p className={`text-xs ${stat.textColor} truncate`}>{stat.subtitle}</p>
-              </div>
-            </CardContent>
-          </Card>
+                <div>
+                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight leading-none mb-1">{stat.value}</h3>
+                  <p className="text-xs sm:text-sm font-medium text-gray-500">{stat.title}</p>
+
+                  <div className="mt-3 flex items-center">
+                    <span className={`text-[10px] sm:text-xs font-medium px-2 py-0.5 rounded-full ${stat.trendUp ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-600'
+                      }`}>
+                      {stat.trend}
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </a>
         );
       })}
     </div>
