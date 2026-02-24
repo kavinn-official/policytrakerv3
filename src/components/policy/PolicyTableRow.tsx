@@ -11,11 +11,23 @@ interface PolicyTableRowProps {
   onEditPolicy: (policy: Policy) => void;
   onDeletePolicy: (policy: Policy) => void;
   onPreviewDocument?: (policy: Policy) => void;
+  isSelected?: boolean;
+  onToggleSelect?: (policy: Policy, checked: boolean) => void;
 }
 
-const PolicyTableRow = ({ policy, daysToExpiry, statusColor, onViewPolicy, onEditPolicy, onDeletePolicy, onPreviewDocument }: PolicyTableRowProps) => {
+const PolicyTableRow = ({ policy, daysToExpiry, statusColor, onViewPolicy, onEditPolicy, onDeletePolicy, onPreviewDocument, isSelected, onToggleSelect }: PolicyTableRowProps) => {
   return (
-    <tr className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+    <tr className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${isSelected ? 'bg-blue-50/50' : ''}`}>
+      <td className="p-3 sm:p-4 w-12">
+        <div className="flex items-center justify-center">
+          <input
+            type="checkbox"
+            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+            checked={!!isSelected}
+            onChange={(e) => onToggleSelect?.(policy, e.target.checked)}
+          />
+        </div>
+      </td>
       <td className="p-3 sm:p-4">
         <div className="flex items-center gap-2">
           <span className="font-medium text-blue-600 text-sm sm:text-base">{policy.policy_number}</span>

@@ -35,6 +35,10 @@ export interface Policy {
   first_year_commission?: number;
   od_commission_percentage?: number;
   tp_commission_percentage?: number;
+  commission_amount?: number;
+  od_commission_amount?: number;
+  tp_commission_amount?: number;
+  net_commission_amount?: number;
   whatsapp_reminder_count?: number;
   product_name?: string;
 }
@@ -125,13 +129,17 @@ export const downloadPoliciesAsExcel = (policies: Policy[], filename: string) =>
   const worksheet = XLSX.utils.json_to_sheet(policies.map((policy, index) => {
     const premium = Number(policy.net_premium) || 0;
     const commissionRate = Number(policy.commission_percentage) || 0;
-    const commission = Number(policy.first_year_commission) || ((premium * commissionRate) / 100);
+    const commissionAmount = Number(policy.commission_amount) || 0;
+    const commission = commissionAmount > 0 ? commissionAmount : (Number(policy.first_year_commission) || ((premium * commissionRate) / 100));
     const odPremium = Number(policy.basic_od_premium) || 0;
     const tpPremium = Number(policy.basic_tp_premium) || 0;
     const odCommRate = Number(policy.od_commission_percentage) || 0;
     const tpCommRate = Number(policy.tp_commission_percentage) || 0;
-    const odCommission = odPremium > 0 && odCommRate > 0 ? (odPremium * odCommRate / 100) : '';
-    const tpCommission = tpPremium > 0 && tpCommRate > 0 ? (tpPremium * tpCommRate / 100) : '';
+    const odCommAmt = Number(policy.od_commission_amount) || 0;
+    const tpCommAmt = Number(policy.tp_commission_amount) || 0;
+    const netCommAmt = Number(policy.net_commission_amount) || 0;
+    const odCommission = odCommAmt > 0 ? odCommAmt : (odPremium > 0 && odCommRate > 0 ? (odPremium * odCommRate / 100) : '');
+    const tpCommission = tpCommAmt > 0 ? tpCommAmt : (tpPremium > 0 && tpCommRate > 0 ? (tpPremium * tpCommRate / 100) : '');
 
     return {
       'Policy Number': policy.policy_number,
@@ -165,6 +173,7 @@ export const downloadPoliciesAsExcel = (policies: Policy[], filename: string) =>
       'OD Commission Amount': odCommission,
       'TP Commission %': tpCommRate || '',
       'TP Commission Amount': tpCommission,
+      'Net Commission Amount': netCommAmt > 0 ? netCommAmt : '',
       'Created At': formatDateDDMMYYYY(policy.created_at),
     };
   }));

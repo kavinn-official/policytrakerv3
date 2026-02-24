@@ -38,7 +38,8 @@ const CommissionAnalytics = ({ policies, formatCurrency, periodLabel }: Commissi
   policies.forEach(policy => {
     const premium = Number(policy.net_premium) || 0;
     const commissionRate = Number(policy.commission_percentage) || 0;
-    const firstYearComm = Number(policy.first_year_commission) || ((premium * commissionRate) / 100);
+    const commissionAmount = Number(policy.commission_amount) || 0;
+    const firstYearComm = commissionAmount > 0 ? commissionAmount : (Number(policy.first_year_commission) || ((premium * commissionRate) / 100));
 
     if (commissionRate > 0) {
       policiesWithCommission++;

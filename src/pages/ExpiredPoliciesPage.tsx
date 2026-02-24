@@ -15,17 +15,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { 
-  MessageSquare, 
-  Phone, 
-  Calendar, 
-  Download, 
-  Send, 
-  Search, 
-  ChevronLeft, 
-  ChevronRight, 
-  RefreshCw, 
-  Edit, 
+import {
+  MessageSquare,
+  Phone,
+  Calendar,
+  Download,
+  Send,
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  RefreshCw,
+  Edit,
   Trash2,
   AlertTriangle,
   ArrowLeft
@@ -164,16 +164,16 @@ const ExpiredPoliciesPage = () => {
 
   const generateWhatsAppMessage = (policy: ExpiredPolicy) => {
     const expiryDate = new Date(policy.policy_expiry_date);
-    const formattedExpiry = expiryDate.toLocaleDateString('en-IN', { 
-      day: '2-digit', 
-      month: '2-digit', 
-      year: 'numeric' 
+    const formattedExpiry = expiryDate.toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
     });
-    
-    const vehicleDetails = policy.vehicle_make && policy.vehicle_model 
+
+    const vehicleDetails = policy.vehicle_make && policy.vehicle_model
       ? `${policy.vehicle_make} - ${policy.vehicle_model}`
       : policy.vehicle_make || 'N/A';
-    
+
     return `Hi ${policy.client_name},
 Your policy ${policy.policy_number} has expired ${policy.daysExpired} days ago.
 Vehicle Details: ${vehicleDetails}
@@ -186,11 +186,11 @@ Please contact us immediately for renewal.`;
   const handleWhatsApp = async (policy: ExpiredPolicy) => {
     const message = generateWhatsAppMessage(policy);
     const phoneNumber = policy.contact_number?.replace(/\D/g, '') || '';
-    
-    const whatsappUrl = phoneNumber 
+
+    const whatsappUrl = phoneNumber
       ? `https://wa.me/91${phoneNumber}?text=${encodeURIComponent(message)}`
       : `https://wa.me/?text=${encodeURIComponent(message)}`;
-    
+
     window.open(whatsappUrl, '_blank');
 
     try {
@@ -200,8 +200,8 @@ Please contact us immediately for renewal.`;
         .eq('id', policy.id);
 
       if (!error) {
-        setExpiredPolicies(prev => prev.map(p => 
-          p.id === policy.id 
+        setExpiredPolicies(prev => prev.map(p =>
+          p.id === policy.id
             ? { ...p, whatsapp_reminder_count: (p.whatsapp_reminder_count || 0) + 1 }
             : p
         ));
@@ -209,10 +209,10 @@ Please contact us immediately for renewal.`;
     } catch (error) {
       console.error('Error incrementing WhatsApp count:', error);
     }
-    
+
     toast({
       title: "WhatsApp Message",
-      description: phoneNumber 
+      description: phoneNumber
         ? `Opening WhatsApp for ${policy.client_name}`
         : `Opening WhatsApp - please select a contact`,
     });
@@ -304,7 +304,7 @@ Please contact us immediately for renewal.`;
 
   const handleBulkWhatsApp = () => {
     const selected = filteredPolicies.filter(p => selectedPolicies.has(p.id));
-    
+
     if (selected.length === 0) {
       toast({
         title: "No Policies Selected",
@@ -318,7 +318,7 @@ Please contact us immediately for renewal.`;
       setTimeout(() => {
         const message = generateWhatsAppMessage(policy);
         const phoneNumber = policy.contact_number?.replace(/\D/g, '') || '';
-        const whatsappUrl = phoneNumber 
+        const whatsappUrl = phoneNumber
           ? `https://wa.me/91${phoneNumber}?text=${encodeURIComponent(message)}`
           : `https://wa.me/?text=${encodeURIComponent(message)}`;
         window.open(whatsappUrl, '_blank');
@@ -357,10 +357,10 @@ Please contact us immediately for renewal.`;
 
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Expired Policies');
-    
+
     const fileName = `expired_policies_${new Date().toISOString().split('T')[0]}.xlsx`;
     XLSX.writeFile(workbook, fileName);
-    
+
     toast({
       title: "Download Complete",
       description: `Downloaded ${filteredPolicies.length} expired policies to ${fileName}`,
@@ -374,11 +374,11 @@ Please contact us immediately for renewal.`;
           <Button
             variant="outline"
             size="sm"
-            onClick={() => navigate('/due-policies')}
+            onClick={() => navigate(-1)}
             className="flex items-center gap-2 h-9 px-3"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span className="hidden xs:inline">Due Policies</span>
+            <span className="hidden xs:inline">Back</span>
           </Button>
           <div>
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Expired Policies</h1>
@@ -403,11 +403,11 @@ Please contact us immediately for renewal.`;
           <Button
             variant="outline"
             size="sm"
-            onClick={() => navigate('/due-policies')}
+            onClick={() => navigate(-1)}
             className="flex items-center gap-2 h-9 px-3"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span className="hidden xs:inline">Due Policies</span>
+            <span className="hidden xs:inline">Back</span>
           </Button>
           <div>
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Expired Policies</h1>
@@ -450,7 +450,7 @@ Please contact us immediately for renewal.`;
               </label>
             </div>
           )}
-          
+
           {filteredPolicies.length === 0 ? (
             <div className="text-center py-12">
               <AlertTriangle className="h-12 w-12 text-gray-300 mx-auto mb-4" />
@@ -500,27 +500,27 @@ Please contact us immediately for renewal.`;
                           </Button>
                         </div>
                       </div>
-                      
+
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div className="space-y-1">
                           <h3 className="font-semibold text-gray-900 text-sm sm:text-base">{policy.client_name}</h3>
                           <p className="text-xs sm:text-sm text-gray-600 break-all">{policy.contact_number || 'No contact number'}</p>
                           <p className="text-xs sm:text-sm text-gray-600 break-all">Policy: {policy.policy_number}</p>
                         </div>
-                        
+
                         <div className="space-y-1">
                           <p className="text-xs sm:text-sm font-medium text-gray-900">Vehicle Details</p>
                           <p className="text-xs sm:text-sm text-gray-600">{policy.vehicle_make} {policy.vehicle_model}</p>
                           <p className="text-xs sm:text-sm text-gray-600">{policy.vehicle_number}</p>
                         </div>
-                        
+
                         <div className="space-y-1">
                           <p className="text-xs sm:text-sm font-medium text-gray-900">Company & Agent</p>
                           <p className="text-xs sm:text-sm text-gray-600">{policy.company_name || 'Not specified'}</p>
                           <p className="text-xs sm:text-sm text-gray-600">Agent: {policy.agent_code || 'N/A'}</p>
                           <p className="text-xs sm:text-sm text-gray-600">Ref: {policy.reference || 'N/A'}</p>
                         </div>
-                        
+
                         <div className="space-y-1">
                           <p className="text-xs sm:text-sm text-red-600 font-medium">Expired: {formatDateDDMMYYYY(policy.policy_expiry_date)}</p>
                           <p className="text-xs sm:text-sm text-red-600 font-semibold">Status: Expired</p>
@@ -536,24 +536,24 @@ Please contact us immediately for renewal.`;
                       </div>
 
                       <div className="flex flex-row gap-2 pt-2">
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           className="bg-blue-600 hover:bg-blue-700 text-white min-h-[40px] flex-1"
                           onClick={() => handleRenewPolicy(policy)}
                         >
                           <RefreshCw className="h-4 w-4 mr-1" />
                           <span>Renew</span>
                         </Button>
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           className="bg-green-600 hover:bg-green-700 text-white min-h-[40px] flex-1"
                           onClick={() => handleWhatsApp(policy)}
                         >
                           <MessageSquare className="h-4 w-4 mr-1" />
                           <span>Follow Up</span>
                         </Button>
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           variant="outline"
                           className="hover:bg-blue-50 hover:border-blue-200 min-h-[40px] w-10 sm:flex-1 sm:w-auto p-0 sm:px-3"
                           onClick={() => handleCall(policy)}
@@ -626,7 +626,7 @@ Please contact us immediately for renewal.`;
 
       {filteredPolicies.length > 0 && (
         <div className="flex flex-col sm:flex-row justify-center space-y-2 sm:space-y-0 sm:space-x-4 px-4 sm:px-0">
-          <Button 
+          <Button
             variant="default"
             onClick={handleBulkWhatsApp}
             disabled={selectedPolicies.size === 0}
@@ -635,7 +635,7 @@ Please contact us immediately for renewal.`;
             <Send className="h-4 w-4 mr-2" />
             Follow Up Selected ({selectedPolicies.size})
           </Button>
-          <Button 
+          <Button
             variant="outline"
             onClick={downloadExpiredPolicies}
             className="hover:bg-blue-50 border-blue-200 text-blue-700 hover:text-blue-800 min-h-[44px] w-full sm:w-auto"

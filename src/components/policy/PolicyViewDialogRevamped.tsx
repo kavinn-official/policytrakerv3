@@ -64,7 +64,14 @@ const PolicyViewDialogRevamped = ({ policy, open, onOpenChange }: PolicyViewDial
 
   const netPremium = Number(policy.net_premium) || 0;
   const commissionPercent = Number(policy.commission_percentage) || 0;
-  const firstYearCommission = Number(policy.first_year_commission) || ((netPremium * commissionPercent) / 100);
+  const commissionAmount = Number(policy.commission_amount) || 0;
+  const firstYearCommission = Number(policy.first_year_commission) || 0;
+
+  const odCommissionAmount = Number(policy.od_commission_amount) || 0;
+  const tpCommissionAmount = Number(policy.tp_commission_amount) || 0;
+  const netCommissionAmount = Number(policy.net_commission_amount) || 0;
+
+  const displayTotalCommission = commissionAmount > 0 ? commissionAmount : (firstYearCommission > 0 ? firstYearCommission : ((netPremium * commissionPercent) / 100));
 
   // Check if value is meaningful (not empty, null, undefined, 0, "0", or "00")
   const hasValue = (val: string | number | null | undefined): boolean => {
@@ -296,12 +303,34 @@ const PolicyViewDialogRevamped = ({ policy, open, onOpenChange }: PolicyViewDial
                     <InfoRow icon={Calendar} label="Premium Frequency" value={policy.premium_frequency} iconColor="text-amber-600" />
                   </>
                 )}
-                {commissionPercent > 0 && (
+                {odCommissionAmount > 0 && (
                   <>
                     <Separator className="my-1" />
-                    <InfoRow icon={Percent} label="Commission Rate" value={`${commissionPercent}%`} iconColor="text-amber-600" />
+                    <InfoRow icon={IndianRupee} label="OD Commission" value={`₹${odCommissionAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`} iconColor="text-amber-600" />
+                  </>
+                )}
+                {tpCommissionAmount > 0 && (
+                  <>
                     <Separator className="my-1" />
-                    <InfoRow icon={IndianRupee} label="Commission Amount" value={`₹${firstYearCommission.toLocaleString('en-IN')}`} iconColor="text-amber-600" />
+                    <InfoRow icon={IndianRupee} label="TP Commission" value={`₹${tpCommissionAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`} iconColor="text-amber-600" />
+                  </>
+                )}
+                {netCommissionAmount > 0 && (
+                  <>
+                    <Separator className="my-1" />
+                    <InfoRow icon={IndianRupee} label="Net Commission" value={`₹${netCommissionAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`} iconColor="text-amber-600" />
+                  </>
+                )}
+                {displayTotalCommission > 0 && (
+                  <>
+                    <Separator className="my-1" />
+                    <InfoRow icon={IndianRupee} label="Total Commission" value={`₹${displayTotalCommission.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`} iconColor="text-amber-600" />
+                  </>
+                )}
+                {commissionPercent > 0 && commissionAmount === 0 && (
+                  <>
+                    <Separator className="my-1" />
+                    <InfoRow icon={Percent} label="Commission Rate (Legacy)" value={`${commissionPercent}%`} iconColor="text-amber-600" />
                   </>
                 )}
               </div>
