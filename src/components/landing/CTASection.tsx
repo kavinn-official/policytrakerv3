@@ -4,61 +4,67 @@ import { ArrowRight, CheckCircle, Zap } from "lucide-react";
 
 const CTASection = () => {
   return (
-    <section className="py-16 sm:py-24 bg-gradient-to-r from-cyan-600 via-teal-600 to-emerald-600" aria-labelledby="cta-heading">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+    <section className="py-24 sm:py-32 relative overflow-hidden bg-slate-900" aria-labelledby="cta-heading">
+      <div className="absolute inset-0 bg-slate-900 overflow-hidden z-0">
+        {/* Animated Background Mesh */}
+        <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_100%_0%,_#4f46e5_0%,_transparent_50%)] opacity-30 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-full h-full bg-[radial-gradient(circle_at_0%_100%,_#3b82f6_0%,_transparent_50%)] opacity-20 pointer-events-none" />
+      </div>
+
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
         {/* Badge */}
-        <div className="inline-flex items-center gap-2 bg-white/20 text-white px-4 py-2 rounded-full text-sm font-medium mb-6 backdrop-blur-sm">
+        <div className="inline-flex items-center gap-2 bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-4 py-2 rounded-full text-sm font-semibold mb-8 backdrop-blur-md shadow-sm">
           <Zap className="h-4 w-4" />
           Start Free Today - No Credit Card Required
         </div>
 
         {/* Heading */}
-        <h2 id="cta-heading" className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight">
-          Get Free Policy Reminder Setup — Start Tracking Today
+        <h2 id="cta-heading" className="text-4xl sm:text-5xl lg:text-7xl font-bold text-white mb-6 leading-[1.1] tracking-tight">
+          Get Free Policy Reminder Setup
         </h2>
-        
-        <p className="text-xl text-cyan-100 mb-8 max-w-2xl mx-auto">
-          Join 1,500+ insurance agents who've streamlined their workflow 
-          and increased renewals by 25%. Talk to an insurance expert now.
+
+        <p className="text-xl sm:text-2xl text-slate-300 mb-10 max-w-3xl mx-auto leading-relaxed">
+          Join 1,500+ insurance agents who've streamlined their workflow
+          and <span className="text-white font-semibold">increased renewals by 25%</span>. Talk to an expert now.
         </p>
 
         {/* Benefits */}
-        <div className="flex flex-wrap justify-center gap-4 sm:gap-6 mb-10 text-white">
+        <div className="flex flex-wrap justify-center gap-4 sm:gap-8 mb-12 text-slate-300">
           <div className="flex items-center gap-2">
-            <CheckCircle className="h-5 w-5 text-cyan-200" />
-            <span>Free Forever Plan</span>
+            <CheckCircle className="h-5 w-5 text-indigo-400" />
+            <span className="font-medium">Free Forever Plan</span>
           </div>
           <div className="flex items-center gap-2">
-            <CheckCircle className="h-5 w-5 text-cyan-200" />
-            <span>2-Minute Setup</span>
+            <CheckCircle className="h-5 w-5 text-indigo-400" />
+            <span className="font-medium">2-Minute Setup</span>
           </div>
           <div className="flex items-center gap-2">
-            <CheckCircle className="h-5 w-5 text-cyan-200" />
-            <span>WhatsApp Reminders</span>
+            <CheckCircle className="h-5 w-5 text-indigo-400" />
+            <span className="font-medium">WhatsApp Reminders</span>
           </div>
           <div className="flex items-center gap-2">
-            <CheckCircle className="h-5 w-5 text-cyan-200" />
-            <span>OCR PDF Auto-Fill</span>
+            <CheckCircle className="h-5 w-5 text-indigo-400" />
+            <span className="font-medium">OCR PDF Auto-Fill</span>
           </div>
         </div>
 
         {/* CTAs */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link to="/auth">
-            <Button size="lg" className="w-full sm:w-auto bg-white text-teal-700 hover:bg-gray-100 text-lg px-10 py-7 shadow-xl">
+            <Button size="lg" className="w-full sm:w-auto bg-white text-slate-900 hover:bg-slate-100 text-lg px-10 h-14 shadow-2xl shadow-indigo-500/20 transition-all font-semibold">
               Start Tracking Your Policies Today
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </Link>
           <Link to="/enquiry">
-            <Button size="lg" variant="outline" className="w-full sm:w-auto border-2 border-white bg-white/10 text-white hover:bg-white hover:text-teal-700 text-lg px-10 py-7 backdrop-blur-sm">
+            <Button size="lg" variant="outline" className="w-full sm:w-auto border border-slate-700 bg-slate-800/50 text-white hover:bg-slate-800 hover:border-slate-600 text-lg px-10 h-14 backdrop-blur-md transition-all">
               Talk to an Expert
             </Button>
           </Link>
         </div>
 
         {/* Trust Note */}
-        <p className="mt-8 text-cyan-100 text-sm">
+        <p className="mt-12 text-slate-400 text-sm">
           Trusted by agents from LIC, HDFC, ICICI, Bajaj, and 50+ insurance companies
         </p>
       </div>

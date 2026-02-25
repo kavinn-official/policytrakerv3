@@ -66,15 +66,15 @@ const FAQSection = () => {
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="text-center mb-12">
-          <span className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium mb-4">
+        <div className="text-center mb-16">
+          <span className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 font-semibold rounded-full text-sm mb-4 border border-indigo-100/50">
             <HelpCircle className="h-4 w-4" />
             Frequently Asked Questions
           </span>
-          <h2 id="faq-heading" className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
+          <h2 id="faq-heading" className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 mb-6 tracking-tight">
             Everything You Need to Know
           </h2>
-          <p className="text-lg text-gray-600">
+          <p className="text-lg text-slate-600">
             Got questions about PolicyTracker? Find answers to common questions below.
           </p>
         </div>
@@ -85,12 +85,12 @@ const FAQSection = () => {
             <AccordionItem
               key={index}
               value={`item-${index}`}
-              className="bg-white rounded-xl border border-gray-200 px-6 shadow-sm hover:shadow-md transition-shadow"
+              className="bg-white rounded-2xl border border-slate-200/60 shadow-sm hover:shadow-md transition-all duration-300 px-6 overflow-hidden data-[state=open]:border-indigo-200"
             >
-              <AccordionTrigger className="text-left py-5 hover:no-underline">
-                <span className="text-lg font-medium text-gray-900 pr-4">{faq.question}</span>
+              <AccordionTrigger className="text-left py-6 hover:no-underline group">
+                <span className="text-lg font-semibold text-slate-900 pr-4 group-hover:text-indigo-600 transition-colors">{faq.question}</span>
               </AccordionTrigger>
-              <AccordionContent className="pb-5 text-gray-600 leading-relaxed">
+              <AccordionContent className="pb-6 text-slate-600 leading-relaxed text-base">
                 {faq.answer}
               </AccordionContent>
             </AccordionItem>
@@ -98,19 +98,19 @@ const FAQSection = () => {
         </Accordion>
 
         {/* Contact CTA */}
-        <div className="mt-12 text-center bg-white rounded-2xl p-8 border border-gray-200">
-          <h3 className="text-xl font-bold text-gray-900 mb-2">Still Have Questions?</h3>
-          <p className="text-gray-600 mb-4">
+        <div className="mt-16 text-center bg-slate-50/50 rounded-3xl p-10 border border-slate-200/60 backdrop-blur-sm">
+          <h3 className="text-xl font-bold text-slate-900 mb-3 tracking-tight">Still Have Questions?</h3>
+          <p className="text-slate-600 mb-8 text-sm sm:text-base">
             Our team is here to help you get started with PolicyTracker.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/contact">
-              <Button variant="outline" size="lg">
+              <Button variant="outline" className="w-full sm:w-auto border-slate-300 text-slate-700 hover:bg-white h-12 px-8 shadow-sm">
                 Contact Support
               </Button>
             </Link>
             <Link to="/auth">
-              <Button size="lg" className="bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700">
+              <Button className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white shadow-lg text-base h-12 px-8">
                 Try Free Now
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>

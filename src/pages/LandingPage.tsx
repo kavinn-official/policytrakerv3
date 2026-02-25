@@ -271,31 +271,31 @@ const LandingPage = () => {
       />
 
       {/* JSON-LD Structured Data */}
-      <script 
+      <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
       />
-      <script 
+      <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
-      <script 
+      <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
       />
-      <script 
+      <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(howToSchema) }}
       />
-      <script 
+      <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceSchema) }}
       />
-      <script 
+      <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(webApplicationSchema) }}
       />
-      <script 
+      <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
@@ -307,14 +307,11 @@ const LandingPage = () => {
         {/* Hero Section - H1, Main Value Proposition */}
         <HeroSection />
 
-        {/* Benefits Section - Key Agent Benefits */}
-        <BenefitsSection />
+        {/* Features Section - Product Features Grid (Bento) */}
+        <FeaturesSection />
 
         {/* Insurance Types Section - Motor, Health, Life, General */}
         <InsuranceTypesSection />
-
-        {/* Features Section - Product Features Grid */}
-        <FeaturesSection />
 
         {/* How It Works - 3-Step Process */}
         <HowItWorksSection />

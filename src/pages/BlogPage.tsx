@@ -1,9 +1,12 @@
+import React from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Calendar, User, Clock, BookOpen, Car, Shield, Heart, FileText, Briefcase, FolderOpen } from "lucide-react";
 import SEOHead from "@/components/SEOHead";
+import Navigation from "@/components/landing/Navigation";
+import Footer from "@/components/landing/Footer";
 
 interface BlogPost {
   id: string;
@@ -157,52 +160,36 @@ const categories = ["All", "Motor Insurance", "Health Insurance", "Life Insuranc
 const BlogPage = () => {
   return (
     <>
-      <SEOHead 
+      <SEOHead
         title="Insurance Agent Blog | Motor Insurance Tips & Resources | Policy Tracker"
         description="Expert tips for insurance agents. Learn motor insurance renewal strategies, WhatsApp reminder techniques, claim processes, and productivity hacks. Free resources for Indian insurance agents."
         canonicalPath="/blog"
       />
-      
-      <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
-        {/* Header */}
-        <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
-          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-            <Link to="/" className="flex items-center space-x-2">
-              <img src="/logo.png" alt="Policy Tracker" className="h-8 w-8" loading="lazy" />
-              <span className="text-xl font-bold text-primary">Policy Tracker</span>
-            </Link>
-            <div className="flex items-center gap-4">
-              <Link to="/features" className="hidden md:block text-gray-600 hover:text-primary">
-                Features
-              </Link>
-              <Link to="/pricing" className="hidden md:block text-gray-600 hover:text-primary">
-                Pricing
-              </Link>
-              <Link to="/auth">
-                <Button>Get Started Free</Button>
-              </Link>
-            </div>
-          </div>
-        </header>
+
+      <div className="min-h-screen bg-slate-50 selection:bg-indigo-100 selection:text-indigo-900">
+        <Navigation />
 
         {/* Hero Section */}
-        <section className="py-12 md:py-16 bg-gradient-to-r from-primary/5 to-cyan-50">
-          <div className="container mx-auto px-4 text-center">
-            <Badge className="mb-4 bg-primary/10 text-primary border-primary/20">
-              <BookOpen className="h-3 w-3 mr-1" />
+        <section className="py-16 md:py-24 relative overflow-hidden bg-white border-b border-slate-200">
+          <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:20px_20px] opacity-30 pointer-events-none"></div>
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-50/50 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+
+          <div className="container mx-auto px-4 text-center relative z-10">
+            <Badge className="mb-6 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 shadow-sm px-4 py-1.5 rounded-full text-sm font-medium">
+              <BookOpen className="h-4 w-4 mr-2" />
               Insurance Agent Resources
             </Badge>
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
-              Blog for <span className="text-primary">Insurance Agents</span>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-slate-900 mb-6 tracking-tight leading-tight">
+              Blog for <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-blue-600">Insurance Agents</span>
             </h1>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            <p className="text-xl text-slate-600 max-w-2xl mx-auto font-medium leading-relaxed">
               Expert tips, industry insights, and practical guides to help you grow your insurance business and serve your clients better.
             </p>
           </div>
         </section>
 
         {/* Category Filter */}
-        <section className="py-6 border-b bg-white">
+        <section className="py-8 bg-white/50 backdrop-blur-sm sticky top-[64px] z-40 border-b border-slate-200 shadow-sm">
           <div className="container mx-auto px-4">
             <div className="flex flex-wrap gap-2 justify-center">
               {categories.map((category) => (
@@ -210,7 +197,10 @@ const BlogPage = () => {
                   key={category}
                   variant={category === "All" ? "default" : "outline"}
                   size="sm"
-                  className="rounded-full"
+                  className={`rounded-full px-6 transition-all ${category === "All"
+                    ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-200 border-indigo-600"
+                    : "bg-white text-slate-600 border-slate-200 hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50"
+                    }`}
                 >
                   {category}
                 </Button>
@@ -220,46 +210,47 @@ const BlogPage = () => {
         </section>
 
         {/* Blog Grid */}
-        <section className="py-12 md:py-16">
+        <section className="py-16 md:py-24 relative">
           <div className="container mx-auto px-4">
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {blogPosts.map((post) => (
-                <Card key={post.id} className="group hover:shadow-lg transition-all duration-300 border-0 shadow-md overflow-hidden">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between mb-3">
-                      <Badge variant="secondary" className="flex items-center gap-1">
-                        {post.icon}
+                <Card key={post.id} className="group hover:shadow-2xl transition-all duration-300 border-slate-200 shadow-sm overflow-hidden bg-white hover:-translate-y-1">
+                  <CardHeader className="pb-4 border-b border-slate-50 relative">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-blue-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div className="flex items-center justify-between mb-4">
+                      <Badge variant="secondary" className="flex items-center gap-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-100 font-medium">
+                        {React.cloneElement(post.icon as React.ReactElement<{ className?: string }>, { className: "h-3.5 w-3.5" })}
                         {post.category}
                       </Badge>
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
+                      <span className="text-xs text-slate-500 flex items-center gap-1.5 font-medium">
+                        <Clock className="h-3.5 w-3.5" />
                         {post.readTime}
                       </span>
                     </div>
-                    <CardTitle className="text-lg group-hover:text-primary transition-colors line-clamp-2">
+                    <CardTitle className="text-xl font-bold group-hover:text-indigo-600 transition-colors line-clamp-2 leading-tight">
                       {post.title}
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+                  <CardContent className="pt-6">
+                    <p className="text-slate-600 text-base mb-6 line-clamp-3 leading-relaxed">
                       {post.excerpt}
                     </p>
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <User className="h-3 w-3" />
+                    <div className="flex items-center justify-between text-sm text-slate-500 font-medium border-t border-slate-100 pt-4 mb-6">
+                      <span className="flex items-center gap-1.5">
+                        <User className="h-4 w-4 text-slate-400" />
                         {post.author}
                       </span>
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {new Date(post.date).toLocaleDateString('en-IN', { 
-                          day: 'numeric', 
-                          month: 'short', 
-                          year: 'numeric' 
+                      <span className="flex items-center gap-1.5">
+                        <Calendar className="h-4 w-4 text-slate-400" />
+                        {new Date(post.date).toLocaleDateString('en-IN', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric'
                         })}
                       </span>
                     </div>
-                    <Link to={`/blog/${post.slug}`}>
-                      <Button variant="ghost" size="sm" className="w-full mt-4 group-hover:bg-primary/5">
+                    <Link to={`/blog/${post.slug}`} className="block">
+                      <Button variant="outline" className="w-full group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-600 transition-colors h-12 text-base font-semibold border-slate-200">
                         Read Article
                         <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
                       </Button>
@@ -272,16 +263,19 @@ const BlogPage = () => {
         </section>
 
         {/* CTA Section */}
-        <section className="py-12 bg-primary text-white">
-          <div className="container mx-auto px-4 text-center">
-            <h2 className="text-2xl md:text-3xl font-bold mb-4">
+        <section className="py-20 bg-slate-900 text-white relative overflow-hidden">
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-indigo-600/20 rounded-full blur-[120px] opacity-70"></div>
+          </div>
+          <div className="container mx-auto px-4 text-center relative z-10">
+            <h2 className="text-3xl md:text-4xl font-bold mb-6 tracking-tight">
               Ready to Streamline Your Policy Management?
             </h2>
-            <p className="text-primary-foreground/80 mb-6 max-w-xl mx-auto">
-              Join 1000+ insurance agents using Policy Tracker to manage policies, send WhatsApp reminders, and grow their business.
+            <p className="text-slate-300 mb-8 max-w-2xl mx-auto text-lg leading-relaxed">
+              Join thousands of insurance agents using PolicyTracker.in to manage policies, automate WhatsApp reminders, and grow their business efficiently.
             </p>
             <Link to="/auth">
-              <Button size="lg" variant="secondary" className="font-semibold">
+              <Button size="lg" className="bg-indigo-500 hover:bg-indigo-400 text-white font-semibold h-14 px-8 text-lg border-0 shadow-lg shadow-indigo-900/50">
                 Start Free Trial
                 <ArrowRight className="h-5 w-5 ml-2" />
               </Button>
@@ -289,17 +283,7 @@ const BlogPage = () => {
           </div>
         </section>
 
-        {/* Footer */}
-        <footer className="py-8 bg-gray-900 text-gray-400">
-          <div className="container mx-auto px-4 text-center">
-            <p>© {new Date().getFullYear()} Policy Tracker.in. All rights reserved.</p>
-            <div className="flex justify-center gap-6 mt-4 text-sm">
-              <Link to="/privacy" className="hover:text-white">Privacy</Link>
-              <Link to="/terms-conditions" className="hover:text-white">Terms</Link>
-              <Link to="/contact" className="hover:text-white">Contact</Link>
-            </div>
-          </div>
-        </footer>
+        <Footer />
       </div>
     </>
   );

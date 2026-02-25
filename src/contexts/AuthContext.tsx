@@ -51,7 +51,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('Auth state changed:', event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
-        
+
         // Only set loading to false after we've handled the auth state
         if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
           setLoading(false);
@@ -71,8 +71,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     try {
-      setLoading(true);
-
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -83,7 +81,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (data.user && data.session) {
         setSession(data.session);
         setUser(data.user);
-        
+
         toast({
           title: "Success",
           description: "Successfully signed in!",
@@ -99,18 +97,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         variant: "destructive",
       });
       return { error };
-    } finally {
-      setLoading(false);
     }
   };
 
   const signUp = async (email: string, password: string, metadata?: UserMetadata) => {
     try {
-      setLoading(true);
       cleanupAuthState();
 
       const redirectUrl = `${window.location.origin}/dashboard`;
-      
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -166,8 +161,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         variant: "destructive",
       });
       return { error };
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -177,22 +170,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) {
         console.error('Sign out error:', error);
       }
-      
+
       // Clear component state
       setSession(null);
       setUser(null);
-      
+
       toast({
         title: "Success",
         description: "You have been logged out successfully.",
       });
     } catch (error: any) {
       console.error('Sign out error:', error);
-      
+
       // Still clean up even on error
       setSession(null);
       setUser(null);
-      
+
       toast({
         title: "Success",
         description: "You have been logged out successfully.",
