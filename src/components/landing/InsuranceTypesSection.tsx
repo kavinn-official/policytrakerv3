@@ -100,14 +100,14 @@ const InsuranceTypesSection = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header - SEO optimized */}
         <div className="text-center mb-16">
-          <span className="inline-block px-4 py-2 bg-teal-100 text-teal-800 rounded-full text-sm font-medium mb-4">
+          <span className="inline-block px-4 py-2 bg-indigo-50 text-indigo-700 font-semibold rounded-full text-sm mb-4 border border-indigo-100/50">
             For Every Insurance Professional
           </span>
-          <h2 id="insurance-types-heading" className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
-            Built for All Types of Insurance Agents
+          <h2 id="insurance-types-heading" className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 mb-4 tracking-tight">
+            Built for All Types of <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-blue-600">Insurance Agents</span>
           </h2>
-          <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-            Whether you sell motor, health, life, or general insurance — PolicyTracker.in adapts to your workflow. 
+          <p className="text-lg text-slate-600 max-w-3xl mx-auto">
+            Whether you sell motor, health, life, or general insurance — PolicyTracker.in adapts to your workflow.
             One platform for your entire insurance business.
           </p>
         </div>
@@ -115,63 +115,72 @@ const InsuranceTypesSection = () => {
         {/* Insurance Type Cards */}
         <div className="grid md:grid-cols-2 gap-8">
           {insuranceTypes.map((type) => (
-            <Card key={type.id} className="overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 group">
+            <Card key={type.id} className="overflow-hidden border border-slate-200/60 shadow-sm hover:shadow-xl transition-all duration-300 group bg-white relative">
               <CardContent className="p-0">
-                {/* Header */}
-                <div className={`bg-gradient-to-r ${type.color} p-6 text-white`}>
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                      <type.icon className="h-7 w-7" />
+                {/* Header with Darker Subtle Gradient */}
+                <div className={`bg-gradient-to-r from-slate-900 to-slate-800 p-6 text-white relative overflow-hidden`}>
+                  {/* Abstract Shape Background */}
+                  <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl ${type.color} rounded-full blur-3xl opacity-40 -translate-y-1/2 translate-x-1/3`} />
+
+                  <div className="flex items-center gap-4 relative z-10">
+                    <div className="w-14 h-14 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-md border border-white/10 shadow-inner group-hover:scale-110 transition-transform duration-300">
+                      <type.icon className="h-7 w-7 text-white" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold">{type.title}</h3>
-                      <p className="text-white/80 text-sm">{type.subtitle}</p>
+                      <h3 className="text-xl font-bold tracking-tight">{type.title}</h3>
+                      <p className="text-slate-300 text-sm mt-0.5">{type.subtitle}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Content */}
-                <div className="p-6">
-                  {/* Pain Points */}
-                  <div className="mb-6">
-                    <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-                      Common Challenges
-                    </h4>
-                    <ul className="space-y-2">
-                      {type.painPoints.map((pain, idx) => (
-                        <li key={idx} className="flex items-start gap-2 text-sm text-gray-600">
-                          <span className="text-red-400 mt-1">✗</span>
-                          {pain}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                <div className="p-8">
+                  <div className="grid sm:grid-cols-2 gap-8">
+                    {/* Pain Points */}
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-slate-300"></span>
+                        Common Challenges
+                      </h4>
+                      <ul className="space-y-3">
+                        {type.painPoints.map((pain, idx) => (
+                          <li key={idx} className="flex items-start gap-2 text-sm text-slate-600 leading-relaxed">
+                            <span className="text-slate-300 mt-0.5 mt-1 block h-4 w-4 shrink-0 text-center text-lg leading-none">×</span>
+                            {pain}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
 
-                  {/* Solutions */}
-                  <div className="mb-6">
-                    <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-                      How PolicyTracker Helps
-                    </h4>
-                    <ul className="space-y-2">
-                      {type.solutions.map((solution, idx) => (
-                        <li key={idx} className="flex items-start gap-2 text-sm text-gray-700">
-                          <CheckCircle className={`h-4 w-4 ${type.iconColor} mt-0.5 flex-shrink-0`} />
-                          {solution}
-                        </li>
-                      ))}
-                    </ul>
+                    {/* Solutions */}
+                    <div>
+                      <h4 className="text-xs font-bold text-indigo-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+                        Our Solution
+                      </h4>
+                      <ul className="space-y-3">
+                        {type.solutions.map((solution, idx) => (
+                          <li key={idx} className="flex items-start gap-2 text-sm text-slate-700 font-medium leading-relaxed">
+                            <CheckCircle className={`h-4 w-4 ${type.iconColor} mt-0.5 flex-shrink-0`} />
+                            {solution}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
 
                   {/* CTA */}
-                  <Link to="/auth">
-                    <Button 
-                      variant="outline" 
-                      className={`w-full group-hover:bg-gradient-to-r group-hover:${type.color} group-hover:text-white group-hover:border-transparent transition-all`}
-                    >
-                      Start Managing {type.title.split(' ')[0]} Policies
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </Link>
+                  <div className="mt-8 pt-6 border-t border-slate-100">
+                    <Link to="/auth">
+                      <Button
+                        variant="outline"
+                        className={`w-full group-hover:bg-slate-900 group-hover:text-white transition-all duration-300 border-slate-200 shadow-sm`}
+                      >
+                        Start Managing {type.title.split(' ')[0]} Policies
+                        <ArrowRight className="ml-2 h-4 w-4 opacity-70 group-hover:opacity-100 transition-opacity" />
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -180,11 +189,11 @@ const InsuranceTypesSection = () => {
 
         {/* Bottom CTA */}
         <div className="mt-16 text-center">
-          <p className="text-gray-600 mb-4">
-            Manage multiple insurance types? PolicyTracker handles it all in one platform.
+          <p className="text-slate-600 mb-6 text-lg">
+            Manage multiple insurance types? PolicyTracker handles it all in one powerful platform.
           </p>
           <Link to="/auth">
-            <Button size="lg" className="bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700 text-lg px-8">
+            <Button size="lg" className="bg-slate-900 hover:bg-slate-800 text-white shadow-lg text-base px-8 h-12">
               Start Free Multi-Product Tracking
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>

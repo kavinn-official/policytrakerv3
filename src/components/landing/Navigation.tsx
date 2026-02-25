@@ -22,10 +22,10 @@ const Navigation = () => {
         <div className="flex justify-between items-center h-16 sm:h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 group">
-            <img 
-              src={logo} 
-              alt="PolicyTracker - Insurance Agent CRM" 
-              className="h-10 w-10 sm:h-12 sm:w-12 group-hover:scale-105 transition-transform" 
+            <img
+              src={logo}
+              alt="PolicyTracker - Insurance Agent CRM"
+              className="h-10 w-10 sm:h-12 sm:w-12 group-hover:scale-105 transition-transform"
             />
             <div>
               <div className="font-bold text-gray-900 text-base sm:text-xl">PolicyTracker.in</div>
@@ -36,13 +36,13 @@ const Navigation = () => {
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center gap-8">
             {navLinks.map((link) => (
-              <Link 
+              <Link
                 key={link.name}
-                to={link.href} 
-                className="text-gray-600 hover:text-teal-600 font-medium transition-colors relative group"
+                to={link.href}
+                className="text-slate-600 hover:text-indigo-600 font-medium transition-colors relative group"
               >
                 {link.name}
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-teal-600 group-hover:w-full transition-all duration-300" />
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-600 group-hover:w-full transition-all duration-300" />
               </Link>
             ))}
           </div>
@@ -50,12 +50,12 @@ const Navigation = () => {
           {/* Desktop Auth Buttons */}
           <div className="hidden sm:flex items-center gap-3">
             <Link to="/auth">
-              <Button variant="ghost" className="text-gray-700 hover:text-teal-600 font-medium">
+              <Button variant="ghost" className="text-slate-700 hover:text-indigo-600 font-medium">
                 Login
               </Button>
             </Link>
             <Link to="/auth">
-              <Button className="bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700 shadow-sm">
+              <Button className="bg-slate-900 hover:bg-slate-800 text-white shadow-sm border border-slate-700">
                 Start Free
               </Button>
             </Link>
@@ -83,9 +83,9 @@ const Navigation = () => {
                 <div className="flex-1 p-4">
                   <div className="space-y-1">
                     {navLinks.map((link) => (
-                      <Link 
+                      <Link
                         key={link.name}
-                        to={link.href} 
+                        to={link.href}
                         onClick={() => setIsOpen(false)}
                         className="flex items-center px-4 py-3 rounded-lg text-gray-700 hover:bg-teal-50 hover:text-teal-700 font-medium transition-colors"
                       >
@@ -98,10 +98,10 @@ const Navigation = () => {
                 {/* Mobile Auth */}
                 <div className="p-4 border-t space-y-3">
                   <Link to="/auth" onClick={() => setIsOpen(false)} className="block">
-                    <Button variant="outline" className="w-full">Login</Button>
+                    <Button variant="outline" className="w-full border-slate-200 text-slate-700">Login</Button>
                   </Link>
                   <Link to="/auth" onClick={() => setIsOpen(false)} className="block">
-                    <Button className="w-full bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700">
+                    <Button className="w-full bg-slate-900 hover:bg-slate-800 text-white">
                       Start Free Trial
                     </Button>
                   </Link>
