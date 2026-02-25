@@ -2,8 +2,13 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_PROJECT_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+// Bypass ISP blocks on mobile networks in India (e.g., Jio) by routing 
+// production requests through a Netlify proxy setup in public/_redirects
+const PROXY_URL = typeof window !== 'undefined' ? `${window.location.origin}/supabase` : SUPABASE_PROJECT_URL;
+const SUPABASE_URL = import.meta.env.PROD ? PROXY_URL : SUPABASE_PROJECT_URL;
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
