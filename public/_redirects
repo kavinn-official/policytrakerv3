@@ -4,5 +4,8 @@ https://www.policytracker.in/*  https://policytracker.in/:splat  301!
 # Legacy welcome route
 /welcome    /   301
 
+# Supabase API Proxy to bypass mobile network blocks (e.g., Jio)
+/supabase/*  https://mzxigvdrtadbntiappyt.supabase.co/:splat  200
+
 # SPA fallback
 /*    /index.html   200
